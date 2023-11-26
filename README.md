@@ -4,6 +4,7 @@ Core MetaMod addon for CS2 Surf Servers. This project is aimed to be fully open-
 # Roadmap
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve*
 
+- [ ] Command Listener
 - [ ] Data storage
   - [ ] MySQL database schema (design diagram TBA)
 - [ ] Zoning
