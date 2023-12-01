@@ -1,3 +1,4 @@
 *.vs
 src/bin/Debug/*
 src/obj/*
+src/SurfTimer.csproj
