@@ -1,3 +1,5 @@
+# PLEASE DO NOT USE THIS, IT IS NOT COMPLETE AND IS AN ACTIVE WORK-IN-PROGRESS. ISSUES/PRs HAVE BEEN DISABLED FOR THIS REASON. 
+
 # Timer
 Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source with the goal of uniting all of CS2 surf towards building the game mode.
 
@@ -18,6 +20,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [ ] Save/load times from the database
   - [ ] Practice Mode
   - [ ] Announce records to Discord
+  - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [ ] Profiles
   - [ ] Points/Skill Groups
