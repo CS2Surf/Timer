@@ -6,24 +6,34 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 # Goals
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve. Subject to change.*
 
-- [ ] Data storage
+- [ ] Database
   - [ ] MySQL database schema ([W.I.P Design Diagram](https://dbdiagram.io/d/CS2Surf-Timer-DB-Schema-6560b76b3be1495787ace4d2))
   - [ ] Plugin auto-create tables for easier install? 
+  - [X] Base database class implementation
 - [ ] Zoning
-  - [ ] Hook zones from map triggers
+  - [ ] Start/End trigger touch hooks
+  - [ ] Spawn zone triggers from coordinates (DB)
   - [ ] Support for stages/checkpoints
   - [ ] Support for bonuses
-  - [ ] Load zone information for official maps from CS2 Surf upstream? (Probably make this optional)
-  - [ ] Support for custom zoning (Draw in-game similar to CSGO Surftimer?)
+  - [ ] Load zone information for official maps from CS2 Surf upstream? (Optional)
+  - [ ] Custom zone drawing/editing in-game? (Similar to CS:GO SurfTimer)
+- [ ] Surf configs
+  - [X] Server settings configuration
+  - [ ] Plugin configuration
+  - [X] Database configuration
 - [ ] Timing
-  - [ ] Implement timer HUD (similar to WST)
-  - [ ] Save/load times from the database
+  - [X] Base timer class implementation
+  - [X] Base timer HUD implementation 
+  - [ ] Save/load set times (DB)
   - [ ] Practice Mode
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
-  - [ ] Profiles
-  - [ ] Points/Skill Groups
+  - [X] Base player class
+  - [ ] Player stat classes 
+  - [ ] Profile implementation (DB)
+  - [ ] Points/Skill Groups (DB)
+  - [ ] Player settings (DB)
 - [ ] Replays
 - [ ] Angle style implementation
 - [ ] Paint
