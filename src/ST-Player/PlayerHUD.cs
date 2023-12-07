@@ -9,11 +9,11 @@ internal class PlayerHUD
         _player = Player;
     }
 
-    private string FormatHUDElementHTML(string title, string body, string color, int size = 2)
+    private string FormatHUDElementHTML(string title, string body, string color, string size = "m")
     {
         if (title != "")
-            return $"<font class='fontSize-{size}'><font color=\"white\">{title}</font>: <font color=\"{color}\">{body}</font></font>";
-        return $"<font class='fontSize-{size}' color=\"{color}\">{body}</font>";
+            return $"<font class='fontSize-{size.ToLower()}'><font color=\"white\">{title}</font>: <font color=\"{color}\">{body}</font></font>";
+        return $"<font class='fontSize-{size.ToLower()}' color=\"{color}\">{body}</font>";
     }
 
     public string FormatTime(int ticks) // https://github.com/DEAFPS/SharpTimer/blob/e4ef24fff29a33c36722d23961355742d507441f/Utils.cs#L38
