@@ -10,13 +10,15 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [ ] MySQL database schema ([W.I.P Design Diagram](https://dbdiagram.io/d/CS2Surf-Timer-DB-Schema-6560b76b3be1495787ace4d2))
   - [ ] Plugin auto-create tables for easier install? 
   - [X] Base database class implementation
-- [ ] Zoning
-  - [ ] Start/End trigger touch hooks
-  - [ ] Spawn zone triggers from coordinates (DB)
-  - [ ] Support for stages/checkpoints
-  - [ ] Support for bonuses
-  - [ ] Load zone information for official maps from CS2 Surf upstream? (Optional)
-  - [ ] Custom zone drawing/editing in-game? (Similar to CS:GO SurfTimer)
+- [ ] Maps
+  - [ ] Map info (DB)
+  - [ ] Zoning
+    - [ ] Start/End trigger touch hooks
+    - [ ] Spawn zone triggers from coordinates (DB)
+    - [ ] Support for stages/checkpoints
+    - [ ] Support for bonuses
+    - [ ] Load zone information for official maps from CS2 Surf upstream? (Optional)
+    - [ ] Custom zone drawing/editing in-game? (Similar to CS:GO SurfTimer)
 - [ ] Surf configs
   - [X] Server settings configuration
   - [ ] Plugin configuration
@@ -34,6 +36,6 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
-- [ ] Replays
-- [ ] Angle style implementation
-- [ ] Paint
+- [ ] Run replays
+- [ ] Style implementation (SW, HSW, BW)
+- [ ] Paint (?)
