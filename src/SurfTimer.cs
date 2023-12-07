@@ -80,9 +80,9 @@ public partial class SurfTimer : BasePlugin
             int dbID, joinDate, lastSeen, connections;
             string name, country = "XX"; // To-do: GeoIP
             // Load player data from database (or create an entry if first time connecting)
-            Task<MySqlDataReader> dbTask = DB.Read($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+            Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
             MySqlDataReader playerData = dbTask.Result;
-            if (playerData.HasRows)
+            if (playerData.HasRows && playerData.Read())
             {
                 // Player exists in database
                 dbID = playerData.GetInt32("id");
@@ -100,18 +100,34 @@ public partial class SurfTimer : BasePlugin
 
             else
             {
+                playerData.Close();
                 // Player does not exist in database
                 name = player.PlayerName;
                 joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 lastSeen = joinDate;
                 connections = 1;
-                Task<int> write = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{name}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
-
+                Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
+                int newPlayerTaskRows = newPlayerTask.Result;
+                if (newPlayerTaskRows != 1)
+                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
+                    
                 // Get new player's database ID
-                Task<MySqlDataReader> postWriteTask = DB.Read($"SELECT id FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
-                MySqlDataReader dbReader = postWriteTask.Result;
-                dbID = dbReader.GetInt32("id");
-                dbReader.Close();
+                Task<MySqlDataReader> newPlayerDataTask = DB.Query($"SELECT `id` FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+                MySqlDataReader newPlayerData = newPlayerDataTask.Result;
+                if (newPlayerData.HasRows && newPlayerData.Read()) 
+                {
+                    #if DEBUG
+                    // Iterate through data: 
+                    for (int i = 0; i < newPlayerData.FieldCount; i++)
+                    {
+                        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> newPlayerData[{i}] = {newPlayerData.GetValue(i)}");
+                    }
+                    #endif
+                    dbID = newPlayerData.GetInt32("id");
+                }
+                else
+                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to get new player's database ID after writing, this shouldnt happen. Player: {name} ({player.SteamID})");
+                newPlayerData.Close();
 
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");

@@ -27,9 +27,9 @@ internal class TimerDatabase
         this._db.Close();
     }
 
-    public async Task<MySqlDataReader> Read(string query)
+    public async Task<MySqlDataReader> Query(string query)
     {
-        MySqlCommand cmd = new MySqlCommand(MySqlHelper.EscapeString(query), this._db);
+        MySqlCommand cmd = new MySqlCommand(query, this._db);
         MySqlDataReader reader = await cmd.ExecuteReaderAsync();
 
         return Task.FromResult(reader).Result;
@@ -37,10 +37,8 @@ internal class TimerDatabase
 
     public async Task<int> Write(string query)
     {
-        MySqlConnection conn = new MySqlConnection(this._connString);
-        MySqlCommand cmd = new MySqlCommand(MySqlHelper.EscapeString(query), conn);
+        MySqlCommand cmd = new MySqlCommand(query, this._db);
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        await conn.CloseAsync();
 
         return rowsAffected;
     }
