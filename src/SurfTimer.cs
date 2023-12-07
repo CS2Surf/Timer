@@ -53,7 +53,9 @@ public partial class SurfTimer : BasePlugin
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        // Load cvars/other configs here
+        // Execute server_settings.cfg
+        Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
+        Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
         return HookResult.Continue;
     }
 
@@ -105,13 +107,6 @@ public partial class SurfTimer : BasePlugin
     /* ========== PLUGIN LOAD ========== */
     public override void Load(bool hotReload = false)
     {
-        Console.WriteLine(String.Format("  ____________    ____         ___\n"
-                                    + " / ___/ __/_  |  / __/_ ______/ _/\n"
-                                    + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
-                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
-                                    + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
-        ));
-
         // Load database config & spawn database object
         try
         {
@@ -122,6 +117,7 @@ public partial class SurfTimer : BasePlugin
                                                 dbConfig.GetProperty("password").GetString(),
                                                 dbConfig.GetProperty("port").GetInt32(),
                                                 dbConfig.GetProperty("timeout").GetInt32());
+            Console.WriteLine("[CS2 Surf] Database connection established.");
         }
 
         catch (Exception e)
@@ -129,6 +125,13 @@ public partial class SurfTimer : BasePlugin
             Console.WriteLine($"[CS2 Surf] Error loading database config: {e.Message}");
             // To-do: Abort plugin loading?
         }
+
+        Console.WriteLine(String.Format("  ____________    ____         ___\n"
+                                    + " / ___/ __/_  |  / __/_ ______/ _/\n"
+                                    + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
+                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
+                                    + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
+        ));
 
         // Tick listener
         RegisterListener<Listeners.OnTick>(() =>
