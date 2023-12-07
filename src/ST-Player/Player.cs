@@ -12,15 +12,19 @@ internal class Player
     public PlayerStats Stats {get; set;}
     public PlayerHUD HUD {get; set;}
 
-    // Player vars
-    public int dbID {get; set;} = 0; // Database -> Player.id
+    // Player information
+    public PlayerProfile Profile {get; set;}
+
+    // Player status
     public int Style {get; set;} = 0; // 0 = normal, 1+ = style index
 
     // Constructor
-    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices)
+    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile)
     {
         this.Controller = Controller;
         this.MovementServices = MovementServices;
+
+        this.Profile = Profile;
 
         this.Timer = new PlayerTimer();
         this.Stats = new PlayerStats();

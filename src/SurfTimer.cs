@@ -32,6 +32,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using MySqlConnector;
 
 namespace SurfTimer;
 
@@ -48,6 +49,7 @@ public partial class SurfTimer : BasePlugin
 
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
+    private TimerDatabase? DB = new TimerDatabase();
 
     /* ========== ROUND HOOKS ========== */
     [GameEventHandler]
@@ -66,7 +68,7 @@ public partial class SurfTimer : BasePlugin
     {
         var player = @event.Userid;
         #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId}");
+        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / {player.SteamID}");
         #endif
 
         if (player.IsBot || !player.IsValid)
@@ -75,7 +77,52 @@ public partial class SurfTimer : BasePlugin
         }
         else
         {
-            playerList[player.UserId ?? 0] = new Player(player, new CCSPlayer_MovementServices(player.PlayerPawn.Value.MovementServices!.Handle));
+            int dbID, joinDate, lastSeen, connections;
+            string name, country = "XX"; // To-do: GeoIP
+            // Load player data from database (or create an entry if first time connecting)
+            Task<MySqlDataReader> dbTask = DB.Read($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+            MySqlDataReader playerData = dbTask.Result;
+            if (playerData.HasRows)
+            {
+                // Player exists in database
+                dbID = playerData.GetInt32("id");
+                name = playerData.GetString("name");
+                country = playerData.GetString("country");
+                joinDate = playerData.GetInt32("joined");
+                lastSeen = playerData.GetInt32("lastseen");
+                connections = playerData.GetInt32("connections");
+                playerData.Close();
+
+                #if DEBUG
+                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> Returning player {name} ({player.SteamID}) loaded from database with ID {dbID}");
+                #endif
+            }
+
+            else
+            {
+                // Player does not exist in database
+                name = player.PlayerName;
+                joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                lastSeen = joinDate;
+                connections = 1;
+                Task<int> write = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{name}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
+
+                // Get new player's database ID
+                Task<MySqlDataReader> postWriteTask = DB.Read($"SELECT id FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+                MySqlDataReader dbReader = postWriteTask.Result;
+                dbID = dbReader.GetInt32("id");
+                dbReader.Close();
+
+                #if DEBUG
+                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");
+                #endif
+            }
+            PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
+
+            // Create Player object
+            playerList[player.UserId ?? 0] = new Player(player, 
+                                                    new CCSPlayer_MovementServices(player.PlayerPawn.Value.MovementServices!.Handle),
+                                                    Profile);
             Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected.");
 
             // Player connection to-do
@@ -111,12 +158,12 @@ public partial class SurfTimer : BasePlugin
         try
         {
             JsonElement dbConfig = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/database.json")).RootElement;
-            TimerDatabase DB = new TimerDatabase(dbConfig.GetProperty("host").GetString(),
-                                                dbConfig.GetProperty("database").GetString(),
-                                                dbConfig.GetProperty("user").GetString(),
-                                                dbConfig.GetProperty("password").GetString(),
-                                                dbConfig.GetProperty("port").GetInt32(),
-                                                dbConfig.GetProperty("timeout").GetInt32());
+            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString(),
+                                    dbConfig.GetProperty("database").GetString(),
+                                    dbConfig.GetProperty("user").GetString(),
+                                    dbConfig.GetProperty("password").GetString(),
+                                    dbConfig.GetProperty("port").GetInt32(),
+                                    dbConfig.GetProperty("timeout").GetInt32());
             Console.WriteLine("[CS2 Surf] Database connection established.");
         }
 
