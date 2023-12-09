@@ -7,7 +7,7 @@ namespace SurfTimer;
 public partial class SurfTimer
 {
     // All player-related commands here
-    [ConsoleCommand("st_r", "Reset back to the start of the map.")]
+    [ConsoleCommand("css_r", "Reset back to the start of the map.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void ResetPlayer(CCSPlayerController? player, CommandInfo command)
     {
