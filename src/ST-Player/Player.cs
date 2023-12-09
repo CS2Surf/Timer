@@ -15,9 +15,6 @@ internal class Player
     // Player information
     public PlayerProfile Profile {get; set;}
 
-    // Player status
-    public int Style {get; set;} = 0; // 0 = normal, 1+ = style index
-
     // Constructor
     public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile)
     {

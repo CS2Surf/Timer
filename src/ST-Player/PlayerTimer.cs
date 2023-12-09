@@ -6,6 +6,7 @@ internal class PlayerTimer
     public bool Enabled {get; set;} = true; // Enable toggle for entire timer
     public bool Paused {get; set;} = false; // Pause toggle for timer
     public bool IsRunning {get; set;} = false; // Is the timer currently running?
+    // public int Style = 0; // To-do: style implementation
 
     // Mode
     public bool Practice {get; set;} = false;
