@@ -7,7 +7,7 @@ using MySqlConnector; // https://dev.mysql.com/doc/connector-net/en/connector-ne
 // This will have functions for DB access and query sending
 internal class TimerDatabase 
 {
-    private MySqlConnection _db;
+    private MySqlConnection? _db;
     private string _connString;
 
     public TimerDatabase()
@@ -24,7 +24,8 @@ internal class TimerDatabase
 
     public void Close()
     {
-        this._db.Close();
+        if (this._db != null)
+            this._db!.Close();
     }
 
     public async Task<MySqlDataReader> Query(string query)
