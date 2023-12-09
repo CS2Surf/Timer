@@ -33,6 +33,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using MySqlConnector;
+using MaxMind.GeoIP2;
 
 namespace SurfTimer;
 
@@ -50,6 +51,7 @@ public partial class SurfTimer : BasePlugin
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
     private TimerDatabase? DB = new TimerDatabase();
+    public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
 
     /* ========== ROUND HOOKS ========== */
     [GameEventHandler]
@@ -78,7 +80,21 @@ public partial class SurfTimer : BasePlugin
         else
         {
             int dbID, joinDate, lastSeen, connections;
-            string name, country = "XX"; // To-do: GeoIP
+            string name, country; 
+            
+            // GeoIP
+            DatabaseReader geoipDB = new DatabaseReader(PluginPath + "data/GeoIP/GeoLite2-Country.mmdb");
+            if (geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode is not null)
+            {
+                country = geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode!;
+                #if DEBUG
+                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> GeoIP -> {player.PlayerName} -> {player.IpAddress!.Split(":")[0]} -> {country}");
+                #endif
+            }
+            else
+                country = "XX";
+            geoipDB.Dispose();
+
             // Load player data from database (or create an entry if first time connecting)
             Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
             MySqlDataReader playerData = dbTask.Result;
@@ -87,7 +103,8 @@ public partial class SurfTimer : BasePlugin
                 // Player exists in database
                 dbID = playerData.GetInt32("id");
                 name = playerData.GetString("name");
-                country = playerData.GetString("country");
+                if (country == "XX" && playerData.GetString("country") != "XX")
+                    country = playerData.GetString("country");
                 joinDate = playerData.GetInt32("joined");
                 lastSeen = playerData.GetInt32("lastseen");
                 connections = playerData.GetInt32("connections");
@@ -106,6 +123,8 @@ public partial class SurfTimer : BasePlugin
                 joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 lastSeen = joinDate;
                 connections = 1;
+
+                // Write new player to database
                 Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
                 int newPlayerTaskRows = newPlayerTask.Result;
                 if (newPlayerTaskRows != 1)
@@ -137,12 +156,12 @@ public partial class SurfTimer : BasePlugin
 
             // Create Player object
             playerList[player.UserId ?? 0] = new Player(player, 
-                                                    new CCSPlayer_MovementServices(player.PlayerPawn.Value.MovementServices!.Handle),
+                                                    new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
                                                     Profile);
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected.");
-
-            // Player connection to-do
-
+            
+            // Print join messages
+            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
+            Console.WriteLine($"{PluginPrefix} {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
             return HookResult.Continue;
         }
     }
@@ -168,16 +187,16 @@ public partial class SurfTimer : BasePlugin
     }
 
     /* ========== PLUGIN LOAD ========== */
-    public override void Load(bool hotReload = false)
+    public override void Load(bool hotReload)
     {
         // Load database config & spawn database object
         try
         {
             JsonElement dbConfig = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/database.json")).RootElement;
-            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString(),
-                                    dbConfig.GetProperty("database").GetString(),
-                                    dbConfig.GetProperty("user").GetString(),
-                                    dbConfig.GetProperty("password").GetString(),
+            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString()!,
+                                    dbConfig.GetProperty("database").GetString()!,
+                                    dbConfig.GetProperty("user").GetString()!,
+                                    dbConfig.GetProperty("password").GetString()!,
                                     dbConfig.GetProperty("port").GetInt32(),
                                     dbConfig.GetProperty("timeout").GetInt32());
             Console.WriteLine("[CS2 Surf] Database connection established.");
@@ -186,7 +205,7 @@ public partial class SurfTimer : BasePlugin
         catch (Exception e)
         {
             Console.WriteLine($"[CS2 Surf] Error loading database config: {e.Message}");
-            // To-do: Abort plugin loading?
+            // To-do: Abort plugin loading
         }
 
         Console.WriteLine(String.Format("  ____________    ____         ___\n"
@@ -213,67 +232,87 @@ public partial class SurfTimer : BasePlugin
         // StartTouch Hook
         VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(handler =>
         {
-            // Implement Trigger Start Touch Here
-            // TO-DO: IMPLEMENT ZONES IN ST-Map
             CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
             CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
-            Player player = playerList[new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value.Handle).UserId ?? 0];
-            #if DEBUG
-            player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity.Name}");
-            #endif
-
-            if (trigger.Entity.Name == "map_end") // TO-DO: IMPLEMENT ZONES IN ST-Map
+            CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
+            
+            if (client.IsBot || !client.IsValid)
             {
-                // MAP END ZONE
-                if (player.Timer.IsRunning)
+                return HookResult.Continue;
+            }
+
+            else 
+            {
+                // Implement Trigger Start Touch Here
+                // TO-DO: IMPLEMENT ZONES IN ST-Map
+                Player player = playerList[client.UserId ?? 0];
+                #if DEBUG
+                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
+                #endif
+
+                if (trigger.Entity.Name == "map_end") // TO-DO: IMPLEMENT ZONES IN ST-Map
                 {
-                    player.Timer.Stop();
-                    player.Stats.PB[0,0] = player.Timer.Ticks;
-                    player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
-                    // player.Timer.Reset();
+                    // MAP END ZONE
+                    if (player.Timer.IsRunning)
+                    {
+                        player.Timer.Stop();
+                        player.Stats.PB[0,0] = player.Timer.Ticks;
+                        player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
+                        // player.Timer.Reset();
+                    }
+
+                    #if DEBUG
+                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                    #endif
                 }
 
-                #if DEBUG
-                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
-                #endif
+                else if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
+                {
+                    // MAP START ZONE
+                    player.Timer.Reset();
+
+                    #if DEBUG
+                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
+                    #endif
+                }
+
+                return HookResult.Continue;
             }
-
-            else if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
-            {
-                // MAP START ZONE
-                player.Timer.Reset();
-
-                #if DEBUG
-                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
-                #endif
-            }
-
-            return HookResult.Continue;
         }, HookMode.Post);
 
         // EndTouch Hook
         VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(handler =>
         {
-            // Implement Trigger End Touch Here
-            // TO-DO: IMPLEMENT ZONES IN ST-Map
             CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
             CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
-            Player player = playerList[new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value.Handle).UserId ?? 0];
-            #if DEBUG
-            player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_EndTouchFunc -> {trigger.DesignerName} -> {trigger.Entity.Name}");
-            #endif
-
-            if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
+            CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
+            
+            if (client.IsBot || !client.IsValid)
             {
-                // MAP END ZONE
-                player.Timer.Start();
-
-                #if DEBUG
-                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
-                #endif
+                return HookResult.Continue;
             }
 
-            return HookResult.Continue;
+            else
+            {
+                // Implement Trigger End Touch Here
+                // TO-DO: IMPLEMENT ZONES IN ST-Map
+                Player player = playerList[client.UserId ?? 0];
+                #if DEBUG
+                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_EndTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
+                #endif
+
+                if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
+                {
+                    // MAP START ZONE
+                    player.Timer.Start();
+
+                    #if DEBUG
+                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                    #endif
+                }
+
+                return HookResult.Continue;
+            }
         }, HookMode.Post);
     }
 }
