@@ -46,7 +46,7 @@ public partial class SurfTimer : BasePlugin
     public override string ModuleVersion => "DEV-1";
     public override string ModuleDescription => "Official SurfTimer by the CS2 Surf Initiative.";
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
-    public string PluginPrefix => $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]";
+    public string PluginPrefix => $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]"; // To-do: make configurable
 
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
@@ -161,7 +161,7 @@ public partial class SurfTimer : BasePlugin
             
             // Print join messages
             Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
-            Console.WriteLine($"{PluginPrefix} {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
+            Console.WriteLine($"[CS2 Surf] {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
             return HookResult.Continue;
         }
     }
@@ -178,10 +178,15 @@ public partial class SurfTimer : BasePlugin
         }
         else
         {
-            playerList.Remove(player.UserId ?? 0);
+            // Update data in Player DB table
+            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `lastseen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+            if (updatePlayerTask.Result != 1)
+                throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
 
             // Player disconnection to-do
 
+            // Remove player data from playerList
+            playerList.Remove(player.UserId ?? 0);
             return HookResult.Continue;
         }
     }
