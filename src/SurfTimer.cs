@@ -50,13 +50,17 @@ public partial class SurfTimer : BasePlugin
 
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
-    private TimerDatabase? DB = new TimerDatabase();
+    internal TimerDatabase? DB = new TimerDatabase();
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
+    internal Map CurrentMap;
 
     /* ========== ROUND HOOKS ========== */
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
+        // Initialise Map Object
+        CurrentMap = new Map(Server.MapName, DB!);
+
         // Execute server_settings.cfg
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
@@ -179,7 +183,7 @@ public partial class SurfTimer : BasePlugin
         else
         {
             // Update data in Player DB table
-            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `lastseen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `steam_id` = {player.SteamID} LIMIT 1;");
+            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `lastseen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
             if (updatePlayerTask.Result != 1)
                 throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
 
@@ -278,6 +282,7 @@ public partial class SurfTimer : BasePlugin
 
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
+                    // player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> KeyValues: {trigger.Entity.KeyValues3}");
                     #endif
                 }
 
