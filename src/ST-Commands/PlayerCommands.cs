@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
@@ -18,7 +19,8 @@ public partial class SurfTimer
 
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
-        // player.Teleport(Map.StartZoneOrigin, 0, 0);
+        if (CurrentMap.StartZoneOrigin != new Vector(0,0,0))
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZoneOrigin, new QAngle(0,0,0), new Vector(0,0,0)));
         return;
     }
 
@@ -40,6 +42,9 @@ public partial class SurfTimer
                 player.PrintToChat($"Trigger -> Origin: {trigger.AbsOrigin}, Name: {trigger.Entity!.Name}");
             }
         }
+
+        player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZoneOrigin}");
+        player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZoneOrigin}");
         return;
     }
 }
