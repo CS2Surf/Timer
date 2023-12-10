@@ -12,7 +12,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [ ] Plugin auto-create tables for easier setup? 
   - [X] Base database class implementation
 - [ ] Maps
-  - [ ] Implement map info object (DB)
+  - [X] Implement map info object (DB)
   - [ ] Zoning
     - [ ] Decide on zoning mechanics (pack all zones into map so we don't need any outside source of info? Discussing in Discord)
     - [X] Start/End trigger touch hooks
