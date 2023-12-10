@@ -17,8 +17,8 @@ public class Map
     public int DateAdded {get; set;} = 0;
 
     // Zone Information
-    public Vector StartZoneOrigin {get; set;} = new Vector();
-    public Vector EndZoneOrigin {get; set;} = new Vector();
+    public Vector StartZoneOrigin {get;} = new Vector(0,0,0);
+    public Vector EndZoneOrigin {get;} = new Vector(0,0,0);
 
     internal Map(string Name, TimerDatabase DB)
     {
@@ -29,11 +29,12 @@ public class Map
             if (trigger.Entity!.Name != null)
             {
                 if (trigger.Entity!.Name.Contains("map_start") || trigger.Entity!.Name.Contains("stage1_start") || trigger.Entity!.Name.Contains("s1_start"))
-                    this.StartZoneOrigin = trigger.AbsOrigin!;
+                    this.StartZoneOrigin = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 else if (trigger.Entity!.Name.Contains("map_end"))
-                    this.EndZoneOrigin = trigger.AbsOrigin!;
+                    this.EndZoneOrigin = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
             }
         }
+        Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZoneOrigin.X},{this.StartZoneOrigin.Y},{this.StartZoneOrigin.Z}\nIdentifying end zone: {this.EndZoneOrigin.X},{this.EndZoneOrigin.Y},{this.EndZoneOrigin.Z}");
 
         // Gather map information OR create entry
         Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
@@ -56,7 +57,7 @@ public class Map
         else
         {
             mapData.Close();
-            Task<int> writer = DB.Write($"INSERT INTO Maps (name, author, tier, stages, ranked, date_added) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', 0, 0, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})");
+            Task<int> writer = DB.Write($"INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', 0, 0, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})");
             int writerRows = writer.Result;
             if (writerRows != 1)
                 throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> new Map() -> Failed to write new map to database, this shouldnt happen. Map: {Name}");

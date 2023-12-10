@@ -54,17 +54,18 @@ public partial class SurfTimer : BasePlugin
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
     internal Map CurrentMap;
 
-    /* ========== ROUND HOOKS ========== */
-    [GameEventHandler]
-    public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    /* ========== MAP START HOOK ========== */
+    public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        CurrentMap = new Map(Server.MapName, DB!);
+        if (CurrentMap == null || CurrentMap.Name != mapName)
+        {
+            AddTimer(3.0f, () => CurrentMap = new Map(mapName, DB!));
+        }
 
         // Execute server_settings.cfg
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
-        return HookResult.Continue;
     }
 
     /* ========== PLAYER HOOKS ========== */
@@ -224,6 +225,8 @@ public partial class SurfTimer : BasePlugin
                                     + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
         ));
 
+        // Map Start Hook
+        RegisterListener<Listeners.OnMapStart>(OnMapStart);
         // Tick listener
         RegisterListener<Listeners.OnTick>(() =>
         {
@@ -259,31 +262,34 @@ public partial class SurfTimer : BasePlugin
                 player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
                 #endif
 
-                if (trigger.Entity.Name == "map_end") // TO-DO: IMPLEMENT ZONES IN ST-Map
+                if (trigger.Entity!.Name != null)
                 {
-                    // MAP END ZONE
-                    if (player.Timer.IsRunning)
+                    if (trigger.Entity.Name == "map_end") // TO-DO: IMPLEMENT ZONES IN ST-Map
                     {
-                        player.Timer.Stop();
-                        player.Stats.PB[0,0] = player.Timer.Ticks;
-                        player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
-                        // player.Timer.Reset();
+                        // MAP END ZONE
+                        if (player.Timer.IsRunning)
+                        {
+                            player.Timer.Stop();
+                            player.Stats.PB[0,0] = player.Timer.Ticks;
+                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
+                            // player.Timer.Reset();
+                        }
+
+                        #if DEBUG
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                        #endif
                     }
 
-                    #if DEBUG
-                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
-                    #endif
-                }
+                    else if (trigger.Entity.Name.Contains("map_start") || trigger.Entity.Name.Contains("s1_start") || trigger.Entity.Name.Contains("stage1_start")) // TO-DO: IMPLEMENT ZONES IN ST-Map
+                    {
+                        // MAP START ZONE
+                        player.Timer.Reset();
 
-                else if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
-                {
-                    // MAP START ZONE
-                    player.Timer.Reset();
-
-                    #if DEBUG
-                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
-                    // player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> KeyValues: {trigger.Entity.KeyValues3}");
-                    #endif
+                        #if DEBUG
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
+                        // player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> KeyValues: {trigger.Entity.KeyValues3}");
+                        #endif
+                    }
                 }
 
                 return HookResult.Continue;
@@ -311,14 +317,17 @@ public partial class SurfTimer : BasePlugin
                 player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_EndTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
                 #endif
 
-                if (trigger.Entity.Name == "map_start") // TO-DO: IMPLEMENT ZONES IN ST-Map
+                if (trigger.Entity!.Name != null)
                 {
-                    // MAP START ZONE
-                    player.Timer.Start();
+                    if (trigger.Entity.Name.Contains("map_start") || trigger.Entity.Name.Contains("s1_start") || trigger.Entity.Name.Contains("stage1_start")) // TO-DO: IMPLEMENT ZONES IN ST-Map
+                    {
+                        // MAP START ZONE
+                        player.Timer.Start();
 
-                    #if DEBUG
-                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
-                    #endif
+                        #if DEBUG
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                        #endif
+                    }
                 }
 
                 return HookResult.Continue;
