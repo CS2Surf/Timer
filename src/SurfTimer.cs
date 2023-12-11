@@ -24,6 +24,7 @@
 #define DEBUG
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
@@ -38,7 +39,7 @@ using MaxMind.GeoIP2;
 namespace SurfTimer;
 
 // Gameplan: https://github.com/CS2Surf/Timer/tree/dev 
-[MinimumApiVersion(100)]
+[MinimumApiVersion(120)]
 public partial class SurfTimer : BasePlugin
 {
     // Metadata
@@ -262,7 +263,6 @@ public partial class SurfTimer : BasePlugin
             else 
             {
                 // Implement Trigger Start Touch Here
-                // TO-DO: IMPLEMENT ZONES IN ST-Map
                 Player player = playerList[client.UserId ?? 0];
                 #if DEBUG
                 player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
@@ -270,7 +270,8 @@ public partial class SurfTimer : BasePlugin
 
                 if (trigger.Entity!.Name != null)
                 {
-                    if (trigger.Entity.Name == "map_end") // TO-DO: IMPLEMENT ZONES IN ST-Map
+                    // Map end zones -- hook into map_end
+                    if (trigger.Entity.Name == "map_end")
                     {
                         // MAP END ZONE
                         if (player.Timer.IsRunning)
@@ -282,18 +283,31 @@ public partial class SurfTimer : BasePlugin
                         }
 
                         #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Red}Map Stop Zone");
                         #endif
                     }
 
-                    else if (trigger.Entity.Name.Contains("map_start") || trigger.Entity.Name.Contains("s1_start") || trigger.Entity.Name.Contains("stage1_start")) // TO-DO: IMPLEMENT ZONES IN ST-Map
+                    // Map start zones -- hook into map_start, (s)tage1_start
+                    else if (trigger.Entity.Name.Contains("map_start") || 
+                            trigger.Entity.Name.Contains("s1_start") || 
+                            trigger.Entity.Name.Contains("stage1_start")) 
                     {
-                        // MAP START ZONE
                         player.Timer.Reset();
 
                         #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_start actioned");
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
                         // player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> KeyValues: {trigger.Entity.KeyValues3}");
+                        #endif
+                    }
+
+                    // Stage start zones -- hook into (s)tage#_start
+                    else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
+                    {
+                        int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+                        player.Timer.Stage = stage;
+
+                        #if DEBUG
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
                         #endif
                     }
                 }
@@ -317,7 +331,6 @@ public partial class SurfTimer : BasePlugin
             else
             {
                 // Implement Trigger End Touch Here
-                // TO-DO: IMPLEMENT ZONES IN ST-Map
                 Player player = playerList[client.UserId ?? 0];
                 #if DEBUG
                 player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_EndTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
@@ -325,13 +338,24 @@ public partial class SurfTimer : BasePlugin
 
                 if (trigger.Entity!.Name != null)
                 {
-                    if (trigger.Entity.Name.Contains("map_start") || trigger.Entity.Name.Contains("s1_start") || trigger.Entity.Name.Contains("stage1_start")) // TO-DO: IMPLEMENT ZONES IN ST-Map
+                    // Map start zones -- hook into map_start, (s)tage1_start
+                    if (trigger.Entity.Name.Contains("map_start") || 
+                        trigger.Entity.Name.Contains("s1_start") || 
+                        trigger.Entity.Name.Contains("stage1_start")) 
                     {
                         // MAP START ZONE
                         player.Timer.Start();
 
                         #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> trigger_stop actioned");
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
+                        #endif
+                    }
+
+                    // Stage start zones -- hook into (s)tage#_start
+                    else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
+                    {
+                        #if DEBUG
+                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
                         #endif
                     }
                 }
