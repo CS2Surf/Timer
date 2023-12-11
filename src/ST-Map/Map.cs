@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -16,25 +17,33 @@ public class Map
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
 
-    // Zone Information
-    public Vector StartZoneOrigin {get;} = new Vector(0,0,0);
-    public Vector EndZoneOrigin {get;} = new Vector(0,0,0);
+    // Zone Origin Information
+    public Vector StartZone {get;} = new Vector(0,0,0);
+    public Vector[] StageStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray();
+    // public Vector[] BonusStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
+    public Vector EndZone {get;} = new Vector(0,0,0);
+    // public Vector[] BonusEndZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
 
+    // Constructor
     internal Map(string Name, TimerDatabase DB)
     {
-        // Gather Zone Information for triggers with name "map_start" and "map_end"
+        // Gathering zones from the map
         IEnumerable<CBaseEntity> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("trigger_multiple");
         foreach (CBaseEntity trigger in triggers)
         {
             if (trigger.Entity!.Name != null)
             {
-                if (trigger.Entity!.Name.Contains("map_start") || trigger.Entity!.Name.Contains("stage1_start") || trigger.Entity!.Name.Contains("s1_start"))
-                    this.StartZoneOrigin = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
-                else if (trigger.Entity!.Name.Contains("map_end"))
-                    this.EndZoneOrigin = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                if (trigger.Entity!.Name.Contains("map_start") || 
+                    trigger.Entity!.Name.Contains("stage1_start") || 
+                    trigger.Entity!.Name.Contains("s1_start")) // Map start zone
+                    this.StartZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                else if (trigger.Entity!.Name.Contains("map_end")) // Map end zone
+                    this.EndZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success) // Stage start zones
+                    this.StageStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
             }
         }
-        Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZoneOrigin.X},{this.StartZoneOrigin.Y},{this.StartZoneOrigin.Z}\nIdentifying end zone: {this.EndZoneOrigin.X},{this.EndZoneOrigin.Y},{this.EndZoneOrigin.Z}");
+        Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
 
         // Gather map information OR create entry
         Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
