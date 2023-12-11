@@ -9,23 +9,37 @@ namespace SurfTimer;
 
 public partial class SurfTimer
 {
-    // All player-related commands here
     [ConsoleCommand("css_r", "Reset back to the start of the map.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    public void ResetPlayer(CCSPlayerController? player, CommandInfo command)
+    public void PlayerReset(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
             return;
 
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
-        if (CurrentMap.StartZoneOrigin != new Vector(0,0,0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZoneOrigin, new QAngle(0,0,0), new Vector(0,0,0)));
+        if (CurrentMap.StartZone != new Vector(0,0,0))
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
         return;
     }
 
-    // 
-    [ConsoleCommand("css_triggers", "List triggers eligible for hooking.")]
+    [ConsoleCommand("css_rs", "Reset back to the start of the map.")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void PlayerResetStage(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        // To-do: players[userid].Timer.Reset() -> teleport player
+        Player SurfPlayer = playerList[player.UserId ?? 0];
+        if (CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0,0,0))
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], new QAngle(0,0,0), new Vector(0,0,0)));
+        else
+            Server.NextFrame(() => PlayerReset(player, command));
+        return;
+    }
+
+    [ConsoleCommand("css_triggers", "List all valid zone triggers in the map.")]
     [RequiresPermissions("@css/root")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void Triggers(CCSPlayerController? player, CommandInfo command)
@@ -43,8 +57,19 @@ public partial class SurfTimer
             }
         }
 
-        player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZoneOrigin}");
-        player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZoneOrigin}");
+        player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZone}");
+        player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZone}");
+        int stageCounter = 1;
+        foreach (Vector stage in CurrentMap.StageStartZone)
+        {
+            if (stage.X == 0 && stage.Y == 0 && stage.Z == 0)
+                continue;
+            else
+            {
+                player.PrintToChat($"Hooked Trigger -> Stage {stageCounter} -> {stage}");
+                stageCounter++;
+            }
+        }
         return;
     }
 }
