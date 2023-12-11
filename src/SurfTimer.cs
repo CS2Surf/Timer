@@ -54,7 +54,7 @@ public partial class SurfTimer : BasePlugin
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
     internal Map CurrentMap;
 
-    /* ========== MAP START HOOK ========== */
+    /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
@@ -62,10 +62,16 @@ public partial class SurfTimer : BasePlugin
         {
             AddTimer(3.0f, () => CurrentMap = new Map(mapName, DB!));
         }
+    }
 
+    [GameEventHandler]
+    public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        // Load cvars/other configs here
         // Execute server_settings.cfg
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
+        return HookResult.Continue;
     }
 
     /* ========== PLAYER HOOKS ========== */
