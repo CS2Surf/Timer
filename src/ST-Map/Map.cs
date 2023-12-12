@@ -58,9 +58,6 @@ public class Map
             this.Ranked = mapData.GetBoolean("ranked");
             this.DateAdded = mapData.GetInt32("date_added");
             mapData.Close();
-
-            // Update last_played data
-            Task<int> writer = DB.Write($"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()} WHERE id = {this.ID}");
         }
 
         else
@@ -84,6 +81,15 @@ public class Map
             this.Stages = 0;
             this.Ranked = false;
             this.DateAdded = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(); 
+
+            return;
         }
+
+        // Update the map's last played data in the DB
+        // Update last_played data
+        Task<int> updater = DB.Write($"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()} WHERE id = {this.ID}");
+        int lastPlayedUpdateRows = updater.Result;
+        if (lastPlayedUpdateRows != 1)
+            throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name}");
     }
 }

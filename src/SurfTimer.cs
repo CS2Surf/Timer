@@ -48,7 +48,7 @@ public partial class SurfTimer : BasePlugin
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
     internal TimerDatabase? DB = new TimerDatabase();
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
-    internal Map CurrentMap;
+    internal Map CurrentMap = null!;
 
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
