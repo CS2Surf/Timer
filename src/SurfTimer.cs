@@ -54,7 +54,7 @@ public partial class SurfTimer : BasePlugin
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        if (CurrentMap == null || CurrentMap.Name != mapName)
+        if ((CurrentMap == null || CurrentMap.Name != mapName) && mapName.Contains("surf_"))
         {
             AddTimer(3.0f, () => CurrentMap = new Map(mapName, DB!));
         }
