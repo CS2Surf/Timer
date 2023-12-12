@@ -20,7 +20,7 @@ internal class TimerDatabase
     public TimerDatabase(string host, string database, string user, string password, int port, int timeout)
     {
         this._connString = $"server={host};user={user};password={password};database={database};port={port};connect timeout={timeout};";
-        this._db = new MySqlConnection(_connString);
+        this._db = new MySqlConnection(this._connString);
         this._db.Open();
     }
 
