@@ -24,17 +24,12 @@
 #define DEBUG
 
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
-using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
-using MySqlConnector;
-using MaxMind.GeoIP2;
 
 namespace SurfTimer;
 
@@ -75,134 +70,6 @@ public partial class SurfTimer : BasePlugin
         return HookResult.Continue;
     }
 
-    /* ========== PLAYER HOOKS ========== */
-    // Player Connect
-    [GameEventHandler]
-    public HookResult OnPlayerConnect(EventPlayerConnectFull @event, GameEventInfo info) // To-do: move to post-authorisation
-    {
-        var player = @event.Userid;
-        #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / {player.SteamID}");
-        #endif
-
-        if (player.IsBot || !player.IsValid)
-        {
-            return HookResult.Continue;
-        }
-        else
-        {
-            int dbID, joinDate, lastSeen, connections;
-            string name, country; 
-            
-            // GeoIP
-            DatabaseReader geoipDB = new DatabaseReader(PluginPath + "data/GeoIP/GeoLite2-Country.mmdb");
-            if (geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode is not null)
-            {
-                country = geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode!;
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> GeoIP -> {player.PlayerName} -> {player.IpAddress!.Split(":")[0]} -> {country}");
-                #endif
-            }
-            else
-                country = "XX";
-            geoipDB.Dispose();
-
-            // Load player data from database (or create an entry if first time connecting)
-            Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
-            MySqlDataReader playerData = dbTask.Result;
-            if (playerData.HasRows && playerData.Read())
-            {
-                // Player exists in database
-                dbID = playerData.GetInt32("id");
-                name = playerData.GetString("name");
-                if (country == "XX" && playerData.GetString("country") != "XX")
-                    country = playerData.GetString("country");
-                joinDate = playerData.GetInt32("joined");
-                lastSeen = playerData.GetInt32("lastseen");
-                connections = playerData.GetInt32("connections");
-                playerData.Close();
-
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> Returning player {name} ({player.SteamID}) loaded from database with ID {dbID}");
-                #endif
-            }
-
-            else
-            {
-                playerData.Close();
-                // Player does not exist in database
-                name = player.PlayerName;
-                joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                lastSeen = joinDate;
-                connections = 1;
-
-                // Write new player to database
-                Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
-                int newPlayerTaskRows = newPlayerTask.Result;
-                if (newPlayerTaskRows != 1)
-                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
-                    
-                // Get new player's database ID
-                Task<MySqlDataReader> newPlayerDataTask = DB.Query($"SELECT `id` FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
-                MySqlDataReader newPlayerData = newPlayerDataTask.Result;
-                if (newPlayerData.HasRows && newPlayerData.Read()) 
-                {
-                    #if DEBUG
-                    // Iterate through data: 
-                    for (int i = 0; i < newPlayerData.FieldCount; i++)
-                    {
-                        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> newPlayerData[{i}] = {newPlayerData.GetValue(i)}");
-                    }
-                    #endif
-                    dbID = newPlayerData.GetInt32("id");
-                }
-                else
-                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to get new player's database ID after writing, this shouldnt happen. Player: {name} ({player.SteamID})");
-                newPlayerData.Close();
-
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");
-                #endif
-            }
-            PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
-
-            // Create Player object
-            playerList[player.UserId ?? 0] = new Player(player, 
-                                                    new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
-                                                    Profile);
-            
-            // Print join messages
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
-            Console.WriteLine($"[CS2 Surf] {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
-            return HookResult.Continue;
-        }
-    }
-
-    // Player Disconnect 
-    [GameEventHandler]
-    public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
-    {
-        var player = @event.Userid;
-
-        if (player.IsBot || !player.IsValid)
-        {
-            return HookResult.Continue;
-        }
-        else
-        {
-            // Update data in Player DB table
-            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `lastseen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
-            if (updatePlayerTask.Result != 1)
-                throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
-
-            // Player disconnection to-do
-
-            // Remove player data from playerList
-            playerList.Remove(player.UserId ?? 0);
-            return HookResult.Continue;
-        }
-    }
-
     /* ========== PLUGIN LOAD ========== */
     public override void Load(bool hotReload)
     {
@@ -235,133 +102,11 @@ public partial class SurfTimer : BasePlugin
         // Map Start Hook
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         // Tick listener
-        RegisterListener<Listeners.OnTick>(() =>
-        {
-            foreach (var player in playerList.Values)
-            {
-                player.Timer.Tick();
-                player.HUD.Display();
-
-                #if DEBUG
-                if (player.Controller.IsValid && player.Controller.PawnIsAlive) player.Controller.PrintToCenter($"DEBUG >> PrintToCenter -> Player.Timer.Ticks: {player.Timer.Ticks}");
-                #endif
-            }
-        });
+        RegisterListener<Listeners.OnTick>(OnTick);
 
         // StartTouch Hook
-        VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(handler =>
-        {
-            CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
-            CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
-            CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
-            
-            if (client.IsBot || !client.IsValid)
-            {
-                return HookResult.Continue;
-            }
-
-            else 
-            {
-                // Implement Trigger Start Touch Here
-                Player player = playerList[client.UserId ?? 0];
-                #if DEBUG
-                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
-                #endif
-
-                if (trigger.Entity!.Name != null)
-                {
-                    // Map end zones -- hook into map_end
-                    if (trigger.Entity.Name == "map_end")
-                    {
-                        // MAP END ZONE
-                        if (player.Timer.IsRunning)
-                        {
-                            player.Timer.Stop();
-                            player.Stats.PB[0,0] = player.Timer.Ticks;
-                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
-                            // player.Timer.Reset();
-                        }
-
-                        #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Red}Map Stop Zone");
-                        #endif
-                    }
-
-                    // Map start zones -- hook into map_start, (s)tage1_start
-                    else if (trigger.Entity.Name.Contains("map_start") || 
-                            trigger.Entity.Name.Contains("s1_start") || 
-                            trigger.Entity.Name.Contains("stage1_start")) 
-                    {
-                        player.Timer.Reset();
-
-                        #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
-                        // player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> KeyValues: {trigger.Entity.KeyValues3}");
-                        #endif
-                    }
-
-                    // Stage start zones -- hook into (s)tage#_start
-                    else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
-                    {
-                        int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
-                        player.Timer.Stage = stage;
-
-                        #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
-                        #endif
-                    }
-                }
-
-                return HookResult.Continue;
-            }
-        }, HookMode.Post);
-
+        VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(OnTriggerStartTouch, HookMode.Post);
         // EndTouch Hook
-        VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(handler =>
-        {
-            CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
-            CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
-            CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
-            
-            if (client.IsBot || !client.IsValid)
-            {
-                return HookResult.Continue;
-            }
-
-            else
-            {
-                // Implement Trigger End Touch Here
-                Player player = playerList[client.UserId ?? 0];
-                #if DEBUG
-                player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_EndTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
-                #endif
-
-                if (trigger.Entity!.Name != null)
-                {
-                    // Map start zones -- hook into map_start, (s)tage1_start
-                    if (trigger.Entity.Name.Contains("map_start") || 
-                        trigger.Entity.Name.Contains("s1_start") || 
-                        trigger.Entity.Name.Contains("stage1_start")) 
-                    {
-                        // MAP START ZONE
-                        player.Timer.Start();
-
-                        #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
-                        #endif
-                    }
-
-                    // Stage start zones -- hook into (s)tage#_start
-                    else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
-                    {
-                        #if DEBUG
-                        player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
-                        #endif
-                    }
-                }
-
-                return HookResult.Continue;
-            }
-        }, HookMode.Post);
+        VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(OnTriggerEndTouch, HookMode.Post);
     }
 }
