@@ -21,6 +21,7 @@ internal class PlayerTimer
     {
         this.Stop();
         this.Ticks = 0;
+        this.Stage = 0;
         this.Paused = false;
         this.Practice = false;
     }
