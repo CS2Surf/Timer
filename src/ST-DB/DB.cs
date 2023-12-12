@@ -1,6 +1,5 @@
 namespace SurfTimer;
 
-using System;
 using System.Runtime.CompilerServices;
 using CounterStrikeSharp.API;
 using MySqlConnector; // https://dev.mysql.com/doc/connector-net/en/connector-net-connections-string.html
@@ -8,7 +7,7 @@ using MySqlConnector; // https://dev.mysql.com/doc/connector-net/en/connector-ne
 // This will have functions for DB access and query sending
 internal class TimerDatabase
 {
-    private MySqlConnection? _db;
+    private readonly MySqlConnection? _db;
     private readonly string _connString = string.Empty;
 
     public TimerDatabase()
