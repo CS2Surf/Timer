@@ -1,24 +1,26 @@
 ﻿/*
-                  ___  _____  _________  ___ 
-                 ___  /  _/ |/ / __/ _ \/ _ |
-                ___  _/ //    / _// , _/ __ |
-               ___  /___/_/|_/_/ /_/|_/_/ |_|
+                      ___  _____  _________  ___ 
+                     ___  /  _/ |/ / __/ _ \/ _ |
+                    ___  _/ //    / _// , _/ __ |
+                   ___  /___/_/|_/_/ /_/|_/_/ |_|
 
     Official Timer plugin for the CS2 Surf Initiative.
-    Copyright (C) 2024  Liam C (Infra), Contributors.md
+    Copyright (C) 2024  Liam C. (Infra)
 
     This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
+    You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    Source: https://github.com/CS2Surf/Timer
 */
 
 #define DEBUG
@@ -33,14 +35,14 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
-// Gameplan: https://github.com/CS2Surf/Timer/tree/dev 
+// Gameplan: https://github.com/CS2Surf/Timer/tree/dev/README.md
 [MinimumApiVersion(120)]
 public partial class SurfTimer : BasePlugin
 {
     // Metadata
     public override string ModuleName => "CS2 SurfTimer";
     public override string ModuleVersion => "DEV-1";
-    public override string ModuleDescription => "Official SurfTimer by the CS2 Surf Initiative.";
+    public override string ModuleDescription => "Official Surf Timer by the CS2 Surf Initiative.";
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
     public string PluginPrefix => $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]"; // To-do: make configurable
 
@@ -97,6 +99,7 @@ public partial class SurfTimer : BasePlugin
                                     + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
                                     + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
                                     + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
+                                    + $"[CS2 Surf] This plugin is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information. Source code: https://github.com/CS2Surf/Timer\n"
         ));
 
         // Map Start Hook
