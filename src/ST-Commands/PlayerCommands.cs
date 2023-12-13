@@ -33,7 +33,7 @@ public partial class SurfTimer
         // To-do: players[userid].Timer.Reset() -> teleport player
         Player SurfPlayer = playerList[player.UserId ?? 0];
         if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0,0,0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], new QAngle(0,0,0), new Vector(0,0,0)));
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0,0,0)));
         else // Reset back to map start
             Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
         return;

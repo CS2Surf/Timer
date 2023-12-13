@@ -19,9 +19,12 @@ public class Map
 
     // Zone Origin Information
     public Vector StartZone {get;} = new Vector(0,0,0);
+    public QAngle StartZoneAngles {get;} = new QAngle(0,0,0);
     public Vector[] StageStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray();
+    public QAngle[] StageStartZoneAngles {get;} = Enumerable.Repeat(0, 99).Select(x => new QAngle(0,0,0)).ToArray();
     // public Vector[] BonusStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
     public Vector EndZone {get;} = new Vector(0,0,0);
+    public QAngle EndZoneAngles {get;} = new QAngle(0,0,0);
     // public Vector[] BonusEndZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
 
     // Constructor
@@ -36,11 +39,22 @@ public class Map
                 if (trigger.Entity!.Name.Contains("map_start") || 
                     trigger.Entity!.Name.Contains("stage1_start") || 
                     trigger.Entity!.Name.Contains("s1_start")) // Map start zone
+                {
                     this.StartZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.StartZoneAngles = new QAngle(trigger.AbsRotation!.X, trigger.AbsRotation!.Y, trigger.AbsRotation!.Z);
+                }
+
                 else if (trigger.Entity!.Name.Contains("map_end")) // Map end zone
+                {
                     this.EndZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.EndZoneAngles = new QAngle(trigger.AbsRotation!.X, trigger.AbsRotation!.Y, trigger.AbsRotation!.Z);
+                }
+
                 else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success) // Stage start zones
+                {
                     this.StageStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.StageStartZoneAngles[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new QAngle(trigger.AbsRotation!.X, trigger.AbsRotation!.Y, trigger.AbsRotation!.Z); 
+                }
             }
         }
         Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
