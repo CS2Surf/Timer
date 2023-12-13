@@ -36,7 +36,8 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
-                        player.Stats.PB[0,0] = player.Timer.Ticks;
+                        if (player.Stats.PB[0,0] == 0 || player.Timer.Ticks < player.Stats.PB[0,0])
+                            player.Stats.PB[0,0] = player.Timer.Ticks;
                         player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
                         // player.Timer.Reset();
                     }
@@ -82,7 +83,7 @@ public partial class SurfTimer
         CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
         
-        if (client.IsBot || !client.IsValid)
+        if (client.IsBot || !client.IsValid || client.UserId == -1 || !client.PawnIsAlive)
         {
             return HookResult.Continue;
         }
