@@ -32,6 +32,8 @@ public class Map
     {
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
+        // Gathering info_teleport_destinations from the map
+        IEnumerable<CTriggerTeleport> teleports = Utilities.FindAllEntitiesByDesignerName<CTriggerTeleport>("info_teleport_destination");
         foreach (CBaseTrigger trigger in triggers)
         {
             if (trigger.Entity!.Name != null)
@@ -41,7 +43,13 @@ public class Map
                     trigger.Entity!.Name.Contains("s1_start")) // Map start zone
                 {
                     this.StartZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
-                    this.StartZoneAngles = new QAngle(trigger.AbsRotation!.X, trigger.AbsRotation!.Y, trigger.AbsRotation!.Z);
+                    foreach (CBaseEntity teleport in teleports)
+                    {
+                        if (teleport.Entity!.Name != null && IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!))
+                        {
+                            this.StartZoneAngles = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                        }
+                    }
                 }
 
                 else if (trigger.Entity!.Name.Contains("map_end")) // Map end zone
@@ -55,7 +63,6 @@ public class Map
                     this.StageStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
 
                     // Find an info_destination_teleport inside this zone to grab angles from
-                    IEnumerable<CTriggerTeleport> teleports = Utilities.FindAllEntitiesByDesignerName<CTriggerTeleport>("info_teleport_destination");
                     foreach (CBaseEntity teleport in teleports)
                     {
                         if (teleport.Entity!.Name != null && IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!))
