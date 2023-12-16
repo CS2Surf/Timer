@@ -6,12 +6,15 @@ internal class PlayerTimer
     public bool Enabled {get; set;} = true; // Enable toggle for entire timer
     public bool Paused {get; set;} = false; // Pause toggle for timer
     public bool IsRunning {get; set;} = false; // Is the timer currently running?
-    public int Stage {get; set;} = 0; // Current stage tracker
-    // public int Bonus {get; set;} = 0; // To-do: bonus implementation
-    // public int Style = 0; // To-do: style implementation
 
-    // Mode
-    public bool Practice {get; set;} = false;
+    // Modes
+    public bool PracticeMode {get; set;} = false; // Practice mode toggle
+    public bool StageMode {get; set;} = false; // Stage mode toggle
+
+    // Tracking
+    public int Stage {get; set;} = 0; // Current stage tracker
+    public int Bonus {get; set;} = 0; // Current bonus tracker - To-do: bonus implementation
+    // public int Style = 0; // To-do: style implementation
 
     // Timing
     public int Ticks {get; set;} = 0; // To-do: sub-tick counting? This currently goes on OnTick, which is not sub-tick I believe? Needs investigating
@@ -23,7 +26,7 @@ internal class PlayerTimer
         this.Ticks = 0;
         this.Stage = 0;
         this.Paused = false;
-        this.Practice = false;
+        this.PracticeMode = false;
     }
 
     public void Pause()

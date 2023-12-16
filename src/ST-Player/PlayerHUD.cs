@@ -43,7 +43,7 @@ internal class PlayerHUD
             string timerColor = "#79d1ed";
             if (_player.Timer.IsRunning)
             {
-                if (_player.Timer.Practice)
+                if (_player.Timer.PracticeMode)
                     timerColor = "#F2C94C";
                 else
                     timerColor = "#2E9F65";
