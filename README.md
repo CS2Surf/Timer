@@ -18,6 +18,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
     - [ ] Support for stages (`/rs`, teleporting with `/s`)
     - [ ] Support for bonuses (`/rs`, teleporting with `/b #`)
+    - [ ] Start/End touch hooks implemented for all zones
 - [ ] Surf configs
   - [X] Server settings configuration
   - [ ] Plugin configuration
