@@ -12,8 +12,20 @@ internal class PlayerHUD
     private string FormatHUDElementHTML(string title, string body, string color, string size = "m")
     {
         if (title != "")
-            return $"<font class='fontSize-{size.ToLower()}'><font color=\"white\">{title}</font>: <font color=\"{color}\">{body}</font></font>";
-        return $"<font class='fontSize-{size.ToLower()}' color=\"{color}\">{body}</font>";
+        {
+            if (size == "m")
+                return $"{title}: <font color='{color}'>{body}</font>";
+            else
+                return $"<font class='fontSize-{size.ToLower()}'>{title}: <font color='{color}'>{body}</font></font>";
+        }
+
+        else
+        {
+            if (size == "m")
+                return $"<font color='{color}'>{body}</font>";
+            else
+                return $"<font class='fontSize-{size.ToLower()}' color='{color}'>{body}</font>";
+        }
     }
 
     public string FormatTime(int ticks) // https://github.com/DEAFPS/SharpTimer/blob/e4ef24fff29a33c36722d23961355742d507441f/Utils.cs#L38
@@ -42,7 +54,7 @@ internal class PlayerHUD
             float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X 
                                                 + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
                                                 + _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
-            string velocityModule = FormatHUDElementHTML("Speed", Math.Round(velocity).ToString().PadLeft(3,'0'), "#79d1ed") + " u/s";
+            string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("000"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             // PB & WR Modules
