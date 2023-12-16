@@ -66,8 +66,20 @@ public partial class SurfTimer
                     int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
                     player.Timer.Stage = stage;
 
+                    // To-do: checkpoint functionality because stages = checkpoints
+
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
+                    #endif
+                }
+
+                // Map checkpoint zones -- hook into map_(c)heck(p)oint#
+                else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success)
+                {
+                    // To-do: checkpoint functionality
+
+                    #if DEBUG
+                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.LightBlue}Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Zone");
                     #endif
                 }
             }
