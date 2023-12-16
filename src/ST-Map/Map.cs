@@ -31,8 +31,8 @@ public class Map
     internal Map(string Name, TimerDatabase DB)
     {
         // Gathering zones from the map
-        IEnumerable<CBaseEntity> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("trigger_multiple");
-        foreach (CBaseEntity trigger in triggers)
+        IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
+        foreach (CBaseTrigger trigger in triggers)
         {
             if (trigger.Entity!.Name != null)
             {
@@ -53,7 +53,16 @@ public class Map
                 else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success) // Stage start zones
                 {
                     this.StageStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
-                    this.StageStartZoneAngles[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new QAngle(trigger.AbsRotation!.X, trigger.AbsRotation!.Y, trigger.AbsRotation!.Z); 
+
+                    // Find an info_destination_teleport inside this zone to grab angles from
+                    IEnumerable<CTriggerTeleport> teleports = Utilities.FindAllEntitiesByDesignerName<CTriggerTeleport>("info_teleport_destination");
+                    foreach (CBaseEntity teleport in teleports)
+                    {
+                        if (teleport.Entity!.Name != null && IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!))
+                        {
+                            this.StageStartZoneAngles[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                        }
+                    }
                 }
             }
         }
@@ -105,5 +114,15 @@ public class Map
         int lastPlayedUpdateRows = updater.Result;
         if (lastPlayedUpdateRows != 1)
             throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name}");
+    }
+
+    public bool IsInZone(Vector zoneOrigin, float zoneCollisionRadius, Vector spawnOrigin)
+    {
+        if (spawnOrigin.X >= zoneOrigin.X - zoneCollisionRadius && spawnOrigin.X <= zoneOrigin.X + zoneCollisionRadius &&
+            spawnOrigin.Y >= zoneOrigin.Y - zoneCollisionRadius && spawnOrigin.Y <= zoneOrigin.Y + zoneCollisionRadius &&
+            spawnOrigin.Z >= zoneOrigin.Z - zoneCollisionRadius && spawnOrigin.Z <= zoneOrigin.Z + zoneCollisionRadius)
+            return true;
+        else
+            return false;
     }
 }

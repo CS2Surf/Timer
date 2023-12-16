@@ -38,38 +38,4 @@ public partial class SurfTimer
             Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
         return;
     }
-
-    [ConsoleCommand("css_triggers", "List all valid zone triggers in the map.")]
-    [RequiresPermissions("@css/root")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    public void Triggers(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-            return;
-
-        IEnumerable<CBaseEntity> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("trigger_multiple");
-        player.PrintToChat($"Count of triggers: {triggers.Count()}");
-        foreach (CBaseEntity trigger in triggers)
-        {
-            if (trigger.Entity!.Name != null)
-            {
-                player.PrintToChat($"Trigger -> Origin: {trigger.AbsOrigin}, Name: {trigger.Entity!.Name}");
-            }
-        }
-
-        player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZone}");
-        player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZone}");
-        int stageCounter = 1;
-        foreach (Vector stage in CurrentMap.StageStartZone)
-        {
-            if (stage.X == 0 && stage.Y == 0 && stage.Z == 0)
-                continue;
-            else
-            {
-                player.PrintToChat($"Hooked Trigger -> Stage {stageCounter} -> {stage}");
-                stageCounter++;
-            }
-        }
-        return;
-    }
 }
