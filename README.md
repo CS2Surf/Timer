@@ -15,9 +15,9 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [X] Implement map info object (DB)
   - [ ] Zoning
     - [X] Start/End trigger touch hooks
-    - [ ] Hook zones automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
-    - [ ] Support for stages/checkpoints
-    - [ ] Support for bonuses
+    - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
+    - [ ] Support for stages (`/rs`, teleporting with `/s`)
+    - [ ] Support for bonuses (`/rs`, teleporting with `/b #`)
 - [ ] Surf configs
   - [X] Server settings configuration
   - [ ] Plugin configuration
@@ -26,7 +26,10 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
   - [X] Base timer class implementation
   - [X] Base timer HUD implementation
   - [ ] Prespeed measurement and display
-  - [ ] Save/load set times (DB)
+  - [ ] Save/load times
+    - [ ] Save/load map personal bests (checkpoints included)
+    - [ ] Save/load bonus personal bests
+    - [ ] Save/load stage personal bests
   - [ ] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
