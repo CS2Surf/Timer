@@ -27,9 +27,10 @@ Bold & Italics = being worked on by Infra.
 - [ ] Timing
   - [X] Base timer class implementation
   - [X] Base timer HUD implementation
-  - [ ] Prespeed measurement and display
+  - [X] Prespeed measurement and display
   - [ ] Save/load times
-    - [ ] Save/load map personal bests (checkpoints included)
+    - [ ] Save/load map personal bests
+    - [ ] Save/load map checkpoints
     - [ ] Save/load bonus personal bests
     - [ ] Save/load stage personal bests
   - [ ] Practice Mode implementation
