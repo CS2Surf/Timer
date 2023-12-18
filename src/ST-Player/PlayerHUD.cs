@@ -32,17 +32,7 @@ internal class PlayerHUD
     {
         TimeSpan time = TimeSpan.FromSeconds(ticks / 64.0);
         int millis = (int)(ticks % 64 * (1000.0 / 64.0));
-
-        // Handle hours in times
-        if (time.TotalHours < 1)
-            return $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
-
-        // No leading 0s 
-        string secondsFormat = time.TotalSeconds < 10 ? "D1" : "D2";
-        string minutesFormat = time.TotalMinutes < 10 ? "D1" : "D2";
-
-        // Don't show 00: in times
-        return time.TotalMinutes < 1 ? $"{time.Seconds.ToString(secondsFormat)}.{millis:D3}" : $"{time.Minutes.ToString(minutesFormat)}:{time.Seconds:D2}.{millis:D3}";
+        return $"{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
     }
 
     public void Display()
@@ -61,14 +51,14 @@ internal class PlayerHUD
             string timerModule = FormatHUDElementHTML("", FormatTime(_player.Timer.Ticks), timerColor);
 
             // Velocity Module - To-do: Make velocity module configurable (XY or XYZ velocity)
-            float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
-                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y
+            float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X 
+                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
                                                 + _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("000"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             // PB & WR Modules
-            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0, 0] > 0 ? FormatTime(_player.Stats.PB[0, 0]) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
+            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0,0] > 0 ? FormatTime(_player.Stats.PB[0,0]) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             string wrModule = FormatHUDElementHTML("WR", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
 
             // Build HUD
