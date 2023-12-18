@@ -32,7 +32,17 @@ internal class PlayerHUD
     {
         TimeSpan time = TimeSpan.FromSeconds(ticks / 64.0);
         int millis = (int)(ticks % 64 * (1000.0 / 64.0));
-        return $"{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+
+        // Handle hours in times
+        if (time.TotalHours >= 1)
+            return $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+
+        // No leading 0s 
+        string secondsFormat = time.TotalSeconds < 10 ? "D1" : "D2";
+        string minutesFormat = time.TotalMinutes < 10 ? "D1" : "D2";
+
+        // Don't show 00: in times
+        return time.TotalMinutes < 1 ? $"{time.Seconds.ToString(secondsFormat)}.{millis:D3}" : $"{time.Minutes.ToString(minutesFormat)}:{time.Seconds:D2}.{millis:D3}";
     }
 
     public void Display()
