@@ -6,7 +6,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 
 # Goals
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve. Subject to change.*
-Bold & Italics = being worked on by Infra.
+Bold & Italics = being worked on.
 
 - [ ] Database
   - [ ] MySQL database schema ([W.I.P Design Diagram](https://dbdiagram.io/d/CS2Surf-Timer-DB-Schema-6560b76b3be1495787ace4d2))
@@ -29,10 +29,10 @@ Bold & Italics = being worked on by Infra.
   - [X] Base timer HUD implementation
   - [X] Prespeed measurement and display
   - [ ] Save/load times
-    - [ ] Save/load map personal bests
-    - [ ] Save/load map checkpoints
-    - [ ] Save/load bonus personal bests
-    - [ ] Save/load stage personal bests
+    - [ ] **_Save/load map personal bests_**
+    - [ ] **_Save/load map checkpoints_**
+    - [ ] **_Save/load bonus personal bests_**
+    - [ ] **_Save/load stage personal bests_**
   - [ ] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
