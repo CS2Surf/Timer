@@ -4,4 +4,3 @@
 src/bin/Debug/*
 src/obj/*
 src/SurfTimer.csproj
-*.sln
