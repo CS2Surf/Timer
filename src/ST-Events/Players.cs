@@ -49,8 +49,8 @@ public partial class SurfTimer
                 name = playerData.GetString("name");
                 if (country == "XX" && playerData.GetString("country") != "XX")
                     country = playerData.GetString("country");
-                joinDate = playerData.GetInt32("joined");
-                lastSeen = playerData.GetInt32("lastseen");
+                joinDate = playerData.GetInt32("join_date");
+                lastSeen = playerData.GetInt32("last_seen");
                 connections = playerData.GetInt32("connections");
                 playerData.Close();
 
@@ -69,7 +69,7 @@ public partial class SurfTimer
                 connections = 1;
 
                 // Write new player to database
-                Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `joined`, `lastseen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
+                Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `join_date`, `last_seen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
                 int newPlayerTaskRows = newPlayerTask.Result;
                 if (newPlayerTaskRows != 1)
                     throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
