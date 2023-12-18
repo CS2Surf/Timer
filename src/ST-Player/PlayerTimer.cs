@@ -1,3 +1,6 @@
+using System.Runtime.InteropServices;
+using System.Text.Json;
+
 namespace SurfTimer;
 
 internal class PlayerTimer
@@ -13,6 +16,8 @@ internal class PlayerTimer
 
     // Tracking
     public int Stage {get; set;} = 0; // Current stage tracker
+    public int Checkpoint {get; set;} = 0; // Current checkpoint tracker
+    public List<JsonElement> CurrentRunCheckpoints { get; set; } = new List<JsonElement>(); // Current run cps list
     public int Bonus {get; set;} = 0; // Current bonus tracker - To-do: bonus implementation
     // public int Style = 0; // To-do: style implementation
 
@@ -25,8 +30,10 @@ internal class PlayerTimer
         this.Stop();
         this.Ticks = 0;
         this.Stage = 0;
+        this.Checkpoint = 0;
         this.Paused = false;
         this.PracticeMode = false;
+        this.CurrentRunCheckpoints.Clear();
     }
 
     public void Pause()
