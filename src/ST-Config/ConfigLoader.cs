@@ -28,6 +28,9 @@ public class ConfigLoader<T> where T : class, new()
 
 	public void Save(T config)
 	{
+		string dirName = Path.GetDirectoryName(this.path)!;
+		Directory.CreateDirectory(dirName);
+
 		string jsonRaw = JsonSerializer.Serialize(config, this.jsonOpts);
 		File.WriteAllText(this.path, jsonRaw);
 	}
