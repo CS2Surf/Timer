@@ -52,6 +52,9 @@ public partial class SurfTimer : BasePlugin
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
     internal Map CurrentMap = null!;
 
+    // Configs
+    internal ConfigLoader<DBCfg> databaseCfg = new ConfigLoader<DBCfg>();
+
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
     {
@@ -78,13 +81,7 @@ public partial class SurfTimer : BasePlugin
         // Load database config & spawn database object
         try
         {
-            JsonElement dbConfig = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/database.json")).RootElement;
-            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString()!,
-                                    dbConfig.GetProperty("database").GetString()!,
-                                    dbConfig.GetProperty("user").GetString()!,
-                                    dbConfig.GetProperty("password").GetString()!,
-                                    dbConfig.GetProperty("port").GetInt32(),
-                                    dbConfig.GetProperty("timeout").GetInt32());
+            DB = new TimerDatabase(databaseCfg.Config);
             Console.WriteLine("[CS2 Surf] Database connection established.");
         }
 
