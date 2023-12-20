@@ -123,7 +123,7 @@ public partial class SurfTimer
         else
         {
             // Update data in Player DB table
-            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `lastseen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
+            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
             if (updatePlayerTask.Result != 1)
                 throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
 
