@@ -7,7 +7,9 @@ namespace SurfTimer;
 public class ConfigLoader<T> where T : class, new()
 {
 
-	public T Config { get; private set; }
+	public T Config {get; private set;}
+
+	public bool Loaded {get; private set;} = false;
 
 	private readonly string path;
 	private readonly string relativePath;
@@ -45,17 +47,35 @@ public class ConfigLoader<T> where T : class, new()
 		// Create default cfg
 		if (!File.Exists(this.path))
 		{
-			Console.WriteLine($"Writing default config for '{this.relativePath}'");
+			Console.WriteLine($"[CS2 Surf] Writing default config for: {this.relativePath}");
 			this.Save();
 			return;
 		}
 
-		string rawJson = File.ReadAllText(this.path);
-		T? cfg = JsonSerializer.Deserialize<T>(rawJson);
+		string loadingText = this.Loaded ? "Re-loading" : "Loading";
+		Console.WriteLine($"[CS2 Surf] {loadingText} configuration: {this.relativePath}");
 
-		if (cfg == null) return;
+		T? cfg = null;
+
+		try
+		{
+			string rawJson = File.ReadAllText(this.path);
+			cfg = JsonSerializer.Deserialize<T>(rawJson);
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine($"[CS2 Surf] Error while trying to load config: {this.relativePath}");
+			Console.WriteLine($"[CS2 Surf] Config Error: {e.Message}");
+		}
+
+		if (cfg == null)
+		{
+			Console.WriteLine($"[CS2 Surf] Failed to load config! For file: {this.relativePath}");
+			return;
+		}
 
 		this.Config = cfg;
+		this.Loaded = true;
 	}
 
 }

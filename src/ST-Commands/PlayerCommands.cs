@@ -57,13 +57,13 @@ public partial class SurfTimer
             player.PrintToChat($"CS2 Surf DEBUG >> css_s >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
             #endif
 
-            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
+            player.PrintToChat($"{pluginCfg.Config.Prefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
             return;
         }
 
         else if (CurrentMap.Stages <= 0)
         {
-            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}This map has no stages.");
+            player.PrintToChat($"{pluginCfg.Config.Prefix} {ChatColors.Red}This map has no stages.");
             return;
         }
 
@@ -82,6 +82,6 @@ public partial class SurfTimer
         }
 
         else 
-            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
+            player.PrintToChat($"{pluginCfg.Config.Prefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
     }
 }

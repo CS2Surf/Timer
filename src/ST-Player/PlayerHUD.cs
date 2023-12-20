@@ -50,10 +50,14 @@ internal class PlayerHUD
             }
             string timerModule = FormatHUDElementHTML("", FormatTime(_player.Timer.Ticks), timerColor);
 
-            // Velocity Module - To-do: Make velocity module configurable (XY or XYZ velocity)
-            float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X 
-                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
-                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
+            // Velocity Module
+            float sqVelocity = _player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
+                               + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
+
+            if (SurfTimer.pluginCfg.Config.IncludeZVelocity)
+                sqVelocity += _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
+
+            float velocity = (float) Math.Sqrt(sqVelocity);
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("000"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats

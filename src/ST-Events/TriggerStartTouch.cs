@@ -38,7 +38,7 @@ public partial class SurfTimer
                         player.Timer.Stop();
                         if (player.Stats.PB[0,0] == 0 || player.Timer.Ticks < player.Stats.PB[0,0])
                             player.Stats.PB[0,0] = player.Timer.Ticks;
-                        player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
+                        player.Controller.PrintToChat($"{pluginCfg.Config.Prefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
                         // player.Timer.Reset();
                     }
 
