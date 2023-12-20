@@ -28,11 +28,29 @@ internal class PlayerHUD
         }
     }
 
-    public string FormatTime(int ticks) // https://github.com/DEAFPS/SharpTimer/blob/e4ef24fff29a33c36722d23961355742d507441f/Utils.cs#L38
+    /// <summary>
+    /// Formats the given time in ticks into a readable time string.
+    /// Unless specified differently, the default formatting will be `Verbose`.
+    /// Check <see cref="PlayerTimer.TimeFormatStyle"/> for all formatting types.
+    /// </summary>
+    public string FormatTime(int ticks, PlayerTimer.TimeFormatStyle style = PlayerTimer.TimeFormatStyle.Verbose)
     {
         TimeSpan time = TimeSpan.FromSeconds(ticks / 64.0);
         int millis = (int)(ticks % 64 * (1000.0 / 64.0));
-        return $"{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+
+        switch (style)
+        {
+            case PlayerTimer.TimeFormatStyle.Compact:
+                return time.TotalMinutes < 1
+                    ? $"{time.Seconds:D2}.{millis:D3}"
+                    : $"{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+            case PlayerTimer.TimeFormatStyle.Full:
+                return $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+            case PlayerTimer.TimeFormatStyle.Verbose:
+                return $"{time.Hours}h {time.Minutes}m {time.Seconds}s {millis}ms";
+            default:
+                throw new ArgumentException("Invalid time format style");
+        }
     }
 
     public void Display()
@@ -51,14 +69,14 @@ internal class PlayerHUD
             string timerModule = FormatHUDElementHTML("", FormatTime(_player.Timer.Ticks), timerColor);
 
             // Velocity Module - To-do: Make velocity module configurable (XY or XYZ velocity)
-            float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X 
-                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
+            float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
+                                                + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y
                                                 + _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("000"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             // PB & WR Modules
-            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0,0] > 0 ? FormatTime(_player.Stats.PB[0,0]) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
+            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0, 0] > 0 ? FormatTime(_player.Stats.PB[0, 0]) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             string wrModule = FormatHUDElementHTML("WR", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
 
             // Build HUD
