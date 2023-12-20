@@ -3,13 +3,13 @@ namespace SurfTimer;
 internal class PlayerTimer
 {
     // Status
-    public bool Enabled { get; set; } = true; // Enable toggle for entire timer
-    public bool Paused { get; set; } = false; // Pause toggle for timer
+    public bool IsEnabled { get; set; } = true; // Enable toggle for entire timer
+    public bool IsPaused { get; set; } = false; // Pause toggle for timer
     public bool IsRunning { get; set; } = false; // Is the timer currently running?
 
     // Modes
-    public bool PracticeMode { get; set; } = false; // Practice mode toggle
-    public bool StageMode { get; set; } = false; // Stage mode toggle
+    public bool IsPracticeMode { get; set; } = false; // Practice mode toggle
+    public bool IsStageMode { get; set; } = false; // Stage mode toggle
 
     // Tracking
     public int Stage { get; set; } = 0; // Current stage tracker
@@ -33,19 +33,19 @@ internal class PlayerTimer
         this.Stop();
         this.Ticks = 0;
         this.Stage = 0;
-        this.Paused = false;
-        this.PracticeMode = false;
+        this.IsPaused = false;
+        this.IsPracticeMode = false;
     }
 
     public void Pause()
     {
-        this.Paused = true;
+        this.IsPaused = true;
     }
 
     public void Start()
     {
         // Timer Start method - notes: OnStartTimerPress
-        if (this.Enabled)
+        if (this.IsEnabled)
             this.IsRunning = true;
     }
 
@@ -59,7 +59,7 @@ internal class PlayerTimer
     {
         // Tick the timer - this checks for any restrictions, so can be conveniently called from anywhere
         // without worry for any timing restrictions (eg: Paused, Enabled, etc)
-        if (this.Paused || !this.Enabled || !this.IsRunning)
+        if (this.IsPaused || !this.IsEnabled || !this.IsRunning)
             return;
 
         this.Ticks++;

@@ -75,7 +75,7 @@ public partial class SurfTimer
                 Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[stage], CurrentMap.StageStartZoneAngles[stage], new Vector(0,0,0)));
         
             playerList[player.UserId ?? 0].Timer.Reset();
-            playerList[player.UserId ?? 0].Timer.StageMode = true;
+            playerList[player.UserId ?? 0].Timer.IsStageMode = true;
 
             // To-do: If you run this while you're in the start zone, endtouch for the start zone runs after you've teleported
             //        causing the timer to start. This needs to be fixed.
