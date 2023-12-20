@@ -58,7 +58,6 @@ public partial class SurfTimer
                 Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> Returning player {name} ({player.SteamID}) loaded from database with ID {dbID}");
                 #endif
             }
-
             else
             {
                 playerData.Close();
@@ -96,6 +95,7 @@ public partial class SurfTimer
                 Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");
                 #endif
             }
+
             PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
 
             // Create Player object
@@ -103,8 +103,38 @@ public partial class SurfTimer
                                                     new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
                                                     Profile);
             
+            // Load player stats from database
+            // To-do: add types
+            // Console.WriteLine($"=================== SELECT * FROM `MapTimes` WHERE `player_id` = {Profile.ID} AND `map_id` = {CurrentMap.ID};");
+            Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT * FROM `MapTimes` WHERE `player_id` = {Profile.ID} AND `map_id` = {CurrentMap.ID};");
+            MySqlDataReader playerStats = dbTask2.Result;
+            while (playerStats.HasRows && playerStats.Read())
+            {
+                // Player has a current map completion in database
+                int style = playerStats.GetInt32("style");
+                var stats = playerList[player.UserId ?? 0].Stats;
+                        
+                stats.PB[style].ID = playerStats.GetInt32("id");
+                stats.PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                stats.PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                stats.PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                stats.PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                stats.PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                stats.PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                stats.PB[style].RunTime = playerStats.GetInt32("run_time");
+                stats.PB[style].RunDate = playerStats.GetInt32("run_date");
+
+                Console.WriteLine($"============== CS2 Surf DEBUG >> {stats.PB[style].ID} | {stats.PB[style].RunTime} | {stats.PB[style].StartVelX} | {stats.PB[style].StartVelY} | {stats.PB[style].StartVelZ} | {stats.PB[style].EndVelX} | {stats.PB[style].EndVelY} | {stats.PB[style].EndVelZ} | {stats.PB[style].RunDate}");
+                #if DEBUG
+                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> PlayerStats (ID {stats.PB[style].ID}) loaded from DB for {name} '{Profile.SteamID}' ({Profile.ID})");
+                #endif
+            }
+            if (!playerStats.HasRows)
+                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> No PB entries found for {name}");
+
+            playerStats.Close();
             // Print join messages
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
+            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
             Console.WriteLine($"[CS2 Surf] {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
             return HookResult.Continue;
         }

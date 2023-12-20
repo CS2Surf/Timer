@@ -27,6 +27,11 @@ public partial class SurfTimer
             player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc -> {trigger.DesignerName} -> {trigger.Entity!.Name}");
             #endif
 
+            // Get velocities for DB queries
+            float velocity_x = player.Controller.PlayerPawn.Value!.AbsVelocity.X;
+            float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
+            float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
+
             if (trigger.Entity!.Name != null)
             {
                 // Map end zones -- hook into map_end
@@ -36,9 +41,25 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
-                        if (player.Stats.PB[0,0] == 0 || player.Timer.Ticks < player.Stats.PB[0,0])
-                            player.Stats.PB[0,0] = player.Timer.Ticks;
-                        player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0,0])}!");
+                        // To-do: make Style (currently 0) be dynamic
+                        if (player.Stats.PB[0].RunTime == 0 || player.Timer.Ticks < player.Stats.PB[0].RunTime)
+                        {
+                            player.Stats.PB[0].RunTime = player.Timer.Ticks;
+                            player.Controller.PrintToChat($"{PluginPrefix} You beat your PB in {player.HUD.FormatTime(player.Stats.PB[0].RunTime)} ({player.Timer.Ticks})!");
+                        }
+                        else
+                        {
+                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {player.HUD.FormatTime(player.Stats.PB[0].RunTime)} ({player.Timer.Ticks})!");
+                        }
+
+                        // Add entry in DB for the run
+                        // To-do: add `type`
+                        // To-do: get the `start_vel` values for the run from CP implementation in other repository implementation of checkpoints and their speeds
+                        // Console.WriteLine($"============== INSERT INTO `MapTimes` (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].RunTime}, 123.000, 456.000, 789.000, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) ON DUPLICATE KEY UPDATE player_id=VALUES(player_id), map_id=VALUES(map_id), style=VALUES(style), type=VALUES(type), stage=VALUES(stage), run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
+                        Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].RunTime}, 123.000, 456.000, 789.000, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) ON DUPLICATE KEY UPDATE player_id=VALUES(player_id), map_id=VALUES(map_id), style=VALUES(style), type=VALUES(type), stage=VALUES(stage), run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
+                        if (updatePlayerRunTask.Result <= 0)
+                            throw new Exception($"CS2 Surf ERROR >> OnTriggerStartTouch -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
+
                         // player.Timer.Reset();
                     }
 

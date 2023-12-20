@@ -76,7 +76,7 @@ internal class PlayerHUD
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
             // PB & WR Modules
-            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0, 0] > 0 ? FormatTime(_player.Stats.PB[0, 0]) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
+            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0].RunTime > 0 ? FormatTime(_player.Stats.PB[0].RunTime) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
             string wrModule = FormatHUDElementHTML("WR", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats
 
             // Build HUD
