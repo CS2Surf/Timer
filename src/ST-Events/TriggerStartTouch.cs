@@ -112,49 +112,7 @@ public partial class SurfTimer
                             player.Stats.LoadMapTimesData(player.Profile.ID, CurrentMap.ID, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
                         updatePlayerRunTask.Dispose();
 
-                        // To-do: Transactions? Server freezes for a bit here sometimes
-                        // Loop through the checkpoints and insert/update them in the database for the run
-                        foreach (var item in player.Timer.CurrentRunCheckpoints)
-                        {
-                            int cp = item.Key;
-                            int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                            int ticks = item.Value.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-                            double speed = item.Value.Speed;
-                            double startVelX = item.Value.StartVelX;
-                            double startVelY = item.Value.StartVelY;
-                            double startVelZ = item.Value.StartVelZ;
-                            double endVelX = item.Value.EndVelX;
-                            double endVelY = item.Value.EndVelY;
-                            double endVelZ = item.Value.EndVelZ;
-                            int attempts = item.Value.Attempts;
-
-                            #if DEBUG
-                            Console.WriteLine($"CP: {cp} | Time: {runTime} | Ticks: {ticks} | Speed: {speed} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
-                            Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
-                                                $"INSERT INTO `Checkpoints` " +
-                                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                                $"VALUES ({player.Stats.PB[0].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
-                                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
-                            #endif
-
-                            // Insert/Update CPs to database
-                            // To-do: Transactions?
-                            // Check if the player has PB object initialized and if the player's character is currently active in the game
-                            if (player.Stats.PB[0] != null && player.Controller.PlayerPawn.Value != null)
-                            {
-                                Task<int> newPbTask = DB.Write($"INSERT INTO `Checkpoints` " +
-                                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                                $"VALUES ({player.Stats.PB[0].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
-                                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
-                                if (newPbTask.Result <= 0)
-                                    throw new Exception($"CS2 Surf ERROR >> OnTriggerStartTouch (Checkpoint zones) -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
-                                newPbTask.Dispose();
-                            }
-                        }
+                        player.Stats.PB[0].SaveCurrentRunCheckpoints(player, DB); // Save the Checkpoints PB data
                         player.Stats.PB[0].LoadCheckpointsForRun(player.Stats.PB[0].ID, DB); // Load the Checkpoints PB data again
                     }
 

@@ -56,7 +56,7 @@ public partial class SurfTimer : BasePlugin
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        // To-do: It seems like players connect very quickly and sometimes `CurrentMap` is null when it shouldn't be, lowered the timer ot 0.5 seconds for now
+        // To-do: It seems like players connect very quickly and sometimes `CurrentMap` is null when it shouldn't be, lowered the timer ot 1.0 seconds for now
         if ((CurrentMap == null || CurrentMap.Name != mapName) && mapName.Contains("surf_"))
         {
             AddTimer(1.0f, () => CurrentMap = new Map(mapName, DB!)); // Was 3 seconds, now 1 second

@@ -17,6 +17,9 @@ internal class PersonalBest
     public float EndVelY { get; set; }
     public float EndVelZ { get; set; }
     public int RunDate { get; set; }
+    public float currentRunStartVelX { get; set; }
+    public float currentRunStartVelY { get; set; }
+    public float currentRunStartVelZ { get; set; }
     // Add other properties as needed
 
     internal class CheckpointObject
@@ -67,7 +70,7 @@ internal class PersonalBest
         RunDate = runDate;
     }
 
-    // Executes the DB query to parse the checkpoints
+    // Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
     public void LoadCheckpointsForRun(int mapTimeId, TimerDatabase DB)
     {
         Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {mapTimeId};");
@@ -107,7 +110,7 @@ internal class PersonalBest
             results.Close();
             return;
         }
-        
+
         #if DEBUG
         Console.WriteLine($"======== CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints found for this mapTimeId");
         #endif
@@ -145,6 +148,54 @@ internal class PersonalBest
         Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints loaded from DB. Count: {Checkpoint.Count}");
         #endif
     }
+
+    // To-do: Transactions? Server freezes for a bit here sometimes
+    // Saves the CurrentRunCheckpoints to the database
+    public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)
+    {
+        // Loop through the checkpoints and insert/update them in the database for the run
+        foreach (var item in player.Timer.CurrentRunCheckpoints)
+        {
+            int cp = item.Key;
+            int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+            int ticks = item.Value.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
+            double speed = item.Value.Speed;
+            double startVelX = item.Value.StartVelX;
+            double startVelY = item.Value.StartVelY;
+            double startVelZ = item.Value.StartVelZ;
+            double endVelX = item.Value.EndVelX;
+            double endVelY = item.Value.EndVelY;
+            double endVelZ = item.Value.EndVelZ;
+            int attempts = item.Value.Attempts;
+
+            #if DEBUG
+            Console.WriteLine($"CP: {cp} | Time: {runTime} | Ticks: {ticks} | Speed: {speed} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
+            Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
+                                $"INSERT INTO `Checkpoints` " +
+                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
+                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
+                                $"VALUES ({player.Stats.PB[0].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
+                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
+                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+            #endif
+
+            // Insert/Update CPs to database
+            // To-do: Transactions?
+            // Check if the player has PB object initialized and if the player's character is currently active in the game
+            if (player.Stats.PB[0] != null && player.Controller.PlayerPawn.Value != null)
+            {
+                Task<int> newPbTask = DB.Write($"INSERT INTO `Checkpoints` " +
+                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
+                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
+                                $"VALUES ({player.Stats.PB[0].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
+                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
+                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+                if (newPbTask.Result <= 0)
+                    throw new Exception($"CS2 Surf ERROR >> OnTriggerStartTouch (Checkpoint zones) -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
+                newPbTask.Dispose();
+            }
+        }
+    }
 }
 
 internal class PlayerStats
@@ -167,8 +218,8 @@ internal class PlayerStats
     public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
     public int[,] StageRank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
 
+    // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     public void LoadMapTimesData(int playerId, int mapId, TimerDatabase DB)
-    // public void LoadMapTimesData(MySqlDataReader results)
     {
         Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT * FROM `MapTimes` WHERE `player_id` = {playerId} AND `map_id` = {mapId};");
         MySqlDataReader playerStats = dbTask2.Result;
@@ -195,11 +246,11 @@ internal class PlayerStats
 
                 Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> {PB[style].ID} | {PB[style].RunTime} | {PB[style].StartVelX} | {PB[style].StartVelY} | {PB[style].StartVelZ} | {PB[style].EndVelX} | {PB[style].EndVelY} | {PB[style].EndVelZ} | {PB[style].RunDate}");
                 #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats (ID {PB[style].ID}) loaded from DB.");
+                Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif
             }
         }
-        playerStats.Close();        
+        playerStats.Close();
     }
 
 }
