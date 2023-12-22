@@ -194,6 +194,7 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[0].Checkpoints.Count = {player.Stats.PB[0].Checkpoints.Count}");
                         #endif
 
+                        // Print checkpoint message
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
@@ -230,15 +231,9 @@ public partial class SurfTimer
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoints.Count = {player.Stats.PB[0].Checkpoints.Count}");
                         #endif
+                        
                         // Print checkpoint message
-                        player.Controller.PrintToChat(
-                            $"{PluginPrefix} CP [{ChatColors.Yellow}{checkpoint}{ChatColors.Default}]: " +
-                            $"{ChatColors.Yellow}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} " +
-                            $"{ChatColors.Yellow}({velocity.ToString("0")}){ChatColors.Default} " +
-                            $"[PB: {ChatColors.Green}-00:00.000{ChatColors.Default} " +
-                            $"{ChatColors.Red}(N/A){ChatColors.Default} | " +
-                            $"WR: {ChatColors.Red}+PL:CE.HLD{ChatColors.Default} " +
-                            $"{ChatColors.Green}(+1234){ChatColors.Default}]");
+                        player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
                         PersonalBest.Checkpoint cp2 = new PersonalBest.Checkpoint(checkpoint,
