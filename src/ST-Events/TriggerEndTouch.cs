@@ -89,12 +89,17 @@ public partial class SurfTimer
                         currentCheckpoint.EndVelZ = velocity_z;
                         currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
                         currentCheckpoint.Attempts += 1;
+                        
+                        // Show Prespeed for stages - will be enabled/disabled by the user?
+                        player.Controller.PrintToCenter($"Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");
                     }
                     else
                     {
                         // Handle the case where the index is out of bounds
                     }
                 }
+
+                // To-do: Checkpoint zones -- hook into "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$" map_c(heck)p(oint) 
             }
 
             return HookResult.Continue;
