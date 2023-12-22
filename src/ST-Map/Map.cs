@@ -9,13 +9,15 @@ namespace SurfTimer;
 public class Map 
 {
     // Map information
-    public int ID {get; set;} = 0;
+    public int ID {get; set;} = -1; // Can we use this to re-trigger retrieving map information from the database?? (all db IDs are auto-incremented)
     public string Name {get; set;} = "";
     public string Author {get; set;} = "";
     public int Tier {get; set;} = 0;
     public int Stages {get; set;} = 0;
+    public int Bonuses {get; set;} = 0;
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
+    public int LastPlayed {get; set;} = 0;
 
     // Zone Origin Information
     // Map start/end zones
@@ -109,8 +111,10 @@ public class Map
             this.Author = mapData.GetString("author") ?? "Unknown";
             this.Tier = mapData.GetInt32("tier");
             this.Stages = mapData.GetInt32("stages");
+            this.Bonuses = mapData.GetInt32("bonuses");
             this.Ranked = mapData.GetBoolean("ranked");
             this.DateAdded = mapData.GetInt32("date_added");
+            this.LastPlayed = mapData.GetInt32("last_played");
             mapData.Close();
         }
 
@@ -131,10 +135,12 @@ public class Map
             postWriteMapData.Close();
             this.Name = Name;
             this.Author = "Unknown";
-            this.Tier = 0;
-            this.Stages = 0;
+            this.Tier = -1;
+            this.Stages = -1;
+            this.Bonuses = -1;
             this.Ranked = false;
-            this.DateAdded = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(); 
+            this.DateAdded = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            this.LastPlayed = this.DateAdded; 
 
             return;
         }

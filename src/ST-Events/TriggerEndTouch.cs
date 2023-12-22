@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
+using CounterStrikeSharp.API;
 
 namespace SurfTimer;
 
@@ -29,6 +30,15 @@ public partial class SurfTimer
 
             if (trigger.Entity!.Name != null)
             {
+                // Get velocities for DB queries
+                // Get the velocity of the player - we will be using this values to compare and write to DB
+                float velocity = (float)Math.Sqrt(player.Controller.PlayerPawn.Value!.AbsVelocity.X * player.Controller.PlayerPawn.Value!.AbsVelocity.X 
+                                            + player.Controller.PlayerPawn.Value!.AbsVelocity.Y * player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
+                                            + player.Controller.PlayerPawn.Value!.AbsVelocity.Z * player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
+                float velocity_x = player.Controller.PlayerPawn.Value!.AbsVelocity.X;
+                float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
+                float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
+                
                 // Map start zones -- hook into map_start, (s)tage1_start
                 if (trigger.Entity.Name.Contains("map_start") || 
                     trigger.Entity.Name.Contains("s1_start") || 
@@ -37,10 +47,18 @@ public partial class SurfTimer
                     // MAP START ZONE
                     player.Timer.Start();
 
+                    // Wonky Prespeed check
+                    // To-do: make the teleportation a bit more elegant (method in a class or something)
+                    if (velocity > 666.0)
+                    {
+                        player.Controller.PrintToChat(
+                            $"{PluginPrefix} {ChatColors.Red}You are going too fast! ({velocity.ToString("0")} u/s)");
+                        player.Timer.Reset();
+                        if (CurrentMap.StartZone != new Vector(0,0,0))
+                            Server.NextFrame(() => player.Controller.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
+                    }
+
                     // Prespeed display
-                    float velocity = (float)Math.Sqrt(player.Controller.PlayerPawn.Value!.AbsVelocity.X * player.Controller.PlayerPawn.Value!.AbsVelocity.X 
-                                                + player.Controller.PlayerPawn.Value!.AbsVelocity.Y * player.Controller.PlayerPawn.Value!.AbsVelocity.Y 
-                                                + player.Controller.PlayerPawn.Value!.AbsVelocity.Z * player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
                     player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
 
                     #if DEBUG
@@ -53,7 +71,29 @@ public partial class SurfTimer
                 {
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
+                    Console.WriteLine($"===================== player.Timer.Checkpoint {player.Timer.Checkpoint} - player.Timer.CurrentRunCheckpoints.Count {player.Timer.CurrentRunCheckpoints.Count}");
                     #endif
+
+                    if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Timer.CurrentRunCheckpoints.Count)
+                    {
+                        var currentCheckpoint = player.Timer.CurrentRunCheckpoints[player.Timer.Checkpoint - 1];
+                        #if DEBUG
+                        Console.WriteLine($"currentCheckpoint.EndVelX {currentCheckpoint.EndVelX} - velocity_x {velocity_x}");
+                        Console.WriteLine($"currentCheckpoint.EndVelY {currentCheckpoint.EndVelY} - velocity_y {velocity_y}");
+                        Console.WriteLine($"currentCheckpoint.EndVelZ {currentCheckpoint.EndVelZ} - velocity_z {velocity_z}");
+                        #endif
+
+                        // Update the values
+                        currentCheckpoint.EndVelX = velocity_x;
+                        currentCheckpoint.EndVelY = velocity_y;
+                        currentCheckpoint.EndVelZ = velocity_z;
+                        currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
+                        currentCheckpoint.Attempts += 1;
+                    }
+                    else
+                    {
+                        // Handle the case where the index is out of bounds
+                    }
                 }
             }
 
