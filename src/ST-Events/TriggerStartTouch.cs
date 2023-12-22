@@ -191,14 +191,14 @@ public partial class SurfTimer
 
                         #if DEBUG
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `stage`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
-                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[0].Checkpoints.Count = {player.Stats.PB[0].Checkpoints.Count}");
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
                         #endif
 
                         // Print checkpoint message
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        PersonalBest.Checkpoint cp2 = new PersonalBest.Checkpoint(stage,
+                        PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(stage,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                                         velocity,
@@ -229,14 +229,14 @@ public partial class SurfTimer
                     {
                         #if DEBUG
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
-                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoints.Count = {player.Stats.PB[0].Checkpoints.Count}");
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
                         #endif
                         
                         // Print checkpoint message
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        PersonalBest.Checkpoint cp2 = new PersonalBest.Checkpoint(checkpoint,
+                        PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(checkpoint,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                                         velocity,

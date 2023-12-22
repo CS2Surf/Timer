@@ -111,14 +111,14 @@ internal class PlayerHUD
         // Can check checkpoints count instead of try/catch
         try
         {
-            pbTime = _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].RunTime; // Should we use -1 here?
-            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelX * _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelX
-                                        + _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelY * _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelY
-                                        + _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelZ * _player.Stats.PB[0].Checkpoints[_player.Timer.Checkpoint - 1].StartVelZ);
+            pbTime = _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].RunTime;
+            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX
+                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY
+                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ);
             
             #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  Got pbTime from _player.Stats.PB[0].Checkpoints[{_player.Timer.Checkpoint - 1} = {pbTime}]");
-            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [SPEED] Got pbSpeed from _player.Stats.PB[0].Checkpoints[{_player.Timer.Checkpoint - 1}] = {pbSpeed}");
+            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  Got pbTime from _player.Stats.PB[0].Checkpoint[{_player.Timer.Checkpoint} = {pbTime}]");
+            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [SPEED] Got pbSpeed from _player.Stats.PB[0].Checkpoint[{_player.Timer.Checkpoint}] = {pbSpeed}");
             #endif
         }
         #if DEBUG
@@ -134,7 +134,7 @@ internal class PlayerHUD
             
             #if DEBUG
             Console.WriteLine($"CS2 Surf CAUGHT EXCEPTION >> DisplayCheckpointMessages -> An error occurred: {ex.Message}");
-            Console.WriteLine($"CS2 Surf CAUGHT EXCEPTION >> DisplayCheckpointMessages -> An error occurred Player has no PB and therefore no Checkpoints | _player.Stats.PB[0].Checkpoints.Count = {_player.Stats.PB[0].Checkpoints.Count}");
+            Console.WriteLine($"CS2 Surf CAUGHT EXCEPTION >> DisplayCheckpointMessages -> An error occurred Player has no PB and therefore no Checkpoints | _player.Stats.PB[0].Checkpoint.Count = {_player.Stats.PB[0].Checkpoint.Count}");
             #endif
         }
 

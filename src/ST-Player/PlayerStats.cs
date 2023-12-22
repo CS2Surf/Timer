@@ -8,7 +8,7 @@ internal class PersonalBest
 {
     public int ID { get; set; }
     public int RunTime { get; set; }
-    public List<Checkpoint> Checkpoints { get; set; } // To-do: this should be a dictionary with CP as key and Checkpoint as value
+    public Dictionary<int, CheckpointObject> Checkpoint { get; set; }
     // public int Type { get; set; }
     public float StartVelX { get; set; }
     public float StartVelY { get; set; }
@@ -19,7 +19,7 @@ internal class PersonalBest
     public int RunDate { get; set; }
     // Add other properties as needed
 
-    internal class Checkpoint
+    internal class CheckpointObject
     {
         public int CP { get; set; }
         public int RunTime { get; set; } // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
@@ -34,7 +34,7 @@ internal class PersonalBest
         public float EndTouch { get; set; }
         public int Attempts { get; set; }
 
-        public Checkpoint(int cp, int runTime, int ticks, float speed, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
+        public CheckpointObject(int cp, int runTime, int ticks, float speed, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
         {
             CP = cp;
             RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
@@ -56,7 +56,7 @@ internal class PersonalBest
     {
         ID = id;
         RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-        Checkpoints = new List<Checkpoint>(); // To-do: this should be a dictionary with CP as key and Checkpoint as value
+        Checkpoint = new Dictionary<int, CheckpointObject>();
         // Type = type;
         StartVelX = startVelX;
         StartVelY = startVelY;
@@ -82,17 +82,17 @@ internal class PersonalBest
             return;
         }
 
-        if (this.Checkpoints == null)
+        if (this.Checkpoint == null)
         {
             #if DEBUG
             Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints list is not initialized.");
             #endif
 
-            this.Checkpoints = new List<Checkpoint>(); // Initialize if null
+            this.Checkpoint = new Dictionary<int, CheckpointObject>(); // Initialize if null
         }
 
         #if DEBUG
-        Console.WriteLine($"this.Checkpoints.Count {this.Checkpoints.Count} ");
+        Console.WriteLine($"this.Checkpoint.Count {this.Checkpoint.Count} ");
         Console.WriteLine($"this.ID {this.ID} ");
         Console.WriteLine($"this.RunTime {this.RunTime} ");
         Console.WriteLine($"this.RunDate {this.RunDate} ");
@@ -121,7 +121,7 @@ internal class PersonalBest
             Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
             #endif
 
-            Checkpoint cp = new(results.GetInt32("cp"),
+            CheckpointObject cp = new(results.GetInt32("cp"),
                                 results.GetInt32("run_time"), // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                 results.GetInt32("run_time"), // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                 666.666f,
@@ -133,7 +133,7 @@ internal class PersonalBest
                                 results.GetFloat("end_vel_z"),
                                 results.GetFloat("end_touch"),
                                 results.GetInt32("attempts"));
-            Checkpoints.Add(cp);
+            Checkpoint[cp.CP] = cp;
 
             #if DEBUG
             Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Loaded CP {cp.CP} with RunTime {cp.RunTime}.");
@@ -142,7 +142,7 @@ internal class PersonalBest
         results.Close();
 
         #if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints loaded from DB. Count: {Checkpoints.Count}");
+        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints loaded from DB. Count: {Checkpoint.Count}");
         #endif
     }
 }
