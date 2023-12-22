@@ -76,7 +76,7 @@ public partial class SurfTimer
 
                     if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Timer.CurrentRunCheckpoints.Count)
                     {
-                        var currentCheckpoint = player.Timer.CurrentRunCheckpoints[player.Timer.Checkpoint - 1];
+                        var currentCheckpoint = player.Timer.CurrentRunCheckpoints[player.Timer.Checkpoint];
                         #if DEBUG
                         Console.WriteLine($"currentCheckpoint.EndVelX {currentCheckpoint.EndVelX} - velocity_x {velocity_x}");
                         Console.WriteLine($"currentCheckpoint.EndVelY {currentCheckpoint.EndVelY} - velocity_y {velocity_y}");

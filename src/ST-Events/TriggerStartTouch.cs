@@ -116,17 +116,17 @@ public partial class SurfTimer
                         // Loop through the checkpoints and insert/update them in the database for the run
                         foreach (var item in player.Timer.CurrentRunCheckpoints)
                         {
-                            int cp = item.CP;
-                            int runTime = item.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                            int ticks = item.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-                            double speed = item.Speed;
-                            double startVelX = item.StartVelX;
-                            double startVelY = item.StartVelY;
-                            double startVelZ = item.StartVelZ;
-                            double endVelX = item.EndVelX;
-                            double endVelY = item.EndVelY;
-                            double endVelZ = item.EndVelZ;
-                            int attempts = item.Attempts;
+                            int cp = item.Key;
+                            int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                            int ticks = item.Value.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
+                            double speed = item.Value.Speed;
+                            double startVelX = item.Value.StartVelX;
+                            double startVelY = item.Value.StartVelY;
+                            double startVelZ = item.Value.StartVelZ;
+                            double endVelX = item.Value.EndVelX;
+                            double endVelY = item.Value.EndVelY;
+                            double endVelZ = item.Value.EndVelZ;
+                            int attempts = item.Value.Attempts;
 
                             #if DEBUG
                             Console.WriteLine($"CP: {cp} | Time: {runTime} | Ticks: {ticks} | Speed: {speed} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
@@ -210,7 +210,8 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        player.Timer.CurrentRunCheckpoints.Add(cp2);
+                        // player.Timer.CurrentRunCheckpoints.Add(cp2);
+                        player.Timer.CurrentRunCheckpoints[stage] = cp2;
                     }
 
                     #if DEBUG
@@ -248,7 +249,8 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        player.Timer.CurrentRunCheckpoints.Add(cp2);
+                        // player.Timer.CurrentRunCheckpoints.Add(cp2);
+                        player.Timer.CurrentRunCheckpoints[checkpoint] = cp2;
                     }
 
                     #if DEBUG
