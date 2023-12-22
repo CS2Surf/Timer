@@ -121,7 +121,11 @@ internal class PlayerHUD
             Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [SPEED] Got pbSpeed from _player.Stats.PB[0].Checkpoints[{_player.Timer.Checkpoint - 1}] = {pbSpeed}");
             #endif
         }
+        #if DEBUG
         catch (System.Exception ex)
+        #else
+        catch (System.Exception)
+        #endif
         {
             // Handle the exception gracefully without stopping the application
             // We assign default values to pbTime and pbSpeed
