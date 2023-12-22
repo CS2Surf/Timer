@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Property Group for the Debug configuration -->
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>DEBUG</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.116" />
     <PackageReference Include="MaxMind.GeoIP2" Version="5.2.0" />
