@@ -2,6 +2,48 @@ using MySqlConnector;
 
 namespace SurfTimer;
 
+internal class CurrentRun
+{
+    public Dictionary<int, PersonalBest.CheckpointObject> Checkpoint { get; set; } // Current RUN checkpoints tracker
+    public int RunTime { get; set; } // To-do: will be the last (any) zone end touch time
+    public float StartVelX { get; set; }
+    public float StartVelY { get; set; }
+    public float StartVelZ { get; set; }
+    public float EndVelX { get; set; }
+    public float EndVelY { get; set; }
+    public float EndVelZ { get; set; }
+    public int RunDate { get; set; }
+    // Add other properties as needed
+
+    // Constructor
+    public CurrentRun()
+    {
+        Checkpoint = new Dictionary<int, PersonalBest.CheckpointObject>();
+        RunTime = 0;
+        StartVelX = 0.0f;
+        StartVelY = 0.0f;
+        StartVelZ = 0.0f;
+        EndVelX = 0.0f;
+        EndVelY = 0.0f;
+        EndVelZ = 0.0f;
+        RunDate = 0;
+    }
+
+    public void Reset()
+    {
+        Checkpoint.Clear();
+        RunTime = 0;
+        StartVelX = 0.0f;
+        StartVelY = 0.0f;
+        StartVelZ = 0.0f;
+        EndVelX = 0.0f;
+        EndVelY = 0.0f;
+        EndVelZ = 0.0f;
+        RunDate = 0;
+        // Reset other properties as needed
+    }
+}
+
 // To-do: make Style (currently 0) be dynamic
 // To-do: add `Type`
 internal class PersonalBest
@@ -154,7 +196,7 @@ internal class PersonalBest
     public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)
     {
         // Loop through the checkpoints and insert/update them in the database for the run
-        foreach (var item in player.Timer.CurrentRunCheckpoints)
+        foreach (var item in player.Stats.ThisRun.Checkpoint) // player.Timer.CurrentRunCheckpoints
         {
             int cp = item.Key;
             int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
@@ -213,6 +255,7 @@ internal class PlayerStats
         PB[0] = new PersonalBest(0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
         // Add more styles as needed
     }
+    public CurrentRun ThisRun {get; set;} = new CurrentRun();
     public int[,] Rank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
     // public int[,] Checkpoints { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: checkpoint index
     public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index

@@ -14,7 +14,7 @@ internal class PlayerTimer
     // Tracking
     public int Stage { get; set; } = 0; // Current stage tracker
     public int Checkpoint {get; set;} = 0; // Current checkpoint tracker
-    public Dictionary<int, PersonalBest.CheckpointObject> CurrentRunCheckpoints { get; set; } = new Dictionary<int, PersonalBest.CheckpointObject>();  // Current RUN checkpoints tracker
+    public CurrentRun CurrentRunData { get; set; } = new CurrentRun(); // Current RUN data tracker
     public int Bonus { get; set; } = 0; // To-do: bonus implementation - Current bonus tracker 
     // public int Style = 0; // To-do: style implementation
 
@@ -38,7 +38,7 @@ internal class PlayerTimer
         this.Checkpoint = 0;
         this.IsPaused = false;
         this.IsPracticeMode = false;
-        this.CurrentRunCheckpoints.Clear();
+        this.CurrentRunData.Reset();
     }
 
     public void Pause()

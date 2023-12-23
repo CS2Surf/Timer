@@ -142,8 +142,8 @@ public partial class SurfTimer
 
                     // To-do:* checkpoint functionality because stages = checkpoints when in a run on a Staged map
                     // To-do:* This triggers more than once at random :monkaHmm: *already posted in CS# about OnPlayerConnect being triggered after OnStartTouch*
-                    // This should patch up re-triggering *player.Timer.CurrentRunCheckpoints.Count < stage*
-                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Timer.CurrentRunCheckpoints.Count <= stage)
+                    // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*
+                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count <= stage)
                     {
                         player.Timer.Checkpoint = stage; // Stage = Checkpoint when in a run on a Staged map
 
@@ -169,7 +169,7 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         0);
                         // player.Timer.CurrentRunCheckpoints.Add(cp2);
-                        player.Timer.CurrentRunCheckpoints[stage] = cp2;
+                        player.Stats.ThisRun.Checkpoint[stage] = cp2;
                     }
 
                     #if DEBUG
@@ -183,8 +183,8 @@ public partial class SurfTimer
                     int checkpoint = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
                     player.Timer.Checkpoint = checkpoint;
 
-                    // This should patch up re-triggering *player.Timer.CurrentRunCheckpoints.Count < checkpoint*
-                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Timer.CurrentRunCheckpoints.Count < checkpoint)
+                    // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < checkpoint*
+                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count < checkpoint)
                     {
                         #if DEBUG
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
@@ -207,8 +207,8 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        // player.Timer.CurrentRunCheckpoints.Add(cp2);
-                        player.Timer.CurrentRunCheckpoints[checkpoint] = cp2;
+                        // player.Timer.CurrentRunCheckpoints[checkpoint] = cp2;
+                        player.Stats.ThisRun.Checkpoint[checkpoint] = cp2;
                     }
 
                     #if DEBUG

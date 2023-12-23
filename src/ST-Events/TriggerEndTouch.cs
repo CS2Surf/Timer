@@ -71,12 +71,12 @@ public partial class SurfTimer
                 {
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
-                    Console.WriteLine($"===================== player.Timer.Checkpoint {player.Timer.Checkpoint} - player.Timer.CurrentRunCheckpoints.Count {player.Timer.CurrentRunCheckpoints.Count}");
+                    Console.WriteLine($"===================== player.Timer.Checkpoint {player.Timer.Checkpoint} - player.Stats.ThisRun.Checkpoint.Count {player.Stats.ThisRun.Checkpoint.Count}");
                     #endif
 
-                    if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Timer.CurrentRunCheckpoints.Count)
+                    if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Stats.ThisRun.Checkpoint.Count)
                     {
-                        var currentCheckpoint = player.Timer.CurrentRunCheckpoints[player.Timer.Checkpoint];
+                        var currentCheckpoint = player.Stats.ThisRun.Checkpoint[player.Timer.Checkpoint];
                         #if DEBUG
                         Console.WriteLine($"currentCheckpoint.EndVelX {currentCheckpoint.EndVelX} - velocity_x {velocity_x}");
                         Console.WriteLine($"currentCheckpoint.EndVelY {currentCheckpoint.EndVelY} - velocity_y {velocity_y}");
