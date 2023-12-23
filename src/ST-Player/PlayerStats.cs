@@ -6,12 +6,12 @@ internal class CurrentRun
 {
     public Dictionary<int, PersonalBest.CheckpointObject> Checkpoint { get; set; } // Current RUN checkpoints tracker
     public int RunTime { get; set; } // To-do: will be the last (any) zone end touch time
-    public float StartVelX { get; set; }
-    public float StartVelY { get; set; }
-    public float StartVelZ { get; set; }
-    public float EndVelX { get; set; }
-    public float EndVelY { get; set; }
-    public float EndVelZ { get; set; }
+    public float StartVelX { get; set; } // This will store MAP START VELOCITY X
+    public float StartVelY { get; set; } // This will store MAP START VELOCITY Y
+    public float StartVelZ { get; set; } // This will store MAP START VELOCITY Z
+    public float EndVelX { get; set; } // This will store MAP END VELOCITY X
+    public float EndVelY { get; set; } // This will store MAP END VELOCITY Y
+    public float EndVelZ { get; set; } // This will store MAP END VELOCITY Z
     public int RunDate { get; set; }
     // Add other properties as needed
 
@@ -59,9 +59,6 @@ internal class PersonalBest
     public float EndVelY { get; set; }
     public float EndVelZ { get; set; }
     public int RunDate { get; set; }
-    public float currentRunStartVelX { get; set; }
-    public float currentRunStartVelY { get; set; }
-    public float currentRunStartVelZ { get; set; }
     // Add other properties as needed
 
     internal class CheckpointObject
@@ -237,6 +234,22 @@ internal class PersonalBest
                 newPbTask.Dispose();
             }
         }
+    }
+
+    public void SaveMapTime(Player player, TimerDatabase DB, int mapId)
+    {
+        // Add entry in DB for the run
+        // To-do: add `type`
+        // To-do: get the `start_vel` values for the run from CP implementation in other repository implementation of checkpoints and their speeds
+        Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` " +
+                                                    $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
+                                                    $"VALUES ({player.Profile.ID}, {mapId}, 0, 0, 0, {player.Stats.PB[0].RunTime}, " +
+                                                    $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
+                                                    $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
+                                                    $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
+        if (updatePlayerRunTask.Result <= 0)
+            throw new Exception($"CS2 Surf ERROR >> internal class PersonalBest -> SaveMapTime -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");                           
+        updatePlayerRunTask.Dispose();
     }
 }
 

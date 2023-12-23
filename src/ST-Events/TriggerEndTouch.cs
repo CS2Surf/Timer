@@ -60,6 +60,9 @@ public partial class SurfTimer
 
                     // Prespeed display
                     player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
+                    player.Stats.ThisRun.StartVelX = velocity_x; // Start pre speed for the run
+                    player.Stats.ThisRun.StartVelY = velocity_y; // Start pre speed for the run
+                    player.Stats.ThisRun.StartVelZ = velocity_z; // Start pre speed for the run
 
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");

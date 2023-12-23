@@ -100,21 +100,13 @@ public partial class SurfTimer
                                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
                         #endif
 
+                        // Populate speed values
+                        player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
                         // Add entry in DB for the run
-                        // To-do: add `type`
-                        // To-do: get the `start_vel` values for the run from CP implementation in other repository implementation of checkpoints and their speeds
-                        Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` " +
-                                                                    $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].RunTime}, " +
-                                                                    $"123.000, 456.000, 789.000, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
-                                                                    $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
-                                                                    $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
-                        if (updatePlayerRunTask.Result <= 0)
-                            throw new Exception($"CS2 Surf ERROR >> OnTriggerStartTouch (Map end zone) -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
-                        else
-                            player.Stats.LoadMapTimesData(player.Profile.ID, CurrentMap.ID, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-                        updatePlayerRunTask.Dispose();
-
+                        player.Stats.PB[0].SaveMapTime(player, DB, CurrentMap.ID); // Save the MapTime PB data
+                        player.Stats.LoadMapTimesData(player.Profile.ID, CurrentMap.ID, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
                         player.Stats.PB[0].SaveCurrentRunCheckpoints(player, DB); // Save the Checkpoints PB data
                         player.Stats.PB[0].LoadCheckpointsForRun(player.Stats.PB[0].ID, DB); // Load the Checkpoints PB data again
                     }
