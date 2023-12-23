@@ -50,6 +50,7 @@ internal class PersonalBest
 {
     public int ID { get; set; }
     public int RunTime { get; set; }
+    public int Rank { get; set; }
     public Dictionary<int, CheckpointObject> Checkpoint { get; set; }
     // public int Type { get; set; }
     public float StartVelX { get; set; }
@@ -94,10 +95,11 @@ internal class PersonalBest
     }
 
     // Constructor
-    public PersonalBest(int id, int runTime, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate)
+    public PersonalBest(int id, int runTime, int rank, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate)
     {
         ID = id;
         RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+        Rank = rank;
         Checkpoint = new Dictionary<int, CheckpointObject>();
         // Type = type;
         StartVelX = startVelX;
@@ -260,27 +262,35 @@ internal class PlayerStats
 
     public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
 
-    // Initialize default styles (e.g., 0 for normal)
-    public PlayerStats()
-    {
-        PB[0] = new PersonalBest(0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
-        // Add more styles as needed
-    }
     public CurrentRun ThisRun {get; set;} = new CurrentRun(); // This is a CurrenntRun object that tracks the data for the Player's current run
 
     // These account for future style support and a relevant index.
     // public int[,] PB {get; set;} = {{0,0}}; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
     // public int[,] Checkpoints { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: checkpoint index
-    public int[,] Rank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
+    // public int[,] Rank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
     public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
     public int[,] StageRank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
 
+    // Initialize PersonalBest for each `style` (e.g., 0 for normal) - this is a temporary solution
+    public PlayerStats()
+    {
+        PB[0] = new PersonalBest(-1, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+        // Add more styles as needed
+    }
+    
     // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
+    /// <summary>
+    /// Loads the player's MapTimes data from the database along with `Rank` for the run.
+    /// `Checkpoints` are loaded separately.
+    /// </summary>
     public void LoadMapTimesData(int playerId, int mapId, TimerDatabase DB)
     {
-        Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT * FROM `MapTimes` WHERE `player_id` = {playerId} AND `map_id` = {mapId};");
+        Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT mainquery.*, (SELECT COUNT(*) FROM `MapTimes` AS subquery " +
+                                                 $"WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` " +
+                                                 $"AND subquery.`run_time` <= mainquery.`run_time`) AS `rank` FROM `MapTimes` AS mainquery " +
+                                                 $"WHERE mainquery.`player_id` = {playerId} AND mainquery.`map_id` = {mapId}; ");
         MySqlDataReader playerStats = dbTask2.Result;
-        int style = 0;
+        int style = 0; // To-do: implement styles
         if (!playerStats.HasRows)
         {
             Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> No MapTimes data found for Player.");
@@ -300,8 +310,9 @@ internal class PlayerStats
                 PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
                 PB[style].RunTime = playerStats.GetInt32("run_time");
                 PB[style].RunDate = playerStats.GetInt32("run_date");
+                PB[style].Rank = playerStats.GetInt32("rank");
 
-                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {playerId} | {PB[style].ID} | {PB[style].RunTime} | {PB[style].StartVelX} | {PB[style].StartVelY} | {PB[style].StartVelZ} | {PB[style].EndVelX} | {PB[style].EndVelY} | {PB[style].EndVelZ} | {PB[style].RunDate}");
+                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {playerId} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].RunTime} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif
