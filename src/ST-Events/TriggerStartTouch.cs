@@ -3,6 +3,7 @@ using System.Text.Json;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
+using CounterStrikeSharp.API;
 
 namespace SurfTimer;
 
@@ -71,11 +72,13 @@ public partial class SurfTimer
                         // To-do: make Style (currently 0) be dynamic
                         if (player.Stats.PB[0].RunTime <= 0) // Player first ever PersonalBest for the map
                         {
-                            player.Controller.PrintToChat($"{PluginPrefix} Congratulations on setting your PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                            // player.Controller.PrintToChat($"{PluginPrefix} Congratulations on setting your PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
                         else if (player.Timer.Ticks < player.Stats.PB[0].RunTime) // Player beating their existing PersonalBest for the map
                         {
-                            player.Controller.PrintToChat($"{PluginPrefix} You beat your PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].RunTime)}{ChatColors.Default})!");
+                            // player.Controller.PrintToChat($"{PluginPrefix} You beat your PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].RunTime)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].RunTime)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
@@ -191,7 +194,7 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
                         #endif
                         
-                        // Print checkpoint message
+                        // Print checkpointfffffffffffffffffffffffffffffffffffffff message
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
