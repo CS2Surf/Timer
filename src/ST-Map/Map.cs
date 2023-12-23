@@ -18,6 +18,8 @@ public class Map
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
     public int LastPlayed {get; set;} = 0;
+    public int TotalCompletions {get; set;} = 0;
+    public int WrRunTime {get; set;} = 0;
 
     // Zone Origin Information
     // Map start/end zones
@@ -151,6 +153,11 @@ public class Map
         int lastPlayedUpdateRows = updater.Result;
         if (lastPlayedUpdateRows != 1)
             throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name}");
+        updater.Dispose();
+
+        // Initiates getting the World Records for the map
+        // To-do: Will this check if no records exist for the map? (i.e. no rows returned)
+        GetMapRecordAndTotals(DB); // To-do: Implement styles
     }
 
     public bool IsInZone(Vector zoneOrigin, float zoneCollisionRadius, Vector spawnOrigin)
@@ -161,5 +168,32 @@ public class Map
             return true;
         else
             return false;
+    }
+
+    // Leaving this outside of the constructor for `Map` so we can call it to ONLY update the data when a new world record is set
+    internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
+    {
+        // Get map world records
+        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM `MapTimes` WHERE `map_id` = {this.ID} AND `style` = {style} ORDER BY `run_time` ASC;'");
+        MySqlDataReader mapWrData = reader.Result;
+        int totalRows = 0;
+        
+        if (mapWrData.HasRows)
+        { 
+            // To-do: Implement bonuses WR
+            // To-do: Implement stages WR
+            // To-do: Implement checkpoints WR
+            while (mapWrData.Read())
+            {
+                if (totalRows == 0)
+                    this.WrRunTime = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+
+                totalRows++;
+            }
+        }
+
+        this.TotalCompletions = totalRows; // Total completions for the map and style
+
+        mapWrData.Close();
     }
 }
