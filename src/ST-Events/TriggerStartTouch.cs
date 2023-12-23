@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.Text.Json;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
@@ -172,7 +171,7 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
                         #endif
                         
-                        // Print checkpointfffffffffffffffffffffffffffffffffffffff message
+                        // Print checkpoint message
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
