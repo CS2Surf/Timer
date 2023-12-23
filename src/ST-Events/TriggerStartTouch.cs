@@ -25,7 +25,6 @@ public partial class SurfTimer
             {
                 Console.WriteLine($"CS2 Surf ERROR >> OnTriggerStartTouch -> Init -> Player playerList does NOT contain client.UserId, this shouldn't happen. Player: {client.PlayerName} ({client.UserId})");
             }
-
             // Implement Trigger Start Touch Here
             Player player = playerList[client.UserId ?? 0];
             #if DEBUG
@@ -46,11 +45,11 @@ public partial class SurfTimer
                 // Map end zones -- hook into map_end
                 if (trigger.Entity.Name == "map_end")
                 {
+                    player.Controller.PrintToCenter($"Map End");
                     // MAP END ZONE
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
-                        player.Stats.PB[0].RunTime = player.Timer.Ticks;
                         player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
                         player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
                         player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
@@ -84,6 +83,7 @@ public partial class SurfTimer
                         #endif
 
                         // Add entry in DB for the run
+                        player.Stats.PB[0].RunTime = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
                         player.Stats.PB[0].SaveMapTime(player, DB, CurrentMap.ID); // Save the MapTime PB data
                         player.Stats.LoadMapTimesData(player.Profile.ID, CurrentMap.ID, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
                     }
@@ -99,6 +99,7 @@ public partial class SurfTimer
                         trigger.Entity.Name.Contains("stage1_start"))
                 {
                     player.Timer.Reset();
+                    player.Controller.PrintToCenter($"Map Start ({trigger.Entity.Name})");
 
                     #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
@@ -146,7 +147,6 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        // player.Timer.CurrentRunCheckpoints.Add(cp2);
                         player.Stats.ThisRun.Checkpoint[stage] = cp2;
                     }
 
@@ -185,7 +185,6 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        // player.Timer.CurrentRunCheckpoints[checkpoint] = cp2;
                         player.Stats.ThisRun.Checkpoint[checkpoint] = cp2;
                     }
 
