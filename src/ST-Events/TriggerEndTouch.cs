@@ -14,8 +14,7 @@ public partial class SurfTimer
         CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
         CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
-        
-        if (client.IsBot || !client.IsValid || client.UserId == -1 || !client.PawnIsAlive)
+        if (!client.IsValid || client.UserId == -1 || !client.PawnIsAlive) // `client.IsBot` throws error in server console when going to spectator?
         {
             return HookResult.Continue;
         }
