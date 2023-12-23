@@ -272,29 +272,25 @@ internal class PlayerStats
 {
     // To-Do: Each stat should be a class of its own, with its own methods and properties - easier to work with. 
     //        Temporarily, we store ticks + basic info so we can experiment
-
-    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
-
-    public CurrentRun ThisRun {get; set;} = new CurrentRun(); // This is a CurrenntRun object that tracks the data for the Player's current run
-
     // These account for future style support and a relevant index.
-    // public int[,] PB {get; set;} = {{0,0}}; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
-    // public int[,] Checkpoints { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: checkpoint index
-    // public int[,] Rank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: map/bonus (0 = map, 1+ = bonus index)
     public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
     public int[,] StageRank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
-
+    //
+    
+    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
+    public CurrentRun ThisRun {get; set;} = new CurrentRun(); // This is a CurrenntRun object that tracks the data for the Player's current run
     // Initialize PersonalBest for each `style` (e.g., 0 for normal) - this is a temporary solution
+    // Here we can loop through all available styles at some point and initialize them
     public PlayerStats()
     {
         PB[0] = new PersonalBest(-1, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
         // Add more styles as needed
     }
     
-    // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     /// <summary>
     /// Loads the player's MapTimes data from the database along with `Rank` for the run.
-    /// `Checkpoints` are loaded separately.
+    /// `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
+    /// This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     /// </summary>
     public void LoadMapTimesData(int playerId, int mapId, TimerDatabase DB)
     {
@@ -329,8 +325,7 @@ internal class PlayerStats
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif
-            }
-            
+            } 
         }
         playerStats.Close();
     }
