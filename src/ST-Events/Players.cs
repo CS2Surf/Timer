@@ -113,7 +113,7 @@ public partial class SurfTimer
             // To-do: hardcoded Style value
             // Load MapTimes for the player's PB and their Checkpoints
             playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0].Profile.ID, CurrentMap.ID, DB);
-            playerList[player.UserId ?? 0].Stats.PB[0].LoadCheckpointsForRun(playerList[player.UserId ?? 0].Stats.PB[0].ID, DB);
+            playerList[player.UserId ?? 0].Stats.PB[0].LoadCheckpointsForRun(DB);
 
             // Print join messages
             Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");

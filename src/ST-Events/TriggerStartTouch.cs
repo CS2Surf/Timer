@@ -24,25 +24,7 @@ public partial class SurfTimer
             // To-do: Sometimes this triggers before `OnPlayerConnect` and `playerList` does not contain the player how is this possible :thonk:
             if (!playerList.ContainsKey(client.UserId ?? 0))
             {
-                /* 
-                CS2 Surf ERROR >> OnTriggerStartTouch -> Player playerList does NOT contain client.UserId, this shouldnt happen. Player: tttt (0)
-                    11:19:18 [EROR] (cssharp:Core) Error invoking callback
-                    System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.
-                    ---> System.Collections.Generic.KeyNotFoundException: The given key '0' was not present in the dictionary.
-                    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
-                    at SurfTimer.SurfTimer.OnTriggerStartTouch(DynamicHook handler)
-                    at InvokeStub_Func`2.Invoke(Object, Object, IntPtr*)
-                    at System.Reflection.MethodInvoker.Invoke(Object obj, IntPtr* args, BindingFlags invokeAttr)
-                    --- End of inner exception stack trace ---
-                    at System.Reflection.MethodInvoker.Invoke(Object obj, IntPtr* args, BindingFlags invokeAttr)
-                    at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
-                    at System.Delegate.DynamicInvokeImpl(Object[] args)
-                    at CounterStrikeSharp.API.Core.FunctionReference.<>c__DisplayClass3_0.<.ctor>b__0(fxScriptContext* context) in /home/runner/work/CounterStrikeSharp/CounterStrikeSharp/managed/CounterStrikeSharp.API/Core/FunctionReference.cs:line 82
-                */
-                // For some reason, this happens as soon as player connects to the server (randomly)
-                // Is an "entity" created for the player when they connect which triggers this???
-                Console.WriteLine($"CS2 Surf ERROR >> OnTriggerStartTouch -> Init -> Player playerList does NOT contain client.UserId, this shouldnt happen. Player: {client.PlayerName} ({client.UserId})");
-                // return HookResult.Continue;
+                Console.WriteLine($"CS2 Surf ERROR >> OnTriggerStartTouch -> Init -> Player playerList does NOT contain client.UserId, this shouldn't happen. Player: {client.PlayerName} ({client.UserId})");
             }
 
             // Implement Trigger Start Touch Here
@@ -69,6 +51,11 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
+                        player.Stats.PB[0].RunTime = player.Timer.Ticks;
+                        player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
+
                         // To-do: make Style (currently 0) be dynamic
                         if (player.Stats.PB[0].RunTime <= 0) // Player first ever PersonalBest for the map
                         {
@@ -85,10 +72,9 @@ public partial class SurfTimer
                             player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {ChatColors.Yellow}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
                             return HookResult.Continue;
                         }
-                        player.Stats.PB[0].RunTime = player.Timer.Ticks;
 
                         if (DB == null)
-                            throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Map end zone) -> DB object is null, this shouldnt happen.");
+                            throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Map end zone) -> DB object is null, this shouldn't happen.");
 
                         #if DEBUG
                         Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
@@ -100,15 +86,9 @@ public partial class SurfTimer
                                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
                         #endif
 
-                        // Populate speed values
-                        player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
-                        player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
-                        player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
                         // Add entry in DB for the run
                         player.Stats.PB[0].SaveMapTime(player, DB, CurrentMap.ID); // Save the MapTime PB data
                         player.Stats.LoadMapTimesData(player.Profile.ID, CurrentMap.ID, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-                        player.Stats.PB[0].SaveCurrentRunCheckpoints(player, DB); // Save the Checkpoints PB data
-                        player.Stats.PB[0].LoadCheckpointsForRun(player.Stats.PB[0].ID, DB); // Load the Checkpoints PB data again
                     }
 
                     #if DEBUG
@@ -140,7 +120,7 @@ public partial class SurfTimer
                     Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> !player.Timer.IsStageMode: {!player.Timer.IsStageMode}");
                     Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.ThisRun.Checkpoint.Count <= stage: {player.Stats.ThisRun.Checkpoint.Count <= stage}");
                     #endif
-                    
+
                     // To-do:* checkpoint functionality because stages = checkpoints when in a run on a Staged map
                     // To-do:* This triggers more than once at random :monkaHmm: *already posted in CS# about OnPlayerConnect being triggered after OnStartTouch*
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*

@@ -156,7 +156,6 @@ public class Map
         updater.Dispose();
 
         // Initiates getting the World Records for the map
-        // To-do: Will this check if no records exist for the map? (i.e. no rows returned)
         GetMapRecordAndTotals(DB); // To-do: Implement styles
     }
 
