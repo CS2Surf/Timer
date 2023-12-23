@@ -234,6 +234,7 @@ internal class PersonalBest
                 newPbTask.Dispose();
             }
         }
+        player.Stats.ThisRun.Checkpoint.Clear();
     }
 
     public void SaveMapTime(Player player, TimerDatabase DB, int mapId)
@@ -308,5 +309,4 @@ internal class PlayerStats
         }
         playerStats.Close();
     }
-
 }

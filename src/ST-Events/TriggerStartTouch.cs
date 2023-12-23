@@ -135,6 +135,12 @@ public partial class SurfTimer
                     int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
                     player.Timer.Stage = stage;
 
+                    #if DEBUG
+                    Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
+                    Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> !player.Timer.IsStageMode: {!player.Timer.IsStageMode}");
+                    Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.ThisRun.Checkpoint.Count <= stage: {player.Stats.ThisRun.Checkpoint.Count <= stage}");
+                    #endif
+                    
                     // To-do:* checkpoint functionality because stages = checkpoints when in a run on a Staged map
                     // To-do:* This triggers more than once at random :monkaHmm: *already posted in CS# about OnPlayerConnect being triggered after OnStartTouch*
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*
