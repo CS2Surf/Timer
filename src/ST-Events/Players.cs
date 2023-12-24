@@ -110,10 +110,11 @@ public partial class SurfTimer
             #if DEBUG
             Console.WriteLine($"=================================== SELECT * FROM `MapTimes` WHERE `player_id` = {playerList[player.UserId ?? 0].Profile.ID} AND `map_id` = {CurrentMap.ID};");
             #endif
+
             // To-do: hardcoded Style value
             // Load MapTimes for the player's PB and their Checkpoints
-            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0].Profile.ID, CurrentMap.ID, DB);
-            playerList[player.UserId ?? 0].Stats.PB[0].LoadCheckpointsForRun(DB);
+            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0].Profile.ID, CurrentMap.ID, DB); // Will reload PB and Checkpoints for the player for all styles
+            playerList[player.UserId ?? 0].Stats.PB[0].LoadCheckpointsForRun(DB); // To-do: This really should go inside `LoadMapTimesData` imo cuz here we hardcoding load for Style 0
 
             // Print join messages
             Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
