@@ -197,6 +197,7 @@ internal class PersonalBest
 
     /// <summary>
     /// Saves the `CurrentRunCheckpoints` dictionary to the database
+    /// We need the correct `this.ID` to be populated before calling this method otherwise Query will fail
     /// </summary>
     public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)  // To-do: Transactions? Player sometimes rubberbands for a bit here
     {
@@ -248,6 +249,7 @@ internal class PersonalBest
 
     /// <summary>
     /// Saves the player's run to the database and reloads the data for the player.
+    /// NOTE: Not re-loading any data at this point as we need `LoadMapTimesData` to be called from here as well, otherwise we may not have the `this.ID` populated
     /// </summary>
     public void SaveMapTime(Player player, TimerDatabase DB, int mapId) // To-do: make `CurrentMap.ID` accessible without passing it as a parameter?
     {
@@ -263,8 +265,9 @@ internal class PersonalBest
             throw new Exception($"CS2 Surf ERROR >> internal class PersonalBest -> SaveMapTime -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");                           
         updatePlayerRunTask.Dispose();
 
-        this.SaveCurrentRunCheckpoints(player, DB); // Save checkpoints for this run
-        this.LoadCheckpointsForRun(DB); // Re-Load checkpoints for this run
+        // Will have to LoadMapTimesData right here as well to get the ID of the run we just inserted
+        // this.SaveCurrentRunCheckpoints(player, DB); // Save checkpoints for this run
+        // this.LoadCheckpointsForRun(DB); // Re-Load checkpoints for this run
     }
 }
 
