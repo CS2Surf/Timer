@@ -143,7 +143,6 @@ public partial class SurfTimer
                         PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(stage,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-                                                        velocity,
                                                         velocity_x,
                                                         velocity_y,
                                                         velocity_z,
@@ -181,7 +180,6 @@ public partial class SurfTimer
                         PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(checkpoint,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-                                                        velocity,
                                                         velocity_x,
                                                         velocity_y,
                                                         velocity_z,

@@ -65,12 +65,12 @@ internal class PersonalBest
     public int RunDate { get; set; }
     // Add other properties as needed
 
-    internal class CheckpointObject
+    public class CheckpointObject
     {
         public int CP { get; set; }
         public int RunTime { get; set; } // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
         public int Ticks { get; set; } // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
-        public float Speed { get; set; }
+        // public float Speed { get; set; } // We shouldn't really need this, we can calculate it from the velocities
         public float StartVelX { get; set; }
         public float StartVelY { get; set; }
         public float StartVelZ { get; set; }
@@ -80,12 +80,11 @@ internal class PersonalBest
         public float EndTouch { get; set; }
         public int Attempts { get; set; }
 
-        public CheckpointObject(int cp, int runTime, int ticks, float speed, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
+        public CheckpointObject(int cp, int runTime, int ticks, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
         {
             CP = cp;
             RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
             Ticks = ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
-            Speed = speed;
             StartVelX = startVelX;
             StartVelY = startVelY;
             StartVelZ = startVelZ;
@@ -171,9 +170,8 @@ internal class PersonalBest
             #endif
 
             CheckpointObject cp = new(results.GetInt32("cp"),
-                                results.GetInt32("run_time"), // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                                results.GetInt32("run_time"), // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-                                666.666f,
+                                results.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                                results.GetInt32("run_time"),   // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                 results.GetFloat("start_vel_x"),
                                 results.GetFloat("start_vel_y"),
                                 results.GetFloat("start_vel_z"),
@@ -207,7 +205,7 @@ internal class PersonalBest
             int cp = item.Key;
             int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
             int ticks = item.Value.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
-            double speed = item.Value.Speed;
+            // double speed = item.Value.Speed;
             double startVelX = item.Value.StartVelX;
             double startVelY = item.Value.StartVelY;
             double startVelZ = item.Value.StartVelZ;
@@ -217,7 +215,7 @@ internal class PersonalBest
             int attempts = item.Value.Attempts;
 
             #if DEBUG
-            Console.WriteLine($"CP: {cp} | MapTime ID: {this.ID} | Time: {runTime} | Ticks: {ticks} | Speed: {speed} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
+            Console.WriteLine($"CP: {cp} | MapTime ID: {this.ID} | Time: {runTime} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
             Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> SaveCurrentRunCheckpoints -> " +
                                 $"INSERT INTO `Checkpoints` " +
                                 $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
@@ -324,7 +322,7 @@ internal class PlayerStats
                 PB[style].RunDate = playerStats.GetInt32("run_date");
                 PB[style].Rank = playerStats.GetInt32("rank");
 
-                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {playerId} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].RunTime} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
+                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].RunTime} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif

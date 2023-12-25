@@ -20,6 +20,7 @@ public class Map
     public int LastPlayed {get; set;} = 0;
     public int TotalCompletions {get; set;} = 0;
     public int WrRunTime {get; set;} = 0;
+    public int WrId {get; set;} = 0;
 
     // Zone Origin Information
     // Map start/end zones
@@ -186,6 +187,7 @@ public class Map
             {
                 if (totalRows == 0)
                     this.WrRunTime = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+                    this.WrId = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
 
                 totalRows++;
             }
