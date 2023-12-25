@@ -76,10 +76,18 @@ internal class PlayerHUD
                                                 + _player.Controller.PlayerPawn.Value!.AbsVelocity.Z * _player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("0"), "#79d1ed") + " u/s";
             // Rank Module
-            string rankModule = FormatHUDElementHTML("Rank", _player.Stats.PB[0].RunTime > 0 ? $"{_player.Stats.PB[0].Rank}" : "N/A", "#7882dd"); // To-do: show total rank count
+            string rankModule = FormatHUDElementHTML("Rank", $"N/A", "#7882dd");
+            if (_player.Stats.PB[0].RunTime > 0 && _player.CurrMap.WrRunTime > 0)
+            {
+                rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[0].Rank}/{_player.CurrMap.TotalCompletions}", "#7882dd");
+            }
+            else if (_player.CurrMap.WrRunTime >= 0)
+            {
+                rankModule = FormatHUDElementHTML("Rank", $"N/A/{_player.CurrMap.TotalCompletions}", "#7882dd");
+            }
             // PB & WR Modules
             string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0].RunTime > 0 ? FormatTime(_player.Stats.PB[0].RunTime) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
-            string wrModule = FormatHUDElementHTML("WR", "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
+            string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WrRunTime > 0 ? FormatTime(_player.CurrMap.WrRunTime) : "N/A", "#ffc61a"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
 
             // Build HUD
             string hud = $"{timerModule}<br>{velocityModule}<br>{pbModule} | {rankModule}<br>{wrModule}";

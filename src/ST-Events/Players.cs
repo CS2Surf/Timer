@@ -105,7 +105,7 @@ public partial class SurfTimer
             PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
             playerList[player.UserId ?? 0] = new Player(player, 
                                                     new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
-                                                    Profile);
+                                                    Profile, CurrentMap);
             
             #if DEBUG
             Console.WriteLine($"=================================== SELECT * FROM `MapTimes` WHERE `player_id` = {playerList[player.UserId ?? 0].Profile.ID} AND `map_id` = {CurrentMap.ID};");
@@ -113,7 +113,7 @@ public partial class SurfTimer
 
             // To-do: hardcoded Style value
             // Load MapTimes for the player's PB and their Checkpoints
-            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0].Profile.ID, CurrentMap.ID, DB); // Will reload PB and Checkpoints for the player for all styles
+            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0], DB); // Will reload PB and Checkpoints for the player for all styles
             playerList[player.UserId ?? 0].Stats.PB[0].LoadCheckpointsForRun(DB); // To-do: This really should go inside `LoadMapTimesData` imo cuz here we hardcoding load for Style 0
 
             // Print join messages

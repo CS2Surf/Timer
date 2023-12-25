@@ -251,13 +251,13 @@ internal class PersonalBest
     /// Saves the player's run to the database and reloads the data for the player.
     /// NOTE: Not re-loading any data at this point as we need `LoadMapTimesData` to be called from here as well, otherwise we may not have the `this.ID` populated
     /// </summary>
-    public void SaveMapTime(Player player, TimerDatabase DB, int mapId) // To-do: make `CurrentMap.ID` accessible without passing it as a parameter?
+    public void SaveMapTime(Player player, TimerDatabase DB, int mapId =  0)
     {
         // Add entry in DB for the run
         // To-do: add `type`
         Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` " +
                                                     $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                    $"VALUES ({player.Profile.ID}, {mapId}, 0, 0, 0, {this.RunTime}, " +
+                                                    $"VALUES ({player.Profile.ID}, {player.CurrMap.ID}, 0, 0, 0, {this.RunTime}, " +
                                                     $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " +
                                                     $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
@@ -295,12 +295,12 @@ internal class PlayerStats
     /// `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
     /// This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     /// </summary>
-    public void LoadMapTimesData(int playerId, int mapId, TimerDatabase DB)
+    public void LoadMapTimesData(Player player, TimerDatabase DB, int playerId = 0, int mapId = 0)
     {
         Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT mainquery.*, (SELECT COUNT(*) FROM `MapTimes` AS subquery " +
                                                  $"WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` " +
                                                  $"AND subquery.`run_time` <= mainquery.`run_time`) AS `rank` FROM `MapTimes` AS mainquery " +
-                                                 $"WHERE mainquery.`player_id` = {playerId} AND mainquery.`map_id` = {mapId}; ");
+                                                 $"WHERE mainquery.`player_id` = {player.Profile.ID} AND mainquery.`map_id` = {player.CurrMap.ID}; ");
         MySqlDataReader playerStats = dbTask2.Result;
         int style = 0; // To-do: implement styles
         if (!playerStats.HasRows)
