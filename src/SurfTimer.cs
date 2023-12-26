@@ -63,6 +63,13 @@ public partial class SurfTimer : BasePlugin
         }
     }
 
+    public void OnMapEnd()
+    {
+        // Clear/reset stuff here
+        CurrentMap = null!;
+        playerList.Clear();
+    }
+
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
@@ -105,6 +112,8 @@ public partial class SurfTimer : BasePlugin
 
         // Map Start Hook
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        // Map End Hook
+        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         // Tick listener
         RegisterListener<Listeners.OnTick>(OnTick);
 
