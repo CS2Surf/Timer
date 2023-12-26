@@ -128,7 +128,7 @@ public partial class SurfTimer
                         currentCheckpoint.Attempts += 1;
                         
                         // Show Prespeed for stages - will be enabled/disabled by the user?
-                        player.Controller.PrintToCenter($"Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");
+                        player.Controller.PrintToCenter($"Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");
                     }
                     else
                     {

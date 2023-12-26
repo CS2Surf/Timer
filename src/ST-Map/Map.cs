@@ -14,6 +14,7 @@ public class Map
     public string Author {get; set;} = "";
     public int Tier {get; set;} = 0;
     public int Stages {get; set;} = 0;
+    public int Checkpoints {get; set;} = 0;
     public int Bonuses {get; set;} = 0;
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
@@ -34,6 +35,8 @@ public class Map
     public Vector[] BonusStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
     public QAngle[] BonusStartZoneAngles {get;} = Enumerable.Repeat(0, 99).Select(x => new QAngle(0,0,0)).ToArray(); // To-do: Implement bonuses
     public Vector[] BonusEndZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
+    // Map checkpoint zones
+    public Vector[] CheckpointStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray();
 
     // Constructor
     internal Map(string Name, TimerDatabase DB)
@@ -83,6 +86,14 @@ public class Map
                             this.Stages++; // Count stage zones for the map to populate DB
                         }
                     }
+                }
+
+                // Checkpoint start zones (linear maps)
+                else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success) 
+                {
+                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.Checkpoints++; // Might be useful to have this in DB entry
+                    // Do we need `info_destination_teleport` data for Checkpoint zones? 
                 }
                 
                 // Bonus start zones

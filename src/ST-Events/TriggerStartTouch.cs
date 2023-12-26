@@ -106,6 +106,7 @@ public partial class SurfTimer
                         trigger.Entity.Name.Contains("stage1_start"))
                 {
                     player.Timer.Reset();
+                    player.Stats.ThisRun.Checkpoint.Clear(); // I have the suspicion that the `Timer.Reset()` does not properly reset this object :thonk:
                     player.Controller.PrintToCenter($"Map Start ({trigger.Entity.Name})");
 
                     #if DEBUG
@@ -162,7 +163,7 @@ public partial class SurfTimer
                 // Map checkpoint zones -- hook into map_(c)heck(p)oint#
                 else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success)
                 {
-                    int checkpoint = Int32.Parse(Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Value) - 1;
+                    int checkpoint = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
                     player.Timer.Checkpoint = checkpoint;
 
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < checkpoint*
