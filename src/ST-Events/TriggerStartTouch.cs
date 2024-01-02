@@ -37,12 +37,10 @@ public partial class SurfTimer
             {
                 // Get velocities for DB queries
                 // Get the velocity of the player - we will be using this values to compare and write to DB
-                float velocity = (float)Math.Sqrt(player.Controller.PlayerPawn.Value!.AbsVelocity.X * player.Controller.PlayerPawn.Value!.AbsVelocity.X
-                                            + player.Controller.PlayerPawn.Value!.AbsVelocity.Y * player.Controller.PlayerPawn.Value!.AbsVelocity.Y
-                                            + player.Controller.PlayerPawn.Value!.AbsVelocity.Z * player.Controller.PlayerPawn.Value!.AbsVelocity.Z);
                 float velocity_x = player.Controller.PlayerPawn.Value!.AbsVelocity.X;
                 float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
                 float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
+                float velocity = (float)Math.Sqrt(velocity_x * velocity_x + velocity_y * velocity_y + velocity_z + velocity_z);
 
                 // Map end zones -- hook into map_end
                 if (trigger.Entity.Name == "map_end")
