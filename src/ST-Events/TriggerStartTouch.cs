@@ -139,7 +139,7 @@ public partial class SurfTimer
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(stage,
+                        CheckpointObject cp2 = new CheckpointObject(stage,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                                         velocity_x,
@@ -176,7 +176,7 @@ public partial class SurfTimer
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        PersonalBest.CheckpointObject cp2 = new PersonalBest.CheckpointObject(checkpoint,
+                        CheckpointObject cp2 = new CheckpointObject(checkpoint,
                                                         player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
                                                         player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                                         velocity_x,
