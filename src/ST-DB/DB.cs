@@ -15,10 +15,9 @@ internal class TimerDatabase
         // Null'd
     }
 
-
-    public TimerDatabase(string host, string database, string user, string password, int port, int timeout)
+    public TimerDatabase(DBCfg cfg)
     {
-        this._connString = $"server={host};user={user};password={password};database={database};port={port};connect timeout={timeout};";
+        this._connString = $"server={cfg.Host};user={cfg.User};password={cfg.Password};database={cfg.Database};port={cfg.Port};connect timeout={cfg.Timeout};";
         this._db = new MySqlConnection(this._connString);
         this._db.Open();
     }

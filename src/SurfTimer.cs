@@ -44,13 +44,16 @@ public partial class SurfTimer : BasePlugin
     public override string ModuleVersion => "DEV-1";
     public override string ModuleDescription => "Official Surf Timer by the CS2 Surf Initiative.";
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
-    public string PluginPrefix => $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]"; // To-do: make configurable
 
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
     internal TimerDatabase? DB = new TimerDatabase();
     public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
     internal Map CurrentMap = null!;
+
+    // Configs
+    internal static ConfigLoader<DBCfg> databaseCfg = new ConfigLoader<DBCfg>();
+    internal static ConfigLoader<PluginCfg> pluginCfg = new ConfigLoader<PluginCfg>();
 
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
@@ -65,7 +68,9 @@ public partial class SurfTimer : BasePlugin
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        // Load cvars/other configs here
+        // (Re)Load cvars/other configs here
+        pluginCfg.Load();
+
         // Execute server_settings.cfg
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
@@ -78,13 +83,7 @@ public partial class SurfTimer : BasePlugin
         // Load database config & spawn database object
         try
         {
-            JsonElement dbConfig = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/database.json")).RootElement;
-            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString()!,
-                                    dbConfig.GetProperty("database").GetString()!,
-                                    dbConfig.GetProperty("user").GetString()!,
-                                    dbConfig.GetProperty("password").GetString()!,
-                                    dbConfig.GetProperty("port").GetInt32(),
-                                    dbConfig.GetProperty("timeout").GetInt32());
+            DB = new TimerDatabase(databaseCfg.Config);
             Console.WriteLine("[CS2 Surf] Database connection established.");
         }
 
