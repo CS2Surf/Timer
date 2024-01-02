@@ -44,6 +44,7 @@ public partial class SurfTimer
                     // MAP START ZONE
                     player.Timer.Start();
 
+                    /* Revisit
                     // Wonky Prespeed check
                     // To-do: make the teleportation a bit more elegant (method in a class or something)
                     if (velocity > 666.0)
@@ -54,6 +55,7 @@ public partial class SurfTimer
                         if (CurrentMap.StartZone != new Vector(0,0,0))
                             Server.NextFrame(() => player.Controller.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
                     }
+                    */
 
                     // Prespeed display
                     player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
