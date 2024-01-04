@@ -39,7 +39,10 @@ public partial class SurfTimer
                 country = "XX";
             geoipDB.Dispose();
 
-            // Load player data from database (or create an entry if first time connecting)
+            if (DB == null)
+                throw new Exception("CS2 Surf ERROR >> OnPlayerConnect -> DB object is null, this shouldnt happen.");
+
+            // Load player profile data from database (or create an entry if first time connecting)
             Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
             MySqlDataReader playerData = dbTask.Result;
             if (playerData.HasRows && playerData.Read())
@@ -58,7 +61,6 @@ public partial class SurfTimer
                 Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> Returning player {name} ({player.SteamID}) loaded from database with ID {dbID}");
                 #endif
             }
-
             else
             {
                 playerData.Close();
@@ -73,7 +75,8 @@ public partial class SurfTimer
                 int newPlayerTaskRows = newPlayerTask.Result;
                 if (newPlayerTaskRows != 1)
                     throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
-                    
+                newPlayerTask.Dispose(); 
+
                 // Get new player's database ID
                 Task<MySqlDataReader> newPlayerDataTask = DB.Query($"SELECT `id` FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
                 MySqlDataReader newPlayerData = newPlayerDataTask.Result;
@@ -96,15 +99,25 @@ public partial class SurfTimer
                 Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");
                 #endif
             }
-            PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
+            dbTask.Dispose();
 
-            // Create Player object
+            // Create Player object and add to playerList
+            PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
             playerList[player.UserId ?? 0] = new Player(player, 
                                                     new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
-                                                    Profile);
+                                                    Profile, CurrentMap);
             
+            #if DEBUG
+            Console.WriteLine($"=================================== SELECT * FROM `MapTimes` WHERE `player_id` = {playerList[player.UserId ?? 0].Profile.ID} AND `map_id` = {CurrentMap.ID};");
+            #endif
+
+            // To-do: hardcoded Style value
+            // Load MapTimes for the player's PB and their Checkpoints
+            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0], DB); // Will reload PB and Checkpoints for the player for all styles
+            playerList[player.UserId ?? 0].Stats.PB[0].Checkpoint[0].LoadCheckpointsForRun(DB); // To-do: This really should go inside `LoadMapTimesData` imo cuz here we hardcoding load for Style 0 - regardless of index for `Checkpoint[X]` it will load all checkpoints
+
             // Print join messages
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
+            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
             Console.WriteLine($"[CS2 Surf] {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
             return HookResult.Continue;
         }
@@ -122,15 +135,27 @@ public partial class SurfTimer
         
         else
         {
-            // Update data in Player DB table
-            Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', `last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
-            if (updatePlayerTask.Result != 1)
-                throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
+            if (DB == null)
+                throw new Exception("CS2 Surf ERROR >> OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
 
-            // Player disconnection to-do
+            if (!playerList.ContainsKey(player.UserId ?? 0))
+            {
+                Console.WriteLine($"CS2 Surf ERROR >> OnPlayerDisconnect -> Player playerList does NOT contain player.UserId, this shouldn't happen. Player: {player.PlayerName} ({player.UserId})");
+            }
+            else
+            {
+                // Update data in Player DB table
+                Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', " +
+                                                        $"`last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 " +
+                                                        $"WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
+                if (updatePlayerTask.Result != 1)
+                    throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
+                // Player disconnection to-do
+                updatePlayerTask.Dispose();
 
-            // Remove player data from playerList
-            playerList.Remove(player.UserId ?? 0);
+                // Remove player data from playerList
+                playerList.Remove(player.UserId ?? 0);
+            }
             return HookResult.Continue;
         }
     }

@@ -15,8 +15,11 @@ internal class Player
     // Player information
     public PlayerProfile Profile {get; set;}
 
+    // Map information
+    public Map CurrMap = null!;
+
     // Constructor
-    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile)
+    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile, Map CurrMap)
     {
         this.Controller = Controller;
         this.MovementServices = MovementServices;
@@ -27,5 +30,6 @@ internal class Player
         this.Stats = new PlayerStats();
 
         this.HUD = new PlayerHUD(this);
+        this.CurrMap = CurrMap;
     }
 }

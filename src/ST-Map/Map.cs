@@ -9,13 +9,19 @@ namespace SurfTimer;
 public class Map 
 {
     // Map information
-    public int ID {get; set;} = 0;
+    public int ID {get; set;} = -1; // Can we use this to re-trigger retrieving map information from the database?? (all db IDs are auto-incremented)
     public string Name {get; set;} = "";
     public string Author {get; set;} = "";
     public int Tier {get; set;} = 0;
     public int Stages {get; set;} = 0;
+    public int Checkpoints {get; set;} = 0;
+    public int Bonuses {get; set;} = 0;
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
+    public int LastPlayed {get; set;} = 0;
+    public int TotalCompletions {get; set;} = 0;
+    public int WrRunTime {get; set;} = 0;
+    public int WrId {get; set;} = 0;
 
     // Zone Origin Information
     // Map start/end zones
@@ -29,10 +35,14 @@ public class Map
     public Vector[] BonusStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
     public QAngle[] BonusStartZoneAngles {get;} = Enumerable.Repeat(0, 99).Select(x => new QAngle(0,0,0)).ToArray(); // To-do: Implement bonuses
     public Vector[] BonusEndZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray(); // To-do: Implement bonuses
+    // Map checkpoint zones
+    public Vector[] CheckpointStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray();
 
     // Constructor
     internal Map(string Name, TimerDatabase DB)
     {
+        // Set map name
+        this.Name = Name;
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
         // Gathering info_teleport_destinations from the map
@@ -73,10 +83,20 @@ public class Map
                         if (teleport.Entity!.Name != null && IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!))
                         {
                             this.StageStartZoneAngles[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.Stages++; // Count stage zones for the map to populate DB
                         }
                     }
                 }
 
+                // Checkpoint start zones (linear maps)
+                else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success) 
+                {
+                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.Checkpoints++; // Might be useful to have this in DB entry
+                    // Do we need `info_destination_teleport` data for Checkpoint zones? 
+                }
+                
+                // Bonus start zones
                 else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success) 
                 {
                     this.BonusStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
@@ -87,6 +107,7 @@ public class Map
                         if (teleport.Entity!.Name != null && IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!))
                         {
                             this.BonusStartZoneAngles[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.Bonuses++; // Count bonus zones for the map to populate DB
                         }
                     }
                 }
@@ -102,49 +123,65 @@ public class Map
         // Gather map information OR create entry
         Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
         MySqlDataReader mapData = reader.Result;
-        if (mapData.HasRows && mapData.Read())
+        bool updateData = false;
+        if (mapData.HasRows && mapData.Read()) // In here we can check whether MapData in DB is the same as the newly extracted data, if not, update it (as hookzones may have changed on map updates)
         {
             this.ID = mapData.GetInt32("id");
-            this.Name = Name;
             this.Author = mapData.GetString("author") ?? "Unknown";
             this.Tier = mapData.GetInt32("tier");
-            this.Stages = mapData.GetInt32("stages");
+            if (this.Stages != mapData.GetInt32("stages") || this.Bonuses != mapData.GetInt32("bonuses"))
+                updateData = true;
+            // this.Stages = mapData.GetInt32("stages");    // this should now be populated accordingly when looping through hookzones for the map
+            // this.Bonuses = mapData.GetInt32("bonuses");  // this should now be populated accordingly when looping through hookzones for the map
             this.Ranked = mapData.GetBoolean("ranked");
             this.DateAdded = mapData.GetInt32("date_added");
+            this.LastPlayed = mapData.GetInt32("last_played");
+            updateData = true;
             mapData.Close();
         }
 
         else
         {
             mapData.Close();
-            Task<int> writer = DB.Write($"INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', 0, 0, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})");
+            Task<int> writer = DB.Write($"INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})");
             int writerRows = writer.Result;
             if (writerRows != 1)
-                throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> new Map() -> Failed to write new map to database, this shouldnt happen. Map: {Name}");
+                throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> new Map() -> Failed to write new map to database, this shouldn't happen. Map: {Name}");
             
             Task<MySqlDataReader> postWriteReader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
             MySqlDataReader postWriteMapData = postWriteReader.Result;
             if (postWriteMapData.HasRows && postWriteMapData.Read())
             {
                 this.ID = postWriteMapData.GetInt32("id");
+                this.Author = postWriteMapData.GetString("author");
+                this.Tier = postWriteMapData.GetInt32("tier");
+                // this.Stages = -1;    // this should now be populated accordingly when looping through hookzones for the map
+                // this.Bonuses = -1;   // this should now be populated accordingly when looping through hookzones for the map
+                this.Ranked = postWriteMapData.GetBoolean("ranked");
+                this.DateAdded = postWriteMapData.GetInt32("date_added");
+                this.LastPlayed = this.DateAdded; 
             }
             postWriteMapData.Close();
-            this.Name = Name;
-            this.Author = "Unknown";
-            this.Tier = 0;
-            this.Stages = 0;
-            this.Ranked = false;
-            this.DateAdded = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(); 
 
             return;
         }
 
         // Update the map's last played data in the DB
-        // Update last_played data
-        Task<int> updater = DB.Write($"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()} WHERE id = {this.ID}");
+        // Update last_played data or update last_played, stages, and bonuses data
+        string query = $"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()} WHERE id={this.ID}";
+        if (updateData) query = $"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, stages={this.Stages}, bonuses={this.Bonuses} WHERE id={this.ID}";
+        #if DEBUG
+        Console.WriteLine($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Update MapData: {query}");
+        #endif
+        
+        Task<int> updater = DB.Write(query);
         int lastPlayedUpdateRows = updater.Result;
         if (lastPlayedUpdateRows != 1)
-            throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name}");
+            throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name} | was it 'big' update? {updateData}");
+        updater.Dispose();
+
+        // Initiates getting the World Records for the map
+        GetMapRecordAndTotals(DB); // To-do: Implement styles
     }
 
     public bool IsInZone(Vector zoneOrigin, float zoneCollisionRadius, Vector spawnOrigin)
@@ -155,5 +192,33 @@ public class Map
             return true;
         else
             return false;
+    }
+
+    // Leaving this outside of the constructor for `Map` so we can call it to ONLY update the data when a new world record is set
+    internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
+    {
+        // Get map world records
+        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM `MapTimes` WHERE `map_id` = {this.ID} AND `style` = {style} ORDER BY `run_time` ASC;'");
+        MySqlDataReader mapWrData = reader.Result;
+        int totalRows = 0;
+        
+        if (mapWrData.HasRows)
+        { 
+            // To-do: Implement bonuses WR
+            // To-do: Implement stages WR
+            // To-do: Implement checkpoints WR
+            while (mapWrData.Read())
+            {
+                if (totalRows == 0)
+                    this.WrRunTime = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+                    this.WrId = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
+
+                totalRows++;
+            }
+        }
+
+        this.TotalCompletions = totalRows; // Total completions for the map and style
+
+        mapWrData.Close();
     }
 }

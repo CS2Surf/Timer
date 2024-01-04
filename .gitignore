@@ -1,6 +1,8 @@
 *.vs
-*.vscode
+*.vscode/*
+!.vscode/tasks.json
 *.idea
 src/bin/Debug/*
+src/bin/Release/*
 src/obj/*
 src/SurfTimer.csproj
