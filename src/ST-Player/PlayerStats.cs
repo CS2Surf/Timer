@@ -7,8 +7,8 @@ namespace SurfTimer;
 /// </summary>
 internal class CurrentRun
 {
-    public Dictionary<int, CheckpointObject> Checkpoint { get; set; } // Current RUN checkpoints tracker
-    public int RunTime { get; set; } // To-do: will be the last (any) zone end touch time
+    public Dictionary<int, Checkpoint> Checkpoint { get; set; } // Current RUN checkpoints tracker
+    public int Ticks { get; set; } // To-do: will be the last (any) zone end touch time
     public float StartVelX { get; set; } // This will store MAP START VELOCITY X
     public float StartVelY { get; set; } // This will store MAP START VELOCITY Y
     public float StartVelZ { get; set; } // This will store MAP START VELOCITY Z
@@ -21,8 +21,8 @@ internal class CurrentRun
     // Constructor
     public CurrentRun()
     {
-        Checkpoint = new Dictionary<int, CheckpointObject>();
-        RunTime = 0;
+        Checkpoint = new Dictionary<int, Checkpoint>();
+        Ticks = 0;
         StartVelX = 0.0f;
         StartVelY = 0.0f;
         StartVelZ = 0.0f;
@@ -35,7 +35,7 @@ internal class CurrentRun
     public void Reset()
     {
         Checkpoint.Clear();
-        RunTime = 0;
+        Ticks = 0;
         StartVelX = 0.0f;
         StartVelY = 0.0f;
         StartVelZ = 0.0f;
@@ -47,45 +47,14 @@ internal class CurrentRun
     }
 }
 
-public class CheckpointObject
-{
-    public int CP { get; set; }
-    public int RunTime { get; set; } // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-    public int Ticks { get; set; } // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
-    // public float Speed { get; set; } // We shouldn't really need this, we can calculate it from the velocities
-    public float StartVelX { get; set; }
-    public float StartVelY { get; set; }
-    public float StartVelZ { get; set; }
-    public float EndVelX { get; set; }
-    public float EndVelY { get; set; }
-    public float EndVelZ { get; set; }
-    public float EndTouch { get; set; }
-    public int Attempts { get; set; }
-
-    public CheckpointObject(int cp, int runTime, int ticks, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
-    {
-        CP = cp;
-        RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-        Ticks = ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
-        StartVelX = startVelX;
-        StartVelY = startVelY;
-        StartVelZ = startVelZ;
-        EndVelX = endVelX;
-        EndVelY = endVelY;
-        EndVelZ = endVelZ;
-        EndTouch = endTouch;
-        Attempts = attempts;
-    }
-}
-
 // To-do: make Style (currently 0) be dynamic
 // To-do: add `Type`
 internal class PersonalBest
 {
-    public int ID { get; set; }
-    public int RunTime { get; set; }
-    public int Rank { get; set; }
-    public Dictionary<int, CheckpointObject> Checkpoint { get; set; }
+    public int ID { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
+    public int Ticks { get; set; }
+    public int Rank { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
+    public Dictionary<int, Checkpoint> Checkpoint { get; set; }
     // public int Type { get; set; }
     public float StartVelX { get; set; }
     public float StartVelY { get; set; }
@@ -97,12 +66,10 @@ internal class PersonalBest
     // Add other properties as needed
 
     // Constructor
-    public PersonalBest(int id, int runTime, int rank, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate)
+    public PersonalBest(int runTime, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate)
     {
-        ID = id;
-        RunTime = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-        Rank = rank;
-        Checkpoint = new Dictionary<int, CheckpointObject>();
+        Ticks = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+        Checkpoint = new Dictionary<int, Checkpoint>();
         // Type = type;
         StartVelX = startVelX;
         StartVelY = startVelY;
@@ -136,13 +103,13 @@ internal class PersonalBest
             Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints list is not initialized.");
             #endif
 
-            this.Checkpoint = new Dictionary<int, CheckpointObject>(); // Initialize if null
+            this.Checkpoint = new Dictionary<int, Checkpoint>(); // Initialize if null
         }
 
         #if DEBUG
         Console.WriteLine($"this.Checkpoint.Count {this.Checkpoint.Count} ");
         Console.WriteLine($"this.ID {this.ID} ");
-        Console.WriteLine($"this.RunTime {this.RunTime} ");
+        Console.WriteLine($"this.Ticks {this.Ticks} ");
         Console.WriteLine($"this.RunDate {this.RunDate} ");
         #endif
 
@@ -169,21 +136,24 @@ internal class PersonalBest
             Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
             #endif
 
-            CheckpointObject cp = new(results.GetInt32("cp"),
+            Checkpoint cp = new(results.GetInt32("cp"),
                                 results.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                                results.GetInt32("run_time"),   // To-do: this was supposed to be the ticks but that is used for run_time for HUD
                                 results.GetFloat("start_vel_x"),
                                 results.GetFloat("start_vel_y"),
                                 results.GetFloat("start_vel_z"),
                                 results.GetFloat("end_vel_x"),
                                 results.GetFloat("end_vel_y"),
                                 results.GetFloat("end_vel_z"),
+                                results.GetInt32("run_date"),
                                 results.GetFloat("end_touch"),
                                 results.GetInt32("attempts"));
+            cp.ID = results.GetInt32("id");
+            // To-do: cp.ID = calculate Rank # from DB
+
             Checkpoint[cp.CP] = cp;
 
             #if DEBUG
-            Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Loaded CP {cp.CP} with RunTime {cp.RunTime}.");
+            Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Loaded CP {cp.CP} with RunTime {cp.Ticks}.");
             #endif
         }
         results.Close();
@@ -203,8 +173,8 @@ internal class PersonalBest
         foreach (var item in player.Stats.ThisRun.Checkpoint)
         {
             int cp = item.Key;
-            int runTime = item.Value.RunTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-            int ticks = item.Value.Ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD
+            int ticks = item.Value.Ticks;
+            int runTime = item.Value.Ticks / 64; // Runtime in decimal
             // double speed = item.Value.Speed;
             double startVelX = item.Value.StartVelX;
             double startVelY = item.Value.StartVelY;
@@ -255,7 +225,7 @@ internal class PersonalBest
         // To-do: add `type`
         Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` " +
                                                     $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                    $"VALUES ({player.Profile.ID}, {player.CurrMap.ID}, 0, 0, 0, {this.RunTime}, " +
+                                                    $"VALUES ({player.Profile.ID}, {player.CurrMap.ID}, 0, 0, 0, {this.Ticks}, " +
                                                     $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " +
                                                     $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
@@ -266,6 +236,20 @@ internal class PersonalBest
         // Will have to LoadMapTimesData right here as well to get the ID of the run we just inserted
         // this.SaveCurrentRunCheckpoints(player, DB); // Save checkpoints for this run
         // this.LoadCheckpointsForRun(DB); // Re-Load checkpoints for this run
+    }
+}
+
+internal class Checkpoint : PersonalBest
+{
+    public int CP { get; set; } // Checkpoint number
+    public float EndTouch { get; set; }
+    public int Attempts { get; set; }
+
+    public Checkpoint(int cp, int runTime, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate, float endTouch, int attempts) : base(runTime, startVelX, startVelY, startVelZ, endVelX, endVelY, endVelZ, runDate)
+    {
+        CP = cp;
+        EndTouch = endTouch;
+        Attempts = attempts;
     }
 }
 
@@ -284,7 +268,7 @@ internal class PlayerStats
     // Here we can loop through all available styles at some point and initialize them
     public PlayerStats()
     {
-        PB[0] = new PersonalBest(-1, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+        PB[0] = new PersonalBest(0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
         // Add more styles as needed
     }
 
@@ -318,11 +302,11 @@ internal class PlayerStats
                 PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
                 PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
                 PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                PB[style].RunTime = playerStats.GetInt32("run_time");
+                PB[style].Ticks = playerStats.GetInt32("run_time");
                 PB[style].RunDate = playerStats.GetInt32("run_date");
                 PB[style].Rank = playerStats.GetInt32("rank");
 
-                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].RunTime} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
+                Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif

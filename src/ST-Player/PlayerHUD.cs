@@ -77,7 +77,7 @@ internal class PlayerHUD
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("0"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", $"N/A", "#7882dd");
-            if (_player.Stats.PB[0].RunTime > 0 && _player.CurrMap.WrRunTime > 0)
+            if (_player.Stats.PB[0].Ticks > 0 && _player.CurrMap.WrRunTime > 0)
             {
                 rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[0].Rank}/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
@@ -86,7 +86,7 @@ internal class PlayerHUD
                 rankModule = FormatHUDElementHTML("Rank", $"N/A/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
             // PB & WR Modules
-            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0].RunTime > 0 ? FormatTime(_player.Stats.PB[0].RunTime) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
+            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0].Ticks > 0 ? FormatTime(_player.Stats.PB[0].Ticks) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
             string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WrRunTime > 0 ? FormatTime(_player.CurrMap.WrRunTime) : "N/A", "#ffc61a"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
 
             // Build HUD
@@ -119,7 +119,7 @@ internal class PlayerHUD
         // Can check checkpoints count instead of try/catch
         try
         {
-            pbTime = _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].RunTime;
+            pbTime = _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].Ticks;
             pbSpeed = (float)Math.Sqrt(_player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX
                                         + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY
                                         + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ);

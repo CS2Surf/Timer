@@ -55,13 +55,13 @@ public partial class SurfTimer
                         player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
 
                         // To-do: make Style (currently 0) be dynamic
-                        if (player.Stats.PB[0].RunTime <= 0) // Player first ever PersonalBest for the map
+                        if (player.Stats.PB[0].Ticks <= 0) // Player first ever PersonalBest for the map
                         {
                             Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
-                        else if (player.Timer.Ticks < player.Stats.PB[0].RunTime) // Player beating their existing PersonalBest for the map
+                        else if (player.Timer.Ticks < player.Stats.PB[0].Ticks) // Player beating their existing PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].RunTime)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
@@ -73,13 +73,13 @@ public partial class SurfTimer
                             throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Map end zone) -> DB object is null, this shouldn't happen.");
 
                         
-                        player.Stats.PB[0].RunTime = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
+                        player.Stats.PB[0].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
 
                         #if DEBUG
                         Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
                                                                     $"============== INSERT INTO `MapTimes` " +
                                                                     $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].RunTime}, " +
+                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].Ticks}, " +
                                                                     $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
                                                                     $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
                                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
@@ -139,16 +139,16 @@ public partial class SurfTimer
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        CheckpointObject cp2 = new CheckpointObject(stage,
-                                                        player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                                                        player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
+                        Checkpoint cp2 = new Checkpoint(stage,
+                                                        player.Timer.Ticks,
                                                         velocity_x,
                                                         velocity_y,
                                                         velocity_z,
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
-                                                        -1.0f,
+                                                        0,
+                                                        0,
                                                         0);
                         player.Stats.ThisRun.Checkpoint[stage] = cp2;
                     }
@@ -176,15 +176,15 @@ public partial class SurfTimer
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        CheckpointObject cp2 = new CheckpointObject(checkpoint,
-                                                        player.Timer.Ticks, // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                                                        player.Timer.Ticks, // To-do: this was supposed to be the ticks but that is used for run_time for HUD
+                        Checkpoint cp2 = new Checkpoint(checkpoint,
+                                                        player.Timer.Ticks,
                                                         velocity_x,
                                                         velocity_y,
                                                         velocity_z,
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
+                                                        0,
                                                         -1.0f,
                                                         0);
                         player.Stats.ThisRun.Checkpoint[checkpoint] = cp2;
