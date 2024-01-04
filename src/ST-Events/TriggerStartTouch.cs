@@ -147,8 +147,7 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
-                                                        0,
-                                                        0,
+                                                        -1.0f,
                                                         0);
                         player.Stats.ThisRun.Checkpoint[stage] = cp2;
                     }
@@ -184,7 +183,6 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
-                                                        0,
                                                         -1.0f,
                                                         0);
                         player.Stats.ThisRun.Checkpoint[checkpoint] = cp2;

@@ -119,10 +119,10 @@ internal class PlayerHUD
         // Can check checkpoints count instead of try/catch
         try
         {
-            pbTime = _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].Ticks;
-            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelX
-                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelY
-                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ);
+            pbTime = _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpTicks;
+            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelX * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelX
+                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelY * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelY
+                                        + _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelZ * _player.Stats.PB[0].Checkpoint[_player.Timer.Checkpoint].CpStartVelZ);
             
             #if DEBUG
             Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  Got pbTime from _player.Stats.PB[0].Checkpoint[{_player.Timer.Checkpoint} = {pbTime}]");

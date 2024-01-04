@@ -87,11 +87,11 @@ public partial class SurfTimer
                         #endif
 
                         // Update the values
-                        currentCheckpoint.EndVelX = velocity_x;
-                        currentCheckpoint.EndVelY = velocity_y;
-                        currentCheckpoint.EndVelZ = velocity_z;
-                        currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
-                        currentCheckpoint.Attempts += 1;
+                        currentCheckpoint.CpEndVelX = velocity_x;
+                        currentCheckpoint.CpEndVelY = velocity_y;
+                        currentCheckpoint.CpEndVelZ = velocity_z;
+                        currentCheckpoint.CpEndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
+                        currentCheckpoint.CpAttempts += 1;
                         
                         // Show Prespeed for stages - will be enabled/disabled by the user?
                         player.Controller.PrintToCenter($"Stage {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");
@@ -121,11 +121,11 @@ public partial class SurfTimer
                         #endif
 
                         // Update the values
-                        currentCheckpoint.EndVelX = velocity_x;
-                        currentCheckpoint.EndVelY = velocity_y;
-                        currentCheckpoint.EndVelZ = velocity_z;
-                        currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
-                        currentCheckpoint.Attempts += 1;
+                        currentCheckpoint.CpEndVelX = velocity_x;
+                        currentCheckpoint.CpEndVelY = velocity_y;
+                        currentCheckpoint.CpEndVelZ = velocity_z;
+                        currentCheckpoint.CpEndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
+                        currentCheckpoint.CpAttempts += 1;
                         
                         // Show Prespeed for stages - will be enabled/disabled by the user?
                         player.Controller.PrintToCenter($"Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");

@@ -47,6 +47,34 @@ internal class CurrentRun
     }
 }
 
+internal class Checkpoint : PersonalBest
+{
+    public int CP { get; set; }
+    public int CpTicks { get; set; } // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
+    public float CpStartVelX { get; set; }
+    public float CpStartVelY { get; set; }
+    public float CpStartVelZ { get; set; }
+    public float CpEndVelX { get; set; }
+    public float CpEndVelY { get; set; }
+    public float CpEndVelZ { get; set; }
+    public float CpEndTouch { get; set; }
+    public int CpAttempts { get; set; }
+
+    public Checkpoint(int cp, int ticks, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, float endTouch, int attempts)
+    {
+        CP = cp;
+        CpTicks = ticks; // To-do: this was supposed to be the ticks but that is used for run_time for HUD????
+        CpStartVelX = startVelX;
+        CpStartVelY = startVelY;
+        CpStartVelZ = startVelZ;
+        CpEndVelX = endVelX;
+        CpEndVelY = endVelY;
+        CpEndVelZ = endVelZ;
+        CpEndTouch = endTouch;
+        CpAttempts = attempts;
+    }
+}
+
 // To-do: make Style (currently 0) be dynamic
 // To-do: add `Type`
 internal class PersonalBest
@@ -66,18 +94,18 @@ internal class PersonalBest
     // Add other properties as needed
 
     // Constructor
-    public PersonalBest(int runTime, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate)
+    public PersonalBest()
     {
-        Ticks = runTime; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+        Ticks = -1; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
         Checkpoint = new Dictionary<int, Checkpoint>();
         // Type = type;
-        StartVelX = startVelX;
-        StartVelY = startVelY;
-        StartVelZ = startVelZ;
-        EndVelX = endVelX;
-        EndVelY = endVelY;
-        EndVelZ = endVelZ;
-        RunDate = runDate;
+        StartVelX = -1.0f;
+        StartVelY = -1.0f;
+        StartVelZ = -1.0f;
+        EndVelX = -1.0f;
+        EndVelY = -1.0f;
+        EndVelZ = -1.0f;
+        RunDate = 0;
     }
 
     /// <summary>
@@ -144,10 +172,9 @@ internal class PersonalBest
                                 results.GetFloat("end_vel_x"),
                                 results.GetFloat("end_vel_y"),
                                 results.GetFloat("end_vel_z"),
-                                results.GetInt32("run_date"),
                                 results.GetFloat("end_touch"),
                                 results.GetInt32("attempts"));
-            cp.ID = results.GetInt32("id");
+            cp.ID = results.GetInt32("cp");
             // To-do: cp.ID = calculate Rank # from DB
 
             Checkpoint[cp.CP] = cp;
@@ -173,16 +200,15 @@ internal class PersonalBest
         foreach (var item in player.Stats.ThisRun.Checkpoint)
         {
             int cp = item.Key;
-            int ticks = item.Value.Ticks;
-            int runTime = item.Value.Ticks / 64; // Runtime in decimal
-            // double speed = item.Value.Speed;
-            double startVelX = item.Value.StartVelX;
-            double startVelY = item.Value.StartVelY;
-            double startVelZ = item.Value.StartVelZ;
-            double endVelX = item.Value.EndVelX;
-            double endVelY = item.Value.EndVelY;
-            double endVelZ = item.Value.EndVelZ;
-            int attempts = item.Value.Attempts;
+            int ticks = item.Value.CpTicks;
+            int runTime = item.Value.CpTicks / 64; // Runtime in decimal
+            double startVelX = item.Value.CpStartVelX;
+            double startVelY = item.Value.CpStartVelY;
+            double startVelZ = item.Value.CpStartVelZ;
+            double endVelX = item.Value.CpEndVelX;
+            double endVelY = item.Value.CpEndVelY;
+            double endVelZ = item.Value.CpEndVelZ;
+            int attempts = item.Value.CpAttempts;
 
             #if DEBUG
             Console.WriteLine($"CP: {cp} | MapTime ID: {this.ID} | Time: {runTime} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
@@ -239,20 +265,6 @@ internal class PersonalBest
     }
 }
 
-internal class Checkpoint : PersonalBest
-{
-    public int CP { get; set; } // Checkpoint number
-    public float EndTouch { get; set; }
-    public int Attempts { get; set; }
-
-    public Checkpoint(int cp, int runTime, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int runDate, float endTouch, int attempts) : base(runTime, startVelX, startVelY, startVelZ, endVelX, endVelY, endVelZ, runDate)
-    {
-        CP = cp;
-        EndTouch = endTouch;
-        Attempts = attempts;
-    }
-}
-
 internal class PlayerStats
 {
     // To-Do: Each stat should be a class of its own, with its own methods and properties - easier to work with. 
@@ -268,7 +280,7 @@ internal class PlayerStats
     // Here we can loop through all available styles at some point and initialize them
     public PlayerStats()
     {
-        PB[0] = new PersonalBest(0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+        PB[0] = new PersonalBest();
         // Add more styles as needed
     }
 
@@ -310,7 +322,7 @@ internal class PlayerStats
                 #if DEBUG
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
                 #endif
-            } 
+            }
         }
         playerStats.Close();
     }
