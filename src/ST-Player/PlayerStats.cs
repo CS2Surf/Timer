@@ -73,6 +73,140 @@ internal class Checkpoint : PersonalBest
         CpEndTouch = endTouch;
         CpAttempts = attempts;
     }
+
+    /// <summary>
+    /// Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
+    /// </summary>
+    public void LoadCheckpointsForRun(TimerDatabase DB)
+    {
+        Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.ID};");
+        MySqlDataReader results = dbTask.Result;
+        if (this == null)
+        {
+            #if DEBUG
+            Console.WriteLine("CS2 Surf ERROR >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> PersonalBest object is null.");
+            #endif
+
+            results.Close();
+            return;
+        }
+
+        if (this.Checkpoint == null)
+        {
+            #if DEBUG
+            Console.WriteLine($"CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> Checkpoints list is not initialized.");
+            #endif
+
+            this.Checkpoint = new Dictionary<int, Checkpoint>(); // Initialize if null
+        }
+
+        #if DEBUG
+        Console.WriteLine($"this.Checkpoint.Count {this.Checkpoint.Count} ");
+        Console.WriteLine($"this.ID {this.ID} ");
+        Console.WriteLine($"this.Ticks {this.Ticks} ");
+        Console.WriteLine($"this.RunDate {this.RunDate} ");
+        #endif
+
+        if (!results.HasRows)
+        {
+            #if DEBUG
+            Console.WriteLine($"CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> No checkpoints found for this mapTimeId {this.ID}.");
+            #endif
+
+            results.Close();
+            return;
+        }
+
+        #if DEBUG
+        Console.WriteLine($"======== CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> Checkpoints found for this mapTimeId");
+        #endif
+
+        while (results.Read())
+        {
+            #if DEBUG
+            Console.WriteLine($"cp {results.GetInt32("cp")} ");
+            Console.WriteLine($"run_time {results.GetFloat("run_time")} ");
+            Console.WriteLine($"sVelX {results.GetFloat("start_vel_x")} ");
+            Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
+            #endif
+
+            Checkpoint cp = new(results.GetInt32("cp"),
+                                results.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                                results.GetFloat("start_vel_x"),
+                                results.GetFloat("start_vel_y"),
+                                results.GetFloat("start_vel_z"),
+                                results.GetFloat("end_vel_x"),
+                                results.GetFloat("end_vel_y"),
+                                results.GetFloat("end_vel_z"),
+                                results.GetFloat("end_touch"),
+                                results.GetInt32("attempts"));
+            cp.ID = results.GetInt32("cp");
+            // To-do: cp.ID = calculate Rank # from DB
+
+            Checkpoint[cp.CP] = cp;
+
+            #if DEBUG
+            Console.WriteLine($"======= CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> Loaded CP {cp.CP} with RunTime {cp.Ticks}.");
+            #endif
+        }
+        results.Close();
+
+        #if DEBUG
+        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> LoadCheckpointsForRun -> Checkpoints loaded from DB. Count: {Checkpoint.Count}");
+        #endif
+    }
+
+    /// <summary>
+    /// Saves the `CurrentRunCheckpoints` dictionary to the database
+    /// We need the correct `this.ID` to be populated before calling this method otherwise Query will fail
+    /// </summary>
+    public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)  // To-do: Transactions? Player sometimes rubberbands for a bit here
+    {
+        // Loop through the checkpoints and insert/update them in the database for the run
+        foreach (var item in player.Stats.ThisRun.Checkpoint)
+        {
+            int cp = item.Key;
+            int ticks = item.Value.CpTicks;
+            int runTime = item.Value.CpTicks / 64; // Runtime in decimal
+            double startVelX = item.Value.CpStartVelX;
+            double startVelY = item.Value.CpStartVelY;
+            double startVelZ = item.Value.CpStartVelZ;
+            double endVelX = item.Value.CpEndVelX;
+            double endVelY = item.Value.CpEndVelY;
+            double endVelZ = item.Value.CpEndVelZ;
+            int attempts = item.Value.CpAttempts;
+
+            #if DEBUG
+            Console.WriteLine($"CP: {cp} | MapTime ID: {this.ID} | Time: {runTime} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
+            Console.WriteLine($"CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> " +
+                                $"INSERT INTO `Checkpoints` " +
+                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
+                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
+                                $"VALUES ({this.ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
+                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
+                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+            #endif
+
+            // Insert/Update CPs to database
+            // To-do: Transactions?
+            // Check if the player has PB object initialized and if the player's character is currently active in the game
+            if (this != null && player.Controller.PlayerPawn.Value != null)
+            {
+                Task<int> newPbTask = DB.Write($"INSERT INTO `Checkpoints` " +
+                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
+                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
+                                $"VALUES ({this.ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) " +
+                                $"ON DUPLICATE KEY UPDATE " +
+                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
+                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+                if (newPbTask.Result <= 0)
+                    throw new Exception($"CS2 Surf ERROR >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
+                newPbTask.Dispose();
+            }
+        }
+        player.Stats.ThisRun.Checkpoint.Clear();
+    }
+
 }
 
 // To-do: make Style (currently 0) be dynamic
@@ -106,139 +240,6 @@ internal class PersonalBest
         EndVelY = -1.0f;
         EndVelZ = -1.0f;
         RunDate = 0;
-    }
-
-    /// <summary>
-    /// Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
-    /// </summary>
-    public void LoadCheckpointsForRun(TimerDatabase DB)
-    {
-        Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.ID};");
-        MySqlDataReader results = dbTask.Result;
-        if (this == null)
-        {
-            #if DEBUG
-            Console.WriteLine("CS2 Surf ERROR >> internal class PersonalBest -> LoadCheckpointsForRun -> PersonalBest object is null.");
-            #endif
-
-            results.Close();
-            return;
-        }
-
-        if (this.Checkpoint == null)
-        {
-            #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints list is not initialized.");
-            #endif
-
-            this.Checkpoint = new Dictionary<int, Checkpoint>(); // Initialize if null
-        }
-
-        #if DEBUG
-        Console.WriteLine($"this.Checkpoint.Count {this.Checkpoint.Count} ");
-        Console.WriteLine($"this.ID {this.ID} ");
-        Console.WriteLine($"this.Ticks {this.Ticks} ");
-        Console.WriteLine($"this.RunDate {this.RunDate} ");
-        #endif
-
-        if (!results.HasRows)
-        {
-            #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> No checkpoints found for this mapTimeId {this.ID}.");
-            #endif
-
-            results.Close();
-            return;
-        }
-
-        #if DEBUG
-        Console.WriteLine($"======== CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints found for this mapTimeId");
-        #endif
-
-        while (results.Read())
-        {
-            #if DEBUG
-            Console.WriteLine($"cp {results.GetInt32("cp")} ");
-            Console.WriteLine($"run_time {results.GetFloat("run_time")} ");
-            Console.WriteLine($"sVelX {results.GetFloat("start_vel_x")} ");
-            Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
-            #endif
-
-            Checkpoint cp = new(results.GetInt32("cp"),
-                                results.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
-                                results.GetFloat("start_vel_x"),
-                                results.GetFloat("start_vel_y"),
-                                results.GetFloat("start_vel_z"),
-                                results.GetFloat("end_vel_x"),
-                                results.GetFloat("end_vel_y"),
-                                results.GetFloat("end_vel_z"),
-                                results.GetFloat("end_touch"),
-                                results.GetInt32("attempts"));
-            cp.ID = results.GetInt32("cp");
-            // To-do: cp.ID = calculate Rank # from DB
-
-            Checkpoint[cp.CP] = cp;
-
-            #if DEBUG
-            Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Loaded CP {cp.CP} with RunTime {cp.Ticks}.");
-            #endif
-        }
-        results.Close();
-
-        #if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> LoadCheckpointsForRun -> Checkpoints loaded from DB. Count: {Checkpoint.Count}");
-        #endif
-    }
-
-    /// <summary>
-    /// Saves the `CurrentRunCheckpoints` dictionary to the database
-    /// We need the correct `this.ID` to be populated before calling this method otherwise Query will fail
-    /// </summary>
-    public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)  // To-do: Transactions? Player sometimes rubberbands for a bit here
-    {
-        // Loop through the checkpoints and insert/update them in the database for the run
-        foreach (var item in player.Stats.ThisRun.Checkpoint)
-        {
-            int cp = item.Key;
-            int ticks = item.Value.CpTicks;
-            int runTime = item.Value.CpTicks / 64; // Runtime in decimal
-            double startVelX = item.Value.CpStartVelX;
-            double startVelY = item.Value.CpStartVelY;
-            double startVelZ = item.Value.CpStartVelZ;
-            double endVelX = item.Value.CpEndVelX;
-            double endVelY = item.Value.CpEndVelY;
-            double endVelZ = item.Value.CpEndVelZ;
-            int attempts = item.Value.CpAttempts;
-
-            #if DEBUG
-            Console.WriteLine($"CP: {cp} | MapTime ID: {this.ID} | Time: {runTime} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> SaveCurrentRunCheckpoints -> " +
-                                $"INSERT INTO `Checkpoints` " +
-                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                $"VALUES ({this.ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
-                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
-            #endif
-
-            // Insert/Update CPs to database
-            // To-do: Transactions?
-            // Check if the player has PB object initialized and if the player's character is currently active in the game
-            if (this != null && player.Controller.PlayerPawn.Value != null)
-            {
-                Task<int> newPbTask = DB.Write($"INSERT INTO `Checkpoints` " +
-                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                $"VALUES ({this.ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) " +
-                                $"ON DUPLICATE KEY UPDATE " +
-                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
-                if (newPbTask.Result <= 0)
-                    throw new Exception($"CS2 Surf ERROR >> internal class PersonalBest -> SaveCurrentRunCheckpoints -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
-                newPbTask.Dispose();
-            }
-        }
-        player.Stats.ThisRun.Checkpoint.Clear();
     }
 
     /// <summary>

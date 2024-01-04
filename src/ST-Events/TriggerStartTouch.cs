@@ -88,8 +88,8 @@ public partial class SurfTimer
                         // Add entry in DB for the run
                         player.Stats.PB[0].SaveMapTime(player, DB); // Save the MapTime PB data
                         player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-                        player.Stats.PB[0].SaveCurrentRunCheckpoints(player, DB); // Save the Checkpoints PB data
-                        player.Stats.PB[0].LoadCheckpointsForRun(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
+                        player.Stats.PB[0].Checkpoint[0].SaveCurrentRunCheckpoints(player, DB); // Save the Checkpoints PB data
+                        player.Stats.PB[0].Checkpoint[0].LoadCheckpointsForRun(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
                         CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
                     }
 
