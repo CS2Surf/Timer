@@ -41,6 +41,7 @@ public partial class SurfTimer
                 float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
                 float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
                 float velocity = (float)Math.Sqrt(velocity_x * velocity_x + velocity_y * velocity_y + velocity_z + velocity_z);
+                int style = player.Timer.Style;
 
                 // Map end zones -- hook into map_end
                 if (trigger.Entity.Name == "map_end")
@@ -56,13 +57,13 @@ public partial class SurfTimer
                         player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
 
                         // To-do: make Style (currently 0) be dynamic
-                        if (player.Stats.PB[0].Ticks <= 0) // Player first ever PersonalBest for the map
+                        if (player.Stats.PB[style].Ticks <= 0) // Player first ever PersonalBest for the map
                         {
                             Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
-                        else if (player.Timer.Ticks < player.Stats.PB[0].Ticks) // Player beating their existing PersonalBest for the map
+                        else if (player.Timer.Ticks < player.Stats.PB[style].Ticks) // Player beating their existing PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[0].Ticks)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[player.Timer.Style].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
@@ -74,7 +75,7 @@ public partial class SurfTimer
                             throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Map end zone) -> DB object is null, this shouldn't happen.");
 
                         
-                        player.Stats.PB[0].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
+                        player.Stats.PB[style].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
 
                         #if DEBUG
                         Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
@@ -133,7 +134,7 @@ public partial class SurfTimer
 
                         #if DEBUG
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `stage`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
-                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[{style}].Checkpoint.Count = {player.Stats.PB[style].Checkpoint.Count}");
                         #endif
 
                         // Print checkpoint message
@@ -169,7 +170,7 @@ public partial class SurfTimer
                     {
                         #if DEBUG
                         Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
-                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[0].Checkpoint.Count = {player.Stats.PB[0].Checkpoint.Count}");
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[{style}].Checkpoint.Count = {player.Stats.PB[style].Checkpoint.Count}");
                         #endif
                         
                         // Print checkpoint message

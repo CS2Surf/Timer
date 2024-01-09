@@ -16,7 +16,7 @@ internal class PlayerTimer
     public int Checkpoint {get; set;} = 0; // Current checkpoint tracker
     public CurrentRun CurrentRunData { get; set; } = new CurrentRun(); // Current RUN data tracker
     public int Bonus { get; set; } = 0; // To-do: bonus implementation - Current bonus tracker 
-    // public int Style = 0; // To-do: style implementation
+    public int Style { get; set; } = 0; // To-do: functionality for player to change this value and the actual styles implementation - Current style tracker
 
     // Timing
     public int Ticks { get; set; } = 0; // To-do: sub-tick counting? This currently goes on OnTick, which is not sub-tick I believe? Needs investigating
