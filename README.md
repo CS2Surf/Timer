@@ -31,14 +31,14 @@ Bold & Italics = being worked on.
   - [X] Save/load times
     - [X] **_Save/load map personal bests_**
     - [X] **_Save/load map checkpoints_**
-    - [X] **_Save/load bonus personal bests_**
-    - [X] **_Save/load stage personal bests_**
+    - [ ] **_Save/load bonus personal bests_**
+    - [ ] **_Save/load stage personal bests_**
   - [ ] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [X] Base player class
-  - [X] **_Player stat classes_**
+  - [ ] **_Player stat classes_**
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
