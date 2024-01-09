@@ -63,7 +63,7 @@ public partial class SurfTimer
                         }
                         else if (player.Timer.Ticks < player.Stats.PB[style].Ticks) // Player beating their existing PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[player.Timer.Style].Ticks)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[style].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
@@ -81,7 +81,7 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
                                                                     $"============== INSERT INTO `MapTimes` " +
                                                                     $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.ThisRun.Ticks}, " +
+                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, {style}, 0, 0, {player.Stats.ThisRun.Ticks}, " +
                                                                     $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
                                                                     $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
                                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
