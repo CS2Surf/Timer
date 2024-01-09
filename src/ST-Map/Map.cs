@@ -6,7 +6,7 @@ using MySqlConnector;
 
 namespace SurfTimer;
 
-public class Map 
+internal class Map 
 {
     // Map information
     public int ID {get; set;} = -1; // Can we use this to re-trigger retrieving map information from the database?? (all db IDs are auto-incremented)
@@ -20,8 +20,7 @@ public class Map
     public int DateAdded {get; set;} = 0;
     public int LastPlayed {get; set;} = 0;
     public int TotalCompletions {get; set;} = 0;
-    public int WrRunTime {get; set;} = 0;
-    public int WrId {get; set;} = 0;
+    public Dictionary<int, PersonalBest> WR { get; set; } = new Dictionary<int, PersonalBest>();
 
     // Zone Origin Information
     // Map start/end zones
@@ -43,6 +42,7 @@ public class Map
     {
         // Set map name
         this.Name = Name;
+        this.WR[0] = new PersonalBest(); // To-do: Implement styles
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
         // Gathering info_teleport_destinations from the map
@@ -178,7 +178,8 @@ public class Map
             int writerRows = writer.Result;
             if (writerRows != 1)
                 throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> new Map() -> Failed to write new map to database, this shouldn't happen. Map: {Name}");
-            
+            writer.Dispose();
+
             Task<MySqlDataReader> postWriteReader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
             MySqlDataReader postWriteMapData = postWriteReader.Result;
             if (postWriteMapData.HasRows && postWriteMapData.Read())
@@ -229,7 +230,7 @@ public class Map
     internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
     {
         // Get map world records
-        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM `MapTimes` WHERE `map_id` = {this.ID} AND `style` = {style} ORDER BY `run_time` ASC;'");
+        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM `MapTimes` WHERE `map_id` = {this.ID} AND `style` = {style} ORDER BY `run_time` ASC;");
         MySqlDataReader mapWrData = reader.Result;
         int totalRows = 0;
         
@@ -237,19 +238,60 @@ public class Map
         { 
             // To-do: Implement bonuses WR
             // To-do: Implement stages WR
-            // To-do: Implement checkpoints WR
             while (mapWrData.Read())
             {
-                if (totalRows == 0)
-                    this.WrRunTime = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
-                    this.WrId = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
-
+                if (totalRows == 0) // We are sorting by `run_time ASC` so the first row is always the fastest run for the map and style combo :)
+                {    
+                    this.WR[style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
+                    this.WR[style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+                    this.WR[style].StartVelX = mapWrData.GetFloat("start_vel_x"); // Fastest run start velocity X for the Map and Style combo
+                    this.WR[style].StartVelY = mapWrData.GetFloat("start_vel_y"); // Fastest run start velocity Y for the Map and Style combo
+                    this.WR[style].StartVelZ = mapWrData.GetFloat("start_vel_z"); // Fastest run start velocity Z for the Map and Style combo
+                    this.WR[style].EndVelX = mapWrData.GetFloat("end_vel_x"); // Fastest run end velocity X for the Map and Style combo
+                    this.WR[style].EndVelY = mapWrData.GetFloat("end_vel_y"); // Fastest run end velocity Y for the Map and Style combo
+                    this.WR[style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
+                    this.WR[style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
+                }
                 totalRows++;
             }
         }
-
-        this.TotalCompletions = totalRows; // Total completions for the map and style
-
         mapWrData.Close();
+        this.TotalCompletions = totalRows; // Total completions for the map and style - this should maybe be added to PersonalBest class
+
+        // Get map world record checkpoints
+        if (totalRows != 0)
+        {
+            Task<MySqlDataReader> cpReader = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.WR[style].ID};");
+            MySqlDataReader cpWrData = cpReader.Result;
+            while (cpWrData.Read())
+            {
+                #if DEBUG
+                Console.WriteLine($"cp {cpWrData.GetInt32("cp")} ");
+                Console.WriteLine($"run_time {cpWrData.GetFloat("run_time")} ");
+                Console.WriteLine($"sVelX {cpWrData.GetFloat("start_vel_x")} ");
+                Console.WriteLine($"sVelY {cpWrData.GetFloat("start_vel_y")} ");
+                #endif
+
+                Checkpoint cp = new(cpWrData.GetInt32("cp"),
+                                    cpWrData.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                                    cpWrData.GetFloat("start_vel_x"),
+                                    cpWrData.GetFloat("start_vel_y"),
+                                    cpWrData.GetFloat("start_vel_z"),
+                                    cpWrData.GetFloat("end_vel_x"),
+                                    cpWrData.GetFloat("end_vel_y"),
+                                    cpWrData.GetFloat("end_vel_z"),
+                                    cpWrData.GetFloat("end_touch"),
+                                    cpWrData.GetInt32("attempts"));
+                cp.ID = cpWrData.GetInt32("cp");
+                // To-do: cp.ID = calculate Rank # from DB
+
+                this.WR[style].Checkpoint[cp.CP] = cp;
+
+                #if DEBUG
+                Console.WriteLine($"======= CS2 Surf DEBUG >> internal void GetMapRecordAndTotals : Map -> Loaded WR CP {cp.CP} with RunTime {cp.Ticks} for MapTimeID {WR[0].ID} (MapId = {this.ID}).");
+                #endif
+            }
+            cpWrData.Close();
+        }
     }
 }

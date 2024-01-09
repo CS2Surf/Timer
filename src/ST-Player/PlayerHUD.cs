@@ -2,7 +2,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
-internal class PlayerHUD
+internal class PlayerHUD 
 {
     private Player _player;
 
@@ -55,7 +55,7 @@ internal class PlayerHUD
         }
     }
 
-    public void Display()
+    public void Display() // To-do: make Style (currently 0) be dynamic
     {
         if (_player.Controller.IsValid && _player.Controller.PawnIsAlive)
         {
@@ -77,17 +77,17 @@ internal class PlayerHUD
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("0"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", $"N/A", "#7882dd");
-            if (_player.Stats.PB[0].Ticks > 0 && _player.CurrMap.WrRunTime > 0)
+            if (_player.Stats.PB[0].Ticks > 0 && _player.CurrMap.WR[0].Ticks > 0)
             {
                 rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[0].Rank}/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
-            else if (_player.CurrMap.WrRunTime >= 0)
+            else if (_player.CurrMap.WR[0].Ticks >= 0)
             {
                 rankModule = FormatHUDElementHTML("Rank", $"N/A/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
             // PB & WR Modules
             string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[0].Ticks > 0 ? FormatTime(_player.Stats.PB[0].Ticks) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
-            string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WrRunTime > 0 ? FormatTime(_player.CurrMap.WrRunTime) : "N/A", "#ffc61a"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
+            string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WR[0].Ticks > 0 ? FormatTime(_player.CurrMap.WR[0].Ticks) : "N/A", "#ffc61a"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
 
             // Build HUD
             string hud = $"{timerModule}<br>{velocityModule}<br>{pbModule} | {rankModule}<br>{wrModule}";
@@ -104,7 +104,9 @@ internal class PlayerHUD
     public void DisplayCheckpointMessages(string PluginPrefix) // To-do: PluginPrefix should be accessible in here without passing it as a parameter
     {
         int pbTime;
+        int wrTime = -1;
         float pbSpeed;
+        float wrSpeed = -1.0f;
 
         int currentTime = _player.Timer.Ticks;
         float currentSpeed = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
@@ -150,7 +152,7 @@ internal class PlayerHUD
         if (pbTime != -1)
         {
             #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> Starting difference calculation... (pbTime != -1)");
+            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> Starting PB difference calculation... (pbTime != -1)");
             #endif
             // Reset the string
             strPbDifference = "";
@@ -178,6 +180,43 @@ internal class PlayerHUD
             strPbDifference += ChatColors.Default + ")";
         }
 
+        if (_player.CurrMap.WR[0].Ticks > 0) // To-do: make Style (currently 0) be dynamic
+        {
+            // Calculate differences in WR (WR - Current)
+            #if DEBUG
+            Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> Starting WR difference calculation... (_player.CurrMap.WR[0].Ticks > 0)");
+            #endif
+
+            wrTime = _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].Ticks;
+            wrSpeed = (float)Math.Sqrt(_player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelX * _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelX
+                                        + _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelY * _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelY
+                                        + _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ * _player.CurrMap.WR[0].Checkpoint[_player.Timer.Checkpoint].StartVelZ);
+            // Reset the string
+            strWrDifference = "";
+
+            // Calculate the WR time difference
+            if (wrTime - currentTime < 0.0)
+            {
+                strWrDifference += ChatColors.Red + "+" + _player.HUD.FormatTime((wrTime - currentTime) * -1); // We multiply by -1 to get the positive value
+            }
+            else if (wrTime - currentTime >= 0.0)
+            {
+                strWrDifference += ChatColors.Green + "-" + _player.HUD.FormatTime(wrTime - currentTime);
+            }
+            strWrDifference += ChatColors.Default + " ";
+
+            // Calculate the WR speed difference
+            if (wrSpeed - currentSpeed <= 0.0)
+            {
+                strWrDifference += "(" + ChatColors.Green + "+" + ((wrSpeed - currentSpeed) * -1).ToString("0"); // We multiply by -1 to get the positive value
+            }
+            else if (wrSpeed - currentSpeed > 0.0)
+            {
+                strWrDifference += "(" + ChatColors.Red + "-" + (wrSpeed - currentSpeed).ToString("0");
+            }
+            strWrDifference += ChatColors.Default + ")";
+        }
+
         // Print checkpoint message
         _player.Controller.PrintToChat(
             $"{PluginPrefix} CP [{ChatColors.Yellow}{_player.Timer.Checkpoint}{ChatColors.Default}]: " +
@@ -189,6 +228,8 @@ internal class PlayerHUD
         #if DEBUG
         Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  PB: {pbTime} - CURR: {currentTime} = pbTime: {pbTime - currentTime}");
         Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [SPEED] PB: {pbSpeed} - CURR: {currentSpeed} = difference: {pbSpeed - currentSpeed}");
+        Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  WR: {wrTime} - CURR: {currentTime} = difference: {wrTime - currentTime}");
+        Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [SPEED] WR: {wrSpeed} - CURR: {currentSpeed} = difference: {wrSpeed - currentSpeed}");
         #endif 
     }
 }

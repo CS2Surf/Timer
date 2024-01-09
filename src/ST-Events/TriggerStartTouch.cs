@@ -50,6 +50,7 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
+                        player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
                         player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
                         player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
                         player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
@@ -79,7 +80,7 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
                                                                     $"============== INSERT INTO `MapTimes` " +
                                                                     $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.PB[0].Ticks}, " +
+                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, 0, 0, 0, {player.Stats.ThisRun.Ticks}, " +
                                                                     $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
                                                                     $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
                                                                     $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
@@ -126,7 +127,7 @@ public partial class SurfTimer
                     #endif
 
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*
-                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count <= stage)
+                    if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count < stage)
                     {
                         player.Timer.Checkpoint = stage; // Stage = Checkpoint when in a run on a Staged map
 
