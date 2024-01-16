@@ -88,7 +88,7 @@ internal class PlayerHUD
             }
             else if (_player.CurrMap.WR[style].ID != -1)
             {
-                rankModule = FormatHUDElementHTML("Rank", $"N/A/{_player.CurrMap.TotalCompletions}", "#7882dd");
+                rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
             // PB & WR Modules
             string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[style].Ticks > 0 ? FormatTime(_player.Stats.PB[style].Ticks) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
@@ -104,8 +104,12 @@ internal class PlayerHUD
         {
             if (_player.CurrMap.ReplayBot.Controller?.Pawn.SerialNum == _player.Controller.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
             {
+                // Replay HUD Modules
+                string replayModule = $"{FormatHUDElementHTML("", "REPLAY", "red", "large")}";
+                string nameModule = FormatHUDElementHTML($"{_player.CurrMap.WR[_player.Timer.Style].Name}", $"{FormatTime(_player.CurrMap.WR[_player.Timer.Style].Ticks)}", "#ffd500");
                 string elapsed_ticks = FormatHUDElementHTML("Tick", $"{_player.CurrMap.ReplayBot.CurrentFrameTick}/{_player.CurrMap.ReplayBot.Frames.Count}", "#7882dd");
-                string hud = $"{FormatHUDElementHTML("", "REPLAY", "red", "large")}<br>{elapsed_ticks}";
+                string hud = $"{replayModule}<br>{elapsed_ticks}<br>{nameModule}";
+
                 _player.Controller.PrintToCenterHtml(hud);
             }
         }

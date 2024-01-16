@@ -16,6 +16,7 @@ internal class PersonalBest
     public float EndVelY { get; set; }
     public float EndVelZ { get; set; }
     public int RunDate { get; set; }
+    public string Name { get; set; } = ""; // This is used only for WRs
     // Add other properties as needed
 
     // Constructor

@@ -125,7 +125,7 @@ internal class ReplayPlayer
 
         SchemaString<CBasePlayerController> bot_name = new SchemaString<CBasePlayerController>(this.Controller, "m_iszPlayerName");
         // Revisit, FORMAT CORECTLLY
-        bot_name.Set($"[WR] {PlayerHUD.FormatTime(current_map.WR[0].Ticks)}");
+        bot_name.Set($"[WR] {current_map.WR[0].Name} | {PlayerHUD.FormatTime(current_map.WR[0].Ticks)}");
         Utilities.SetStateChanged(this.Controller, "CBasePlayerController", "m_iszPlayerName");
     }
 }

@@ -231,7 +231,13 @@ internal class Map
     internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
     {
         // Get map world records
-        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM `MapTimes` WHERE `map_id` = {this.ID} AND `style` = {style} ORDER BY `run_time` ASC;");
+        Task<MySqlDataReader> reader = DB.Query($@"
+            SELECT MapTimes.*, Player.name
+            FROM MapTimes
+            JOIN Player ON MapTimes.player_id = Player.id
+            WHERE MapTimes.map_id = {this.ID} AND MapTimes.style = {style}
+            ORDER BY MapTimes.run_time ASC;
+        ");
         MySqlDataReader mapWrData = reader.Result;
         int totalRows = 0;
         
@@ -252,6 +258,7 @@ internal class Map
                     this.WR[style].EndVelY = mapWrData.GetFloat("end_vel_y"); // Fastest run end velocity Y for the Map and Style combo
                     this.WR[style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
                     this.WR[style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
+                    this.WR[style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
                 }
                 totalRows++;
             }
