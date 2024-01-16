@@ -18,8 +18,8 @@ public partial class SurfTimer
 
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
-        if (CurrentMap.StartZone != new Vector(0,0,0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
+        if (CurrentMap.StartZone != new Vector(0, 0, 0))
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
         return;
     }
 
@@ -32,10 +32,10 @@ public partial class SurfTimer
 
         // To-do: players[userid].Timer.Reset() -> teleport player
         Player SurfPlayer = playerList[player.UserId ?? 0];
-        if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0,0,0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0,0,0)));
+        if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0, 0, 0))
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0, 0, 0)));
         else // Reset back to map start
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0,0,0), new Vector(0,0,0)));
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
         return;
     }
 
@@ -66,13 +66,13 @@ public partial class SurfTimer
             return;
         }
 
-        if (CurrentMap.StageStartZone[stage] != new Vector(0,0,0))
+        if (CurrentMap.StageStartZone[stage] != new Vector(0, 0, 0))
         {
             if (stage == 0)
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, CurrentMap.StartZoneAngles, new Vector(0,0,0)));
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, CurrentMap.StartZoneAngles, new Vector(0, 0, 0)));
             else
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[stage], CurrentMap.StageStartZoneAngles[stage], new Vector(0,0,0)));
-        
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[stage], CurrentMap.StageStartZoneAngles[stage], new Vector(0, 0, 0)));
+
             playerList[player.UserId ?? 0].Timer.Reset();
             playerList[player.UserId ?? 0].Timer.IsStageMode = true;
 
@@ -80,29 +80,15 @@ public partial class SurfTimer
             //        causing the timer to start. This needs to be fixed.
         }
 
-        else 
+        else
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
     }
 
-    // // Test command
-    // [ConsoleCommand("css_savereplay", "Test")]
-    // public void SaveReplay(CCSPlayerController? player, CommandInfo command) {
-    //     if(player == null)
-    //         return;
-
-    //     foreach(var p in playerList.Values) {
-    //         if(p.Replay.Frames.Count() > 0) {
-    //             p.Replay.StopRecording();
-    //             p.Replay.SaveReplayData(p, DB!);
-    //             break;
-    //         }
-    //     }
-    // }
-
     // Test command
     [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]
-    public void MovePlayerToSpectator(CCSPlayerController? player, CommandInfo command) {
-        if(player == null || player.Team == CsTeam.Spectator)
+    public void MovePlayerToSpectator(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null || player.Team == CsTeam.Spectator)
             return;
 
         player.ChangeTeam(CsTeam.Spectator);
@@ -110,27 +96,29 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_replaybotpause", "Pause the replay bot playback")]
     [ConsoleCommand("css_rbpause", "Pause the replay bot playback")]
-    public void PauseReplay(CCSPlayerController? player, CommandInfo command) {
-        if(player == null
+    public void PauseReplay(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null
             || player.Team != CsTeam.Spectator
             || CurrentMap.ReplayBot.Controller == null
             || !CurrentMap.ReplayBot.IsPlaying
             || CurrentMap.ReplayBot.Controller.Pawn.SerialNum != player.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
             return;
-        
+
         CurrentMap.ReplayBot.Pause();
     }
 
     [ConsoleCommand("css_replaybotflip", "Flips the replay bot between Forward/Backward playback")]
     [ConsoleCommand("css_rbflip", "Flips the replay bot between Forward/Backward playback")]
-    public void ReverseReplay(CCSPlayerController? player, CommandInfo command) {
-        if(player == null
+    public void ReverseReplay(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null
             || player.Team != CsTeam.Spectator
             || CurrentMap.ReplayBot.Controller == null
             || !CurrentMap.ReplayBot.IsPlaying
             || CurrentMap.ReplayBot.Controller.Pawn.SerialNum != player.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
             return;
-        
+
         CurrentMap.ReplayBot.FrameTickIncrement *= -1;
     }
 }

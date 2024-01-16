@@ -96,8 +96,10 @@ internal class ReplayPlayer
         if (this.Controller == null)
             return;
         // TODO: make query for wr too
-        Task<MySqlDataReader> dbTask = DB.Query($"SELECT `replay_frames` FROM MapTimeReplay " +
-                                                $"WHERE `map_id`={current_map.ID} AND `maptime_id`={current_map.WR[0].ID} ");
+        Task<MySqlDataReader> dbTask = DB.Query($@"
+            SELECT `replay_frames` FROM MapTimeReplay 
+            WHERE `map_id`={current_map.ID} AND `maptime_id`={current_map.WR[0].ID} 
+        ");
         MySqlDataReader mapTimeReplay = dbTask.Result;
         if(!mapTimeReplay.HasRows) 
         {

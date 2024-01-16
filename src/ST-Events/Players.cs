@@ -97,7 +97,10 @@ public partial class SurfTimer
                 connections = 1;
 
                 // Write new player to database
-                Task<int> newPlayerTask = DB.Write($"INSERT INTO `Player` (`name`, `steam_id`, `country`, `join_date`, `last_seen`, `connections`) VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});");
+                Task<int> newPlayerTask = DB.Write($@"
+                    INSERT INTO `Player` (`name`, `steam_id`, `country`, `join_date`, `last_seen`, `connections`) 
+                    VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});
+                ");
                 int newPlayerTaskRows = newPlayerTask.Result;
                 if (newPlayerTaskRows != 1)
                     throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
@@ -174,9 +177,11 @@ public partial class SurfTimer
             else
             {
                 // Update data in Player DB table
-                Task<int> updatePlayerTask = DB.Write($"UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', " +
-                                                        $"`last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 " +
-                                                        $"WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;");
+                Task<int> updatePlayerTask = DB.Write($@"
+                    UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', 
+                    `last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 
+                    WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;
+                ");
                 if (updatePlayerTask.Result != 1)
                     throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
                 // Player disconnection to-do

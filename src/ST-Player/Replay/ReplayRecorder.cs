@@ -66,10 +66,12 @@ internal class ReplayRecorder
         JsonSerializerOptions options = new JsonSerializerOptions {WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() }};
         string replay_frames = JsonSerializer.Serialize(Frames, options);
         string compressed_replay_frames = Compressor.Compress(replay_frames);
-        Task<int> updatePlayerReplayTask = DB.Write($"INSERT INTO `MapTimeReplay` " +
-                                                        $"(`player_id`, `maptime_id`, `map_id`, `replay_frames`) " +
-                                                        $"VALUES ({player.Profile.ID}, {player.Stats.PB[0].ID}, {player.CurrMap.ID}, '{compressed_replay_frames}') " +
-                                                        $"ON DUPLICATE KEY UPDATE replay_frames=VALUES(replay_frames)");
+        Task<int> updatePlayerReplayTask = DB.Write($@"
+            INSERT INTO `MapTimeReplay` 
+            (`player_id`, `maptime_id`, `map_id`, `replay_frames`) 
+            VALUES ({player.Profile.ID}, {player.Stats.PB[0].ID}, {player.CurrMap.ID}, '{compressed_replay_frames}') 
+            ON DUPLICATE KEY UPDATE replay_frames=VALUES(replay_frames)
+        ");
         if (updatePlayerReplayTask.Result <= 0)
             throw new Exception($"CS2 Surf ERROR >> internal class PlayerReplay -> SaveReplayData -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
         updatePlayerReplayTask.Dispose();

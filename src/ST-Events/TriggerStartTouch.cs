@@ -79,13 +79,14 @@ public partial class SurfTimer
                         player.Stats.PB[style].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
 
                         #if DEBUG
-                        Console.WriteLine($"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> " +
-                                                                    $"============== INSERT INTO `MapTimes` " +
-                                                                    $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                                    $"VALUES ({player.Profile.ID}, {CurrentMap.ID}, {style}, 0, 0, {player.Stats.ThisRun.Ticks}, " +
-                                                                    $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " + // To-do: get the `start_vel` values for the run from CP implementation
-                                                                    $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
-                                                                    $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
+                        Console.WriteLine($@"CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> 
+                            ============== INSERT INTO `MapTimes` 
+                            (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) 
+                            VALUES ({player.Profile.ID}, {CurrentMap.ID}, {style}, 0, 0, {player.Stats.ThisRun.Ticks}, 
+                            {player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})
+                            ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), 
+                            start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);
+                        ");
                         #endif
 
                         // Add entry in DB for the run

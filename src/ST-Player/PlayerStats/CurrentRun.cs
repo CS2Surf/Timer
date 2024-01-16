@@ -53,12 +53,14 @@ internal class CurrentRun
         // Add entry in DB for the run
         // To-do: add `type`
         int style = player.Timer.Style;
-        Task<int> updatePlayerRunTask = DB.Write($"INSERT INTO `MapTimes` " +
-                                                    $"(`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) " +
-                                                    $"VALUES ({player.Profile.ID}, {player.CurrMap.ID}, {style}, 0, 0, {player.Stats.ThisRun.Ticks}, " +
-                                                    $"{player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) " +
-                                                    $"ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), " +
-                                                    $"start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);");
+        Task<int> updatePlayerRunTask = DB.Write($@"
+            INSERT INTO `MapTimes` 
+            (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) 
+            VALUES ({player.Profile.ID}, {player.CurrMap.ID}, {style}, 0, 0, {player.Stats.ThisRun.Ticks}, 
+            {player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}) 
+            ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), 
+            start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);
+        ");
         if (updatePlayerRunTask.Result <= 0)
             throw new Exception($"CS2 Surf ERROR >> internal class PersonalBest -> SaveMapTime -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
         updatePlayerRunTask.Dispose();
@@ -91,13 +93,14 @@ internal class CurrentRun
 
             #if DEBUG
             Console.WriteLine($"CP: {cp} | MapTime ID: {player.Stats.PB[style].ID} | Time: {runTime} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> " +
-                                $"INSERT INTO `Checkpoints` " +
-                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                $"VALUES ({player.Stats.PB[style].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE " +
-                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+            Console.WriteLine($@"CS2 Surf DEBUG >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> 
+                INSERT INTO `Checkpoints` 
+                (`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, 
+                `end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) 
+                VALUES ({player.Stats.PB[style].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) ON DUPLICATE KEY UPDATE 
+                run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), 
+                end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);
+            ");
             #endif
 
             // Insert/Update CPs to database
@@ -105,16 +108,18 @@ internal class CurrentRun
             // Check if the player has PB object initialized and if the player's character is currently active in the game
             if (item.Value != null && player.Controller.PlayerPawn.Value != null)
             {
-                Task<int> newPbTask = DB.Write($"INSERT INTO `Checkpoints` " +
-                                $"(`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, " +
-                                $"`end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) " +
-                                $"VALUES ({player.Stats.PB[style].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) " +
-                                $"ON DUPLICATE KEY UPDATE " +
-                                $"run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), " +
-                                $"end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);");
+                Task<int> newPbTask = DB.Write($@"
+                    INSERT INTO `Checkpoints` 
+                    (`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, 
+                    `end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) 
+                    VALUES ({player.Stats.PB[style].ID}, {cp}, {runTime}, {startVelX}, {startVelY}, {startVelZ}, {endVelX}, {endVelY}, {endVelZ}, {attempts}, {ticks}) 
+                    ON DUPLICATE KEY UPDATE 
+                    run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), 
+                    end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);
+                ");
                 if (newPbTask.Result <= 0)
                     throw new Exception($"CS2 Surf ERROR >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
-                
+
                 newPbTask.Dispose();
             }
         }

@@ -28,10 +28,12 @@ internal class PlayerStats
     /// </summary>
     public void LoadMapTimesData(Player player, TimerDatabase DB, int playerId = 0, int mapId = 0)
     {
-        Task<MySqlDataReader> dbTask2 = DB.Query($"SELECT mainquery.*, (SELECT COUNT(*) FROM `MapTimes` AS subquery " +
-                                                 $"WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` " +
-                                                 $"AND subquery.`run_time` <= mainquery.`run_time`) AS `rank` FROM `MapTimes` AS mainquery " +
-                                                 $"WHERE mainquery.`player_id` = {player.Profile.ID} AND mainquery.`map_id` = {player.CurrMap.ID}; ");
+        Task<MySqlDataReader> dbTask2 = DB.Query($@"
+            SELECT mainquery.*, (SELECT COUNT(*) FROM `MapTimes` AS subquery 
+            WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` 
+            AND subquery.`run_time` <= mainquery.`run_time`) AS `rank` FROM `MapTimes` AS mainquery 
+            WHERE mainquery.`player_id` = {player.Profile.ID} AND mainquery.`map_id` = {player.CurrMap.ID}; 
+        ");
         MySqlDataReader playerStats = dbTask2.Result;
         int style = 0; // To-do: implement styles
         if (!playerStats.HasRows)
