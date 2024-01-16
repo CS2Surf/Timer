@@ -35,7 +35,7 @@ internal class PlayerHUD
     /// Unless specified differently, the default formatting will be `Compact`.
     /// Check <see cref="PlayerTimer.TimeFormatStyle"/> for all formatting types.
     /// </summary>
-    public string FormatTime(int ticks, PlayerTimer.TimeFormatStyle style = PlayerTimer.TimeFormatStyle.Compact)
+    public static string FormatTime(int ticks, PlayerTimer.TimeFormatStyle style = PlayerTimer.TimeFormatStyle.Compact)
     {
         TimeSpan time = TimeSpan.FromSeconds(ticks / 64.0);
         int millis = (int)(ticks % 64 * (1000.0 / 64.0));
@@ -57,7 +57,10 @@ internal class PlayerHUD
 
     public void Display()
     {
-        if (_player.Controller.IsValid && _player.Controller.PawnIsAlive)
+        if(!_player.Controller.IsValid)
+            return;
+
+        if (_player.Controller.PawnIsAlive)
         {
             int style = _player.Timer.Style;
             // Timer Module
@@ -96,6 +99,15 @@ internal class PlayerHUD
 
             // Display HUD
             _player.Controller.PrintToCenterHtml(hud);
+        }
+        else if (_player.Controller.Team == CsTeam.Spectator)
+        {
+            if (_player.CurrMap.ReplayBot.Controller?.Pawn.SerialNum == _player.Controller.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
+            {
+                string elapsed_ticks = FormatHUDElementHTML("Tick", $"{_player.CurrMap.ReplayBot.CurrentFrameTick}/{_player.CurrMap.ReplayBot.Frames.Count}", "#7882dd");
+                string hud = $"{FormatHUDElementHTML("", "REPLAY", "red", "large")}<br>{elapsed_ticks}";
+                _player.Controller.PrintToCenterHtml(hud);
+            }
         }
     }
 
@@ -163,11 +175,11 @@ internal class PlayerHUD
             // Calculate the time difference
             if (pbTime - currentTime < 0.0)
             {
-                strPbDifference += ChatColors.Red + "+" + _player.HUD.FormatTime((pbTime - currentTime) * -1); // We multiply by -1 to get the positive value
+                strPbDifference += ChatColors.Red + "+" + FormatTime((pbTime - currentTime) * -1); // We multiply by -1 to get the positive value
             }
             else if (pbTime - currentTime >= 0.0)
             {
-                strPbDifference += ChatColors.Green + "-" + _player.HUD.FormatTime(pbTime - currentTime);
+                strPbDifference += ChatColors.Green + "-" + FormatTime(pbTime - currentTime);
             }
             strPbDifference += ChatColors.Default + " ";
 
@@ -200,11 +212,11 @@ internal class PlayerHUD
             // Calculate the WR time difference
             if (wrTime - currentTime < 0.0)
             {
-                strWrDifference += ChatColors.Red + "+" + _player.HUD.FormatTime((wrTime - currentTime) * -1); // We multiply by -1 to get the positive value
+                strWrDifference += ChatColors.Red + "+" + FormatTime((wrTime - currentTime) * -1); // We multiply by -1 to get the positive value
             }
             else if (wrTime - currentTime >= 0.0)
             {
-                strWrDifference += ChatColors.Green + "-" + _player.HUD.FormatTime(wrTime - currentTime);
+                strWrDifference += ChatColors.Green + "-" + FormatTime(wrTime - currentTime);
             }
             strWrDifference += ChatColors.Default + " ";
 
@@ -223,7 +235,7 @@ internal class PlayerHUD
         // Print checkpoint message
         _player.Controller.PrintToChat(
             $"{PluginPrefix} CP [{ChatColors.Yellow}{_player.Timer.Checkpoint}{ChatColors.Default}]: " +
-            $"{ChatColors.Yellow}{_player.HUD.FormatTime(_player.Timer.Ticks)}{ChatColors.Default} " +
+            $"{ChatColors.Yellow}{FormatTime(_player.Timer.Ticks)}{ChatColors.Default} " +
             $"{ChatColors.Yellow}({currentSpeed.ToString("0")}){ChatColors.Default} " +
             $"[PB: {strPbDifference} | " +
             $"WR: {strWrDifference}]");

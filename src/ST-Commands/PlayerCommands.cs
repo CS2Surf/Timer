@@ -60,7 +60,6 @@ public partial class SurfTimer
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
             return;
         }
-
         else if (CurrentMap.Stages <= 0)
         {
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}This map has no stages.");
@@ -83,5 +82,55 @@ public partial class SurfTimer
 
         else 
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
+    }
+
+    // // Test command
+    // [ConsoleCommand("css_savereplay", "Test")]
+    // public void SaveReplay(CCSPlayerController? player, CommandInfo command) {
+    //     if(player == null)
+    //         return;
+
+    //     foreach(var p in playerList.Values) {
+    //         if(p.Replay.Frames.Count() > 0) {
+    //             p.Replay.StopRecording();
+    //             p.Replay.SaveReplayData(p, DB!);
+    //             break;
+    //         }
+    //     }
+    // }
+
+    // Test command
+    [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]
+    public void MovePlayerToSpectator(CCSPlayerController? player, CommandInfo command) {
+        if(player == null || player.Team == CsTeam.Spectator)
+            return;
+
+        player.ChangeTeam(CsTeam.Spectator);
+    }
+
+    [ConsoleCommand("css_replaybotpause", "Pause the replay bot playback")]
+    [ConsoleCommand("css_rbpause", "Pause the replay bot playback")]
+    public void PauseReplay(CCSPlayerController? player, CommandInfo command) {
+        if(player == null
+            || player.Team != CsTeam.Spectator
+            || CurrentMap.ReplayBot.Controller == null
+            || !CurrentMap.ReplayBot.IsPlaying
+            || CurrentMap.ReplayBot.Controller.Pawn.SerialNum != player.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
+            return;
+        
+        CurrentMap.ReplayBot.Pause();
+    }
+
+    [ConsoleCommand("css_replaybotflip", "Flips the replay bot between Forward/Backward playback")]
+    [ConsoleCommand("css_rbflip", "Flips the replay bot between Forward/Backward playback")]
+    public void ReverseReplay(CCSPlayerController? player, CommandInfo command) {
+        if(player == null
+            || player.Team != CsTeam.Spectator
+            || CurrentMap.ReplayBot.Controller == null
+            || !CurrentMap.ReplayBot.IsPlaying
+            || CurrentMap.ReplayBot.Controller.Pawn.SerialNum != player.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
+            return;
+        
+        CurrentMap.ReplayBot.FrameTickIncrement *= -1;
     }
 }

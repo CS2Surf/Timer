@@ -9,15 +9,41 @@ namespace SurfTimer;
 
 public partial class SurfTimer
 {
-    [GameEventHandler] // Player Connect Event
-    public HookResult OnPlayerConnect(EventPlayerConnectFull @event, GameEventInfo info)
+    [GameEventHandler(HookMode.Post)]
+    public HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
+    {
+        var controller = @event.Userid;
+        if(!controller.IsValid)
+            return HookResult.Continue;
+
+        if (controller.IsBot && CurrentMap.ReplayBot.Controller == null)
+        {
+            CurrentMap.ReplayBot.Controller = controller;
+            // CurrentMap.ReplayBot.Controller.PlayerName = $"[REPLAY] {CurrentMap.Name}";
+
+            Server.PrintToChatAll($"{ChatColors.Lime} Loading replay data..."); // WHY COLORS NOT WORKING AHHHHH!!!!!
+            AddTimer(2f, () => {
+                CurrentMap.ReplayBot.Controller.RemoveWeapons();
+                
+                CurrentMap.ReplayBot.LoadReplayData(DB!, CurrentMap);
+
+                CurrentMap.ReplayBot.Start();
+            });
+        }
+
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
     {
         var player = @event.Userid;
         #if DEBUG
         Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / {player.SteamID}");
+        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / Bot Diff: {player.PawnBotDifficulty}");
         #endif
 
-        if (player.IsBot || !player.IsValid)
+        if (player.IsBot || !player.IsValid) // IsBot might be broken so we can check for PawnBotDifficulty which is `-1` for real players
         {
             return HookResult.Continue;
         }
@@ -127,6 +153,9 @@ public partial class SurfTimer
     public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
     {
         var player = @event.Userid;
+
+        if (CurrentMap.ReplayBot.Controller != null&& CurrentMap.ReplayBot.Controller.Equals(player))
+            CurrentMap.ReplayBot.Reset();
 
         if (player.IsBot || !player.IsValid)
         {

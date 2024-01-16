@@ -21,6 +21,7 @@ internal class Map
     public int LastPlayed {get; set;} = 0;
     public int TotalCompletions {get; set;} = 0;
     public Dictionary<int, PersonalBest> WR { get; set; } = new Dictionary<int, PersonalBest>();
+    public ReplayPlayer ReplayBot { get; set; } = new ReplayPlayer();
 
     // Zone Origin Information
     // Map start/end zones

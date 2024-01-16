@@ -14,7 +14,7 @@ public partial class SurfTimer
         CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
         CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
-        if (!client.IsValid || client.UserId == -1 || !client.PawnIsAlive) // `client.IsBot` throws error in server console when going to spectator?
+        if (!client.IsValid || client.UserId == -1 || !client.PawnIsAlive || !playerList.ContainsKey((int)client.UserId!)) // `client.IsBot` throws error in server console when going to spectator? + !playerList.ContainsKey((int)client.UserId!) make sure to not check for user_id that doesnt exists
         {
             return HookResult.Continue;
         }
@@ -41,6 +41,13 @@ public partial class SurfTimer
                     trigger.Entity.Name.Contains("s1_start") || 
                     trigger.Entity.Name.Contains("stage1_start")) 
                 {
+                    // Replay
+                    if(player.ReplayRecorder.IsRecording) 
+                    {
+                        // Saveing 2 seconds before leaving the start zone
+                        player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (64*2))); // Would like for someone to fact check the math :)
+                    }
+
                     // MAP START ZONE
                     player.Timer.Start();
 

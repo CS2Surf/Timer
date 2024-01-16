@@ -14,7 +14,7 @@ public partial class SurfTimer
         CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
         CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
-        if (client.IsBot || !client.IsValid || !client.PawnIsAlive)
+        if (!client.IsValid || !client.PawnIsAlive || !playerList.ContainsKey((int)client.UserId!)) // !playerList.ContainsKey((int)client.UserId!) make sure to not check for user_id that doesnt exists
         {
             return HookResult.Continue;
         }
@@ -51,6 +51,7 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
+
                         player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
                         player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
                         player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
@@ -59,15 +60,15 @@ public partial class SurfTimer
                         // To-do: make Style (currently 0) be dynamic
                         if (player.Stats.PB[style].Ticks <= 0) // Player first ever PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
                         else if (player.Timer.Ticks < player.Stats.PB[style].Ticks) // Player beating their existing PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{player.HUD.FormatTime(player.Stats.PB[style].Ticks)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[style].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
-                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {ChatColors.Yellow}{player.HUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
                             return HookResult.Continue; // Exit here so we don't write to DB
                         }
 
@@ -93,6 +94,13 @@ public partial class SurfTimer
                         player.Stats.ThisRun.SaveCurrentRunCheckpoints(player, DB); // Save this run's checkpoints
                         player.Stats.LoadCheckpointsData(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
                         CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
+
+                        // Replay - Add end buffer for replay
+                        AddTimer(1.5f, () => player.ReplayRecorder.SaveReplayData(player, DB));
+                        AddTimer(2f, () => {
+                            CurrentMap.ReplayBot.LoadReplayData(DB!, CurrentMap);
+                            CurrentMap.ReplayBot.ResetReplay();
+                        });
                     }
 
                     #if DEBUG
@@ -105,6 +113,8 @@ public partial class SurfTimer
                         trigger.Entity.Name.Contains("s1_start") ||
                         trigger.Entity.Name.Contains("stage1_start"))
                 {
+                    player.ReplayRecorder.Start(); // Start replay recording
+
                     player.Timer.Reset();
                     player.Stats.ThisRun.Checkpoint.Clear(); // I have the suspicion that the `Timer.Reset()` does not properly reset this object :thonk:
                     player.Controller.PrintToCenter($"Map Start ({trigger.Entity.Name})");
