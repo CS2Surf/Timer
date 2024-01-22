@@ -44,7 +44,7 @@ internal class PlayerHUD
         {
             case PlayerTimer.TimeFormatStyle.Compact:
                 return time.TotalMinutes < 1
-                    ? $"{time.Seconds:D1}.{millis:D3}"
+                    ? $"{time.Seconds:D1}:{millis:D3}"
                     : $"{time.Minutes:D1}:{time.Seconds:D1}.{millis:D3}";
             case PlayerTimer.TimeFormatStyle.Full:
                 return $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
@@ -102,13 +102,17 @@ internal class PlayerHUD
         }
         else if (_player.Controller.Team == CsTeam.Spectator)
         {
-            if (_player.CurrMap.ReplayBot.Controller?.Pawn.SerialNum == _player.Controller.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum)
+            for (int i = 0; i < _player.CurrMap.ReplayBots.Count; i++)
             {
-                // Replay HUD Modules
+                if(!_player.CurrMap.ReplayBots[i].IsPlayable || !_player.IsSpectating(_player.CurrMap.ReplayBots[i].Controller!))
+                    continue;
+
                 string replayModule = $"{FormatHUDElementHTML("", "REPLAY", "red", "large")}";
-                string nameModule = FormatHUDElementHTML($"{_player.CurrMap.WR[_player.Timer.Style].Name}", $"{FormatTime(_player.CurrMap.WR[_player.Timer.Style].Ticks)}", "#ffd500");
-                string elapsed_ticks = FormatHUDElementHTML("Tick", $"{_player.CurrMap.ReplayBot.CurrentFrameTick}/{_player.CurrMap.ReplayBot.Frames.Count}", "#7882dd");
-                string hud = $"{replayModule}<br>{elapsed_ticks}<br>{nameModule}";
+
+                string nameModule = FormatHUDElementHTML($"{_player.CurrMap.ReplayBots[i].Stat_PlayerName}", $"{FormatTime(_player.CurrMap.ReplayBots[i].Stat_RunTime)}", "#ffd500");
+
+                string elapsed_time = FormatHUDElementHTML("Time", $"{PlayerHUD.FormatTime(_player.CurrMap.ReplayBots[i].Stat_RunTick)}", "#7882dd");
+                string hud = $"{replayModule}<br>{elapsed_time}<br>{nameModule}";
 
                 _player.Controller.PrintToCenterHtml(hud);
             }

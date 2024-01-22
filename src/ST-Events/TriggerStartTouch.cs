@@ -51,24 +51,29 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning)
                     {
                         player.Timer.Stop();
+                        player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_RUN;
 
                         player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
                         player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
                         player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
                         player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
 
+                        string PracticeString = "";
+                        if (player.Timer.IsPracticeMode)
+                            PracticeString = $"({ChatColors.Grey}Practice{ChatColors.Default}) ";
+
                         // To-do: make Style (currently 0) be dynamic
                         if (player.Stats.PB[style].Ticks <= 0) // Player first ever PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {player.Controller.PlayerName} finished the map in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{player.Controller.PlayerName} finished the map in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
                         else if (player.Timer.Ticks < player.Stats.PB[style].Ticks) // Player beating their existing PersonalBest for the map
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[style].Ticks)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[style].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing PersonalBest for the map
                         {
-                            player.Controller.PrintToChat($"{PluginPrefix} You finished the map in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                            player.Controller.PrintToChat($"{PluginPrefix} {PracticeString}You finished the map in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
                             return HookResult.Continue; // Exit here so we don't write to DB
                         }
 
@@ -90,18 +95,26 @@ public partial class SurfTimer
                         #endif
 
                         // Add entry in DB for the run
-                        player.Stats.ThisRun.SaveMapTime(player, DB); // Save the MapTime PB data
-                        player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-                        player.Stats.ThisRun.SaveCurrentRunCheckpoints(player, DB); // Save this run's checkpoints
-                        player.Stats.LoadCheckpointsData(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
-                        CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
+                        if(!player.Timer.IsPracticeMode) {
+                            AddTimer(1.5f, () => {
+                                player.Stats.ThisRun.SaveMapTime(player, DB); // Save the MapTime PB data
+                                player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                                player.Stats.ThisRun.SaveCurrentRunCheckpoints(player, DB); // Save this run's checkpoints
+                                player.Stats.LoadCheckpointsData(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
+                                CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
+                            });
 
-                        // Replay - Add end buffer for replay
-                        AddTimer(1.5f, () => player.ReplayRecorder.SaveReplayData(player, DB));
-                        AddTimer(2f, () => {
-                            CurrentMap.ReplayBot.LoadReplayData(DB!, CurrentMap);
-                            CurrentMap.ReplayBot.ResetReplay();
-                        });
+                            // This section checks if the PB is better than WR
+                            if(player.Timer.Ticks < CurrentMap.WR[player.Timer.Style].Ticks || CurrentMap.WR[player.Timer.Style].ID == -1)
+                            {
+                                int WrIndex = CurrentMap.ReplayBots.Count-1; // As the ReplaysBot is set, WR Index will always be at the end of the List
+                                AddTimer(2f, () => {
+                                    CurrentMap.ReplayBots[WrIndex].Stat_MapTimeID = CurrentMap.WR[player.Timer.Style].ID;
+                                    CurrentMap.ReplayBots[WrIndex].LoadReplayData(DB!);
+                                    CurrentMap.ReplayBots[WrIndex].ResetReplay();
+                                });
+                            }
+                        }
                     }
 
                     #if DEBUG

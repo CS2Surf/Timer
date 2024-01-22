@@ -42,6 +42,7 @@ Bold & Italics = being worked on.
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
-- [ ] Run replays
+- [X] Run replays
+- [X] Saveloc/Tele
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)

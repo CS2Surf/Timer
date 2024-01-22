@@ -12,6 +12,8 @@ internal class Player
     public PlayerStats Stats {get; set;}
     public PlayerHUD HUD {get; set;}
     public ReplayRecorder ReplayRecorder { get; set; }
+    public List<SavelocFrame> SavedLocations { get; set; }
+    public int CurrentSavedLocation { get; set; }
 
     // Player information
     public PlayerProfile Profile {get; set;}
@@ -30,8 +32,21 @@ internal class Player
         this.Timer = new PlayerTimer();
         this.Stats = new PlayerStats();
         this.ReplayRecorder = new ReplayRecorder();
+        this.SavedLocations = new List<SavelocFrame>();
+        CurrentSavedLocation = 0;
 
         this.HUD = new PlayerHUD(this);
         this.CurrMap = CurrMap;
+    }
+
+    /// <summary>
+    /// Checks if current player is spcetating player <p>
+    /// </summary>
+    public bool IsSpectating(CCSPlayerController p)
+    {
+        if(p == null || this.Controller == null || this.Controller.Team != CounterStrikeSharp.API.Modules.Utils.CsTeam.Spectator)
+            return false;
+
+        return p.Pawn.SerialNum == this.Controller.ObserverPawn.Value!.ObserverServices!.ObserverTarget.SerialNum;
     }
 }

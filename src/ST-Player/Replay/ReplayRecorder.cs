@@ -1,5 +1,4 @@
 using System.Text.Json;
-using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
@@ -7,6 +6,7 @@ namespace SurfTimer;
 internal class ReplayRecorder
 {
     public bool IsRecording { get; set; } = false;
+    public ReplayFrameSituation CurrentSituation { get; set; } = ReplayFrameSituation.NONE;
     public List<ReplayFrame> Frames { get; set; } = new List<ReplayFrame>();
 
     public void Reset() 
@@ -48,32 +48,22 @@ internal class ReplayRecorder
         {
             Pos = new Vector(player_pos.X, player_pos.Y, player_pos.Z),
             Ang = new QAngle(player_angle.X, player_angle.Y, player_angle.Z),
+            Situation = (uint)this.CurrentSituation,
             Button = player_button,
             Flags = player_flags,
             MoveType = player_move_type,
         };
 
         this.Frames.Add(frame);
+
+        // Every Situation should last for at most, 1 tick
+        this.CurrentSituation = ReplayFrameSituation.NONE;
     }
 
-    /// <summary>
-    /// [ player_id | maptime_id | replay_frames ]
-    /// @ Adding a replay data for a run (PB/WR)
-    /// @ Data saved can be accessed with `ReplayPlayer.LoadReplayData`
-    /// </summary>
-    public void SaveReplayData(Player player, TimerDatabase DB) 
+    public string SerializeReplay()
     {
         JsonSerializerOptions options = new JsonSerializerOptions {WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() }};
         string replay_frames = JsonSerializer.Serialize(Frames, options);
-        string compressed_replay_frames = Compressor.Compress(replay_frames);
-        Task<int> updatePlayerReplayTask = DB.Write($@"
-            INSERT INTO `MapTimeReplay` 
-            (`player_id`, `maptime_id`, `map_id`, `replay_frames`) 
-            VALUES ({player.Profile.ID}, {player.Stats.PB[0].ID}, {player.CurrMap.ID}, '{compressed_replay_frames}') 
-            ON DUPLICATE KEY UPDATE replay_frames=VALUES(replay_frames)
-        ");
-        if (updatePlayerReplayTask.Result <= 0)
-            throw new Exception($"CS2 Surf ERROR >> internal class PlayerReplay -> SaveReplayData -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
-        updatePlayerReplayTask.Dispose();
-    }  
+        return Compressor.Compress(replay_frames);
+    }
 }

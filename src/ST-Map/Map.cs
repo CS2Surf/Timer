@@ -21,7 +21,8 @@ internal class Map
     public int LastPlayed {get; set;} = 0;
     public int TotalCompletions {get; set;} = 0;
     public Dictionary<int, PersonalBest> WR { get; set; } = new Dictionary<int, PersonalBest>();
-    public ReplayPlayer ReplayBot { get; set; } = new ReplayPlayer();
+    public List<int> ConnectedMapTimes { get; set; } = new List<int>();
+    public List<ReplayPlayer> ReplayBots { get; set; } = new List<ReplayPlayer> { new ReplayPlayer() };
 
     // Zone Origin Information
     // Map start/end zones
@@ -150,6 +151,7 @@ internal class Map
                 }
             }
         }
+        if (this.Stages > 0) this.Stages++; // You did not count the stages right :(
         Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
 
         // Gather map information OR create entry
@@ -215,6 +217,26 @@ internal class Map
 
         // Initiates getting the World Records for the map
         GetMapRecordAndTotals(DB); // To-do: Implement styles
+
+        this.ReplayBots[0].Stat_MapTimeID = this.WR[0].ID; // Sets WrIndex to WR maptime_id
+        if(this.Stages > 0) // If stages map adds bot
+            this.ReplayBots = this.ReplayBots.Prepend(new ReplayPlayer()).ToList();
+
+        if(this.Bonuses > 0) // If has bonuses adds bot
+            this.ReplayBots = this.ReplayBots.Prepend(new ReplayPlayer()).ToList();
+    }
+
+    public void KickReplayBot(int index)
+    {
+        if (!this.ReplayBots[index].IsPlayable)
+            return;
+
+        int? id_to_kick = this.ReplayBots[index].Controller!.UserId;
+        if(id_to_kick == null)
+            return;
+
+        this.ReplayBots.RemoveAt(index);
+        Server.ExecuteCommand($"kickid {id_to_kick}; bot_quota {this.ReplayBots.Count}");
     }
 
     public bool IsInZone(Vector zoneOrigin, float zoneCollisionRadius, Vector spawnOrigin)
@@ -245,6 +267,7 @@ internal class Map
         { 
             // To-do: Implement bonuses WR
             // To-do: Implement stages WR
+            this.ConnectedMapTimes.Clear();
             while (mapWrData.Read())
             {
                 if (totalRows == 0) // We are sorting by `run_time ASC` so the first row is always the fastest run for the map and style combo :)
@@ -260,6 +283,7 @@ internal class Map
                     this.WR[style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
                     this.WR[style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
                 }
+                this.ConnectedMapTimes.Add(mapWrData.GetInt32("id"));
                 totalRows++;
             }
         }

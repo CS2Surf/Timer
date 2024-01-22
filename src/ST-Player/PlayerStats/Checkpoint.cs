@@ -1,5 +1,3 @@
-using MySqlConnector;
-
 namespace SurfTimer;
 
 internal class Checkpoint : PersonalBest

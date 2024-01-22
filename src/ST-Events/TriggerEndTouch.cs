@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
-using CounterStrikeSharp.API;
 
 namespace SurfTimer;
 
@@ -45,11 +44,12 @@ public partial class SurfTimer
                     if(player.ReplayRecorder.IsRecording) 
                     {
                         // Saveing 2 seconds before leaving the start zone
-                        player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (64*2))); // Would like for someone to fact check the math :)
+                        player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (64*2))); // Todo make a plugin convar for the time saved before start of run 
                     }
 
                     // MAP START ZONE
                     player.Timer.Start();
+                    player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_RUN;
 
                     /* Revisit
                     // Wonky Prespeed check

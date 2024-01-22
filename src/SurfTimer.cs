@@ -32,8 +32,6 @@ using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Timers;
-using CounterStrikeSharp.API.Modules.Cvars;
 
 namespace SurfTimer;
 
@@ -77,6 +75,11 @@ public partial class SurfTimer : BasePlugin
     {
         // Load cvars/other configs here
         // Execute server_settings.cfg
+
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_stop");
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_freeze");
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_zombie");
+
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
         return HookResult.Continue;
