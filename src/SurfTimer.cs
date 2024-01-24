@@ -56,10 +56,18 @@ public partial class SurfTimer : BasePlugin
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
+        // To-do: It seems like players connect very quickly and sometimes `CurrentMap` is null when it shouldn't be, lowered the timer ot 1.0 seconds for now
         if ((CurrentMap == null || CurrentMap.Name != mapName) && mapName.Contains("surf_"))
         {
-            AddTimer(3.0f, () => CurrentMap = new Map(mapName, DB!));
+            AddTimer(1.0f, () => CurrentMap = new Map(mapName, DB!)); // Was 3 seconds, now 1 second
         }
+    }
+
+    public void OnMapEnd()
+    {
+        // Clear/reset stuff here
+        CurrentMap = null!;
+        playerList.Clear();
     }
 
     [GameEventHandler]
@@ -67,6 +75,11 @@ public partial class SurfTimer : BasePlugin
     {
         // Load cvars/other configs here
         // Execute server_settings.cfg
+
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_stop");
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_freeze");
+        ConVarHelper.RemoveCheatFlagFromConVar("bot_zombie");
+
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
         Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
         return HookResult.Continue;
@@ -104,6 +117,8 @@ public partial class SurfTimer : BasePlugin
 
         // Map Start Hook
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        // Map End Hook
+        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         // Tick listener
         RegisterListener<Listeners.OnTick>(OnTick);
 

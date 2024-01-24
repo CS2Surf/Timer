@@ -17,7 +17,7 @@ Bold & Italics = being worked on.
   - [ ] Zoning
     - [X] Start/End trigger touch hooks
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
-    - [ ] _**Support for stages (`/rs`, teleporting with `/s`)**_
+    - [X] _**Support for stages (`/rs`, teleporting with `/s`)**_
     - [ ] _**Support for bonuses (`/rs`, teleporting with `/b #`)**_
     - [ ] _**Start/End touch hooks implemented for all zones**_
 - [ ] Surf configs
@@ -28,9 +28,9 @@ Bold & Italics = being worked on.
   - [X] Base timer class implementation
   - [X] Base timer HUD implementation
   - [X] Prespeed measurement and display
-  - [ ] Save/load times
-    - [ ] **_Save/load map personal bests_**
-    - [ ] **_Save/load map checkpoints_**
+  - [X] Save/load times
+    - [X] **_Save/load map personal bests_**
+    - [X] **_Save/load map checkpoints_**
     - [ ] **_Save/load bonus personal bests_**
     - [ ] **_Save/load stage personal bests_**
   - [ ] Practice Mode implementation
@@ -38,10 +38,11 @@ Bold & Italics = being worked on.
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [X] Base player class
-  - [ ] Player stat classes
+  - [ ] **_Player stat classes_**
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
-- [ ] Run replays
+- [X] Run replays
+- [X] Saveloc/Tele
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
