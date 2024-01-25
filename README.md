@@ -57,11 +57,11 @@ Bold & Italics = being worked on.
 - [x] Replays - Not tracking Stage/Bonus times but Replay functionality for them is there
    - [x] Personal Best 
       - [x] Map Record
-      - [x] Stage Record
-      - [x] Bonus Record
+      - [ ] Stage Record
+      - [ ] Bonus Record
    - [x] World Record
       - [X] Map Record
-      - [x] Stage Record
-      - [x] Bonus Record
+      - [ ] Stage Record
+      - [ ] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
