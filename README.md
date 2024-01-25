@@ -15,9 +15,21 @@ Bold & Italics = being worked on.
 - [ ] Maps
   - [X] Implement map info object (DB)
   - [ ] Zoning
+    - [X] Hook zones from map triggers
+      - [X] Map start/end zones
+      - [X] Stage zones
+      - [X] Checkpoint zones (this is each stage for a Staged map)
+      - [X] Bonus zones
+    - [X] Support for stages/checkpoints
+      - [X] Hook to their start/end zones
+      - [X] Save/Compare checkpoint times
+      - [ ] Save Stage times
+    - [X] Support for bonuses
+      - [X] Hook to their start/end zones
+      - [ ] Save Bonus times
     - [X] Start/End trigger touch hooks
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
-    - [ ] _**Support for stages (`/rs`, teleporting with `/s`)**_
+    - [X] _**Support for stages (`/rs`, teleporting with `/s`)**_
     - [ ] _**Support for bonuses (`/rs`, teleporting with `/b #`)**_
     - [ ] _**Start/End touch hooks implemented for all zones**_
 - [ ] Surf configs
@@ -29,11 +41,11 @@ Bold & Italics = being worked on.
   - [X] Base timer HUD implementation
   - [X] Prespeed measurement and display
   - [ ] Save/load times
-    - [ ] **_Save/load map personal bests_**
-    - [ ] **_Save/load map checkpoints_**
-    - [ ] **_Save/load bonus personal bests_**
-    - [ ] **_Save/load stage personal bests_**
-  - [ ] Practice Mode implementation
+    - [x] Map times
+    - [x] Checkpoint times
+    - [ ] Stage times
+    - [ ] Bonus times
+  - [X] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
@@ -42,6 +54,14 @@ Bold & Italics = being worked on.
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
-- [ ] Run replays
+- [x] Replays - Not tracking Stage/Bonus times but Replay functionality for them is there
+   - [x] Personal Best 
+      - [x] Map Record
+      - [x] Stage Record
+      - [x] Bonus Record
+   - [x] World Record
+      - [X] Map Record
+      - [x] Stage Record
+      - [x] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
