@@ -50,7 +50,7 @@ Bold & Italics = being worked on.
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [X] Base player class
-  - [ ] Player stat classes
+  - [ ] **_Player stat classes_**
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
