@@ -4,12 +4,18 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- Property Group for the Debug configuration -->
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="CounterStrikeSharp.API">
-       <HintPath>INSERT_CSSHARP_DLL_PATH_HERE</HintPath>
-    </Reference>
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.147" />
+    <PackageReference Include="MaxMind.GeoIP2" Version="5.2.0" />
+    <PackageReference Include="MySqlConnector" Version="2.3.1" />
   </ItemGroup>
 
 </Project>

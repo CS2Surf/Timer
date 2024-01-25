@@ -1,0 +1,8 @@
+{
+    "host": "DATABASE_HOST_OR_IP",
+    "database": "DATABASE_NAME",
+    "user": "DATABASE_USERNAME",
+    "password": "DATABASE_PASSWORD",
+    "port": 3306,
+    "timeout": 0
+}
