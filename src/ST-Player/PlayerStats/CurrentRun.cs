@@ -75,9 +75,10 @@ internal class CurrentRun
     /// Saves the `CurrentRunCheckpoints` dictionary to the database
     /// We need the correct `this.ID` to be populated before calling this method otherwise Query will fail
     /// </summary>
-    public void SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)  // To-do: Transactions? Player sometimes rubberbands for a bit here
+    public async Task SaveCurrentRunCheckpoints(Player player, TimerDatabase DB)
     {
         int style = player.Timer.Style;
+        List<string> commands = new List<string>();
         // Loop through the checkpoints and insert/update them in the database for the run
         foreach (var item in player.Stats.ThisRun.Checkpoint)
         {
@@ -105,11 +106,10 @@ internal class CurrentRun
             #endif
 
             // Insert/Update CPs to database
-            // To-do: Transactions?
             // Check if the player has PB object initialized and if the player's character is currently active in the game
             if (item.Value != null && player.Controller.PlayerPawn.Value != null)
             {
-                Task<int> newPbTask = DB.Write($@"
+                string command = $@"
                     INSERT INTO `Checkpoints` 
                     (`maptime_id`, `cp`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, 
                     `end_vel_x`, `end_vel_y`, `end_vel_z`, `attempts`, `end_touch`) 
@@ -117,14 +117,11 @@ internal class CurrentRun
                     ON DUPLICATE KEY UPDATE 
                     run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), start_vel_z=VALUES(start_vel_z), 
                     end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), attempts=VALUES(attempts), end_touch=VALUES(end_touch);
-                ");
-                if (newPbTask.Result <= 0)
-                    throw new Exception($"CS2 Surf ERROR >> internal class Checkpoint : PersonalBest -> SaveCurrentRunCheckpoints -> Inserting Checkpoints. CP: {cp} | Name: {player.Profile.Name}");
-
-                newPbTask.Dispose();
+                ";
+                commands.Add(command);
             }
         }
-
+        await DB.Transaction(commands);
         player.Stats.ThisRun.Checkpoint.Clear();
     }
 }
