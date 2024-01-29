@@ -76,4 +76,33 @@ internal class TimerDatabase
             }
         });
     }
+
+    public async Task Transaction(List<string> commands)
+    {
+        if (this._db == null)
+        {
+            throw new InvalidOperationException("Database connection is not open.");
+        }
+
+        using (var transaction = await this._db.BeginTransactionAsync())
+        {
+            try
+            {
+                foreach (var command in commands)
+                {
+                    using (var cmd = new MySqlCommand(command, this._db, transaction))
+                    {
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw; // rethrow the exception to be handled by the caller
+            }
+        }
+    }
 }

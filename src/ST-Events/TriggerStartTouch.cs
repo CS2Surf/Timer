@@ -96,10 +96,10 @@ public partial class SurfTimer
 
                         // Add entry in DB for the run
                         if(!player.Timer.IsPracticeMode) {
-                            AddTimer(1.5f, () => {
+                            AddTimer(1.5f, async () => {
                                 player.Stats.ThisRun.SaveMapTime(player, DB); // Save the MapTime PB data
                                 player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-                                player.Stats.ThisRun.SaveCurrentRunCheckpoints(player, DB); // Save this run's checkpoints
+                                await player.Stats.ThisRun.SaveCurrentRunCheckpoints(player, DB); // Save this run's checkpoints
                                 player.Stats.LoadCheckpointsData(DB); // Reload checkpoints for the run - we should really have this in `SaveMapTime` as well but we don't re-load PB data inside there so we need to do it here
                                 CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
                             });
