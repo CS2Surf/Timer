@@ -26,7 +26,7 @@ public partial class SurfTimer
                 repeats = 3;
             
             CurrentMap.ReplayBots[i].SetController(controller, repeats);
-            Server.PrintToChatAll($"{ChatColors.Lime} Loading replay data...");
+            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}Loading replay data...");
             AddTimer(2f, () => {
                 if(!CurrentMap.ReplayBots[i].IsPlayable)
                     return;
@@ -53,7 +53,7 @@ public partial class SurfTimer
         Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / Bot Diff: {player.PawnBotDifficulty}");
         #endif
 
-        if (player.IsBot || !player.IsValid) // IsBot might be broken so we can check for PawnBotDifficulty which is `-1` for real players
+        if (player.IsBot || !player.IsValid)
         {
             return HookResult.Continue;
         }
@@ -168,7 +168,7 @@ public partial class SurfTimer
         var player = @event.Userid;
 
         for (int i = 0; i < CurrentMap.ReplayBots.Count; i++)
-            if (CurrentMap.ReplayBots[i].IsPlayable && CurrentMap.ReplayBots[i].Controller!.Equals(player))
+            if (CurrentMap.ReplayBots[i].IsPlayable && CurrentMap.ReplayBots[i].Controller!.Equals(player) && CurrentMap.ReplayBots[i].Stat_MapTimeID != -1)
                 CurrentMap.ReplayBots[i].Reset();
 
         if (player.IsBot || !player.IsValid)
