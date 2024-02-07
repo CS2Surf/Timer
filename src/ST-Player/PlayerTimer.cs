@@ -38,6 +38,7 @@ internal class PlayerTimer
         this.Checkpoint = 0;
         this.IsPaused = false;
         this.IsPracticeMode = false;
+        this.IsStageMode = false;
         this.CurrentRunData.Reset();
     }
 
