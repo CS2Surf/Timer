@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API;
 
 namespace SurfTimer;
@@ -9,10 +8,13 @@ namespace SurfTimer;
 public partial class SurfTimer
 {
     // Trigger start touch handler - CBaseTrigger_StartTouchFunc
-    internal HookResult OnTriggerStartTouch(DynamicHook handler)
+    // internal HookResult OnTriggerStartTouch(DynamicHook handler)
+    internal HookResult OnTriggerStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
-        CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
-        CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
+        // CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
+        CBaseTrigger trigger = new CBaseTrigger(caller.Handle);
+        // CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
+        CBaseEntity entity = new CBaseEntity(activator.Handle);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
         if (!client.IsValid || !client.PawnIsAlive || !playerList.ContainsKey((int)client.UserId!)) // !playerList.ContainsKey((int)client.UserId!) make sure to not check for user_id that doesnt exists
         {

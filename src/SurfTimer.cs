@@ -122,9 +122,12 @@ public partial class SurfTimer : BasePlugin
         // Tick listener
         RegisterListener<Listeners.OnTick>(OnTick);
 
-        // StartTouch Hook
-        VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(OnTriggerStartTouch, HookMode.Post);
-        // EndTouch Hook
-        VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(OnTriggerEndTouch, HookMode.Post);
+        // StartTouch Hook -- DEPRECATE BROKEN CS2 7TH FEB 2024
+        // VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(OnTriggerStartTouch, HookMode.Post); 
+        // EndTouch Hook -- DEPRECATE BROKEN CS2 7TH FEB 2024
+        // VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(OnTriggerEndTouch, HookMode.Post); 
+
+        HookEntityOutput("trigger_multiple", "OnStartTouch", OnTriggerStartTouch);
+        HookEntityOutput("trigger_multiple", "OnEndTouch", OnTriggerEndTouch);
     }
 }

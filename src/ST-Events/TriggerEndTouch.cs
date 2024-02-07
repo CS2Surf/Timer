@@ -1,17 +1,19 @@
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 
 namespace SurfTimer;
 
 public partial class SurfTimer
 {
     // Trigger end touch handler - CBaseTrigger_EndTouchFunc
-    internal HookResult OnTriggerEndTouch(DynamicHook handler)
+    // internal HookResult OnTriggerEndTouch(DynamicHook handler)
+    internal HookResult OnTriggerEndTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
-        CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
-        CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
+        // CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
+        CBaseTrigger trigger = new CBaseTrigger(caller.Handle);
+        // CBaseEntity entity = handler.GetParam<CBaseEntity>(1);
+        CBaseEntity entity = new CBaseEntity(activator.Handle);
         CCSPlayerController client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
         if (!client.IsValid || client.UserId == -1 || !client.PawnIsAlive || !playerList.ContainsKey((int)client.UserId!)) // `client.IsBot` throws error in server console when going to spectator? + !playerList.ContainsKey((int)client.UserId!) make sure to not check for user_id that doesnt exists
         {
