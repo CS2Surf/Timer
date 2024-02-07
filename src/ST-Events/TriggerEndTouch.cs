@@ -50,8 +50,11 @@ public partial class SurfTimer
                     }
 
                     // MAP START ZONE
-                    player.Timer.Start();
-                    player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_RUN;
+                    if (!player.Timer.IsStageMode)
+                    {
+                        player.Timer.Start();
+                        player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_RUN;
+                    }
 
                     /* Revisit
                     // Wonky Prespeed check
