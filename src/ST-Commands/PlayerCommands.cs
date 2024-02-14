@@ -40,6 +40,7 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_s", "Teleport to a stage")]
+    [ConsoleCommand("css_stage", "Teleport to a stage")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToStage(CCSPlayerController? player, CommandInfo command)
     {
