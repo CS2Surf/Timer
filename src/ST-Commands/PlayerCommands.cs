@@ -32,10 +32,23 @@ public partial class SurfTimer
 
         // To-do: players[userid].Timer.Reset() -> teleport player
         Player SurfPlayer = playerList[player.UserId ?? 0];
-        if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0, 0, 0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0, 0, 0)));
-        else // Reset back to map start
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+
+        if (SurfPlayer.Timer.IsBonusMode)
+        {
+            if (SurfPlayer.Timer.Bonus != 0 && CurrentMap.BonusStartZone[SurfPlayer.Timer.Bonus] != new Vector(0, 0, 0))
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[SurfPlayer.Timer.Bonus], CurrentMap.BonusStartZoneAngles[SurfPlayer.Timer.Bonus], new Vector(0, 0, 0)));
+            else // Reset back to map start
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+        }
+
+        else
+        {
+            if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0, 0, 0))
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0, 0, 0)));
+            else // Reset back to map start
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+        }
+        
         return;
     }
 
@@ -98,10 +111,8 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        int bonus = Int32.Parse(command.ArgByIndex(1)) - 1;
-
         // Must be 1 argument
-        if (command.ArgCount < 2 || bonus < 0)
+        if (command.ArgCount < 2)
         {
             #if DEBUG
             player.PrintToChat($"CS2 Surf DEBUG >> css_bonus >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
@@ -111,7 +122,9 @@ public partial class SurfTimer
             return;
         }
 
-        else if (CurrentMap.Bonuses <= 0)
+        int bonus = Int32.Parse(command.ArgByIndex(1)) - 1;
+
+        if (CurrentMap.Bonuses <= 0)
         {
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}This map has no bonuses.");
             return;
@@ -125,10 +138,10 @@ public partial class SurfTimer
 
         if (CurrentMap.BonusStartZone[bonus] != new Vector(0, 0, 0))
         {
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[bonus], CurrentMap.BonusStartZoneAngles[bonus], new Vector(0, 0, 0)));
-
             playerList[player.UserId ?? 0].Timer.Reset();
             playerList[player.UserId ?? 0].Timer.IsBonusMode = true;
+
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[bonus], CurrentMap.BonusStartZoneAngles[bonus], new Vector(0, 0, 0)));
         }
 
         else
