@@ -47,7 +47,9 @@ internal class PlayerHUD
                     ? $"{time.Seconds:D2}.{millis:D3}"
                     : $"{time.Minutes:D1}:{time.Seconds:D2}.{millis:D3}";
             case PlayerTimer.TimeFormatStyle.Full:
-                return $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
+                return time.TotalHours < 1 
+                    ? $"{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}"
+                    : $"{time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{millis:D3}";
             case PlayerTimer.TimeFormatStyle.Verbose:
                 return $"{time.Hours}h {time.Minutes}m {time.Seconds}s {millis}ms";
             default:
