@@ -152,6 +152,27 @@ public partial class SurfTimer
                         // Handle the case where the index is out of bounds
                     }
                 }
+            
+                // Bonus start zones -- hook into (b)onus#_start
+                else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success)
+                {
+                    #if DEBUG
+                    player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Bonus {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
+                    #endif
+
+                    // BONUS START ZONE
+                    if (!player.Timer.IsStageMode && player.Timer.IsBonusMode)
+                    {
+                        player.Timer.Start();
+                        // To-do: bonus replay
+                    }
+
+                    // Prespeed display
+                    player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
+                    player.Stats.ThisRun.StartVelX = velocity_x; // Start pre speed for the run
+                    player.Stats.ThisRun.StartVelY = velocity_y; // Start pre speed for the run
+                    player.Stats.ThisRun.StartVelZ = velocity_z; // Start pre speed for the run
+                }
             }
 
             return HookResult.Continue;

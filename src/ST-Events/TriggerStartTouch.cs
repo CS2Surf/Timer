@@ -220,6 +220,24 @@ public partial class SurfTimer
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.Lime}StartTouchFunc{ChatColors.Default} -> {ChatColors.LightBlue}Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Zone");
                     #endif
                 }
+            
+                // Bonus start zones -- hook into bonus_start
+                else if (trigger.Entity.Name.Contains("bonus_start"))
+                {
+                    // We only want this working if they're in bonus mode, ignore otherwise.
+                    if (player.Timer.IsBonusMode) 
+                    {
+                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+                        player.Timer.Bonus = bonus;
+
+                        player.Controller.PrintToCenter($"Bonus Start ({trigger.Entity.Name})");
+
+                        #if DEBUG
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
+                        Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> !player.Timer.IsBonusMode: {!player.Timer.IsBonusMode}");
+                        #endif
+                    }
+                }
             }
 
             return HookResult.Continue;
