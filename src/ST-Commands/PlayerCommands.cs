@@ -48,22 +48,27 @@ public partial class SurfTimer
             return;
 
         int stage = Int32.Parse(command.ArgByIndex(1)) - 1;
-        if (stage > CurrentMap.Stages - 1 && CurrentMap.Stages > 0)
-            stage = CurrentMap.Stages - 1;
 
         // Must be 1 argument
         if (command.ArgCount < 2 || stage < 0)
         {
             #if DEBUG
-            player.PrintToChat($"CS2 Surf DEBUG >> css_s >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
+            player.PrintToChat($"CS2 Surf DEBUG >> css_stage >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
             #endif
 
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
             return;
         }
+
         else if (CurrentMap.Stages <= 0)
         {
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}This map has no stages.");
+            return;
+        }
+
+        else if (stage > CurrentMap.Stages)
+        {
+            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid stage provided, this map has {ChatColors.Green}{CurrentMap.Stages} stages.");
             return;
         }
 
@@ -83,6 +88,51 @@ public partial class SurfTimer
 
         else
             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
+    }
+
+    [ConsoleCommand("css_b", "Teleport to a bonus")]
+    [ConsoleCommand("css_bonus", "Teleport to a bonus")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void PlayerGoToBonus(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        int bonus = Int32.Parse(command.ArgByIndex(1)) - 1;
+
+        // Must be 1 argument
+        if (command.ArgCount < 2 || bonus < 0)
+        {
+            #if DEBUG
+            player.PrintToChat($"CS2 Surf DEBUG >> css_bonus >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
+            #endif
+
+            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!bonus <bonus>");
+            return;
+        }
+
+        else if (CurrentMap.Bonuses <= 0)
+        {
+            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}This map has no bonuses.");
+            return;
+        }
+
+        else if (bonus > CurrentMap.Bonuses)
+        {
+            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid bonus provided, this map has {ChatColors.Green}{CurrentMap.Bonuses} bonuses.");
+            return;
+        }
+
+        if (CurrentMap.BonusStartZone[bonus] != new Vector(0, 0, 0))
+        {
+            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[bonus], CurrentMap.BonusStartZoneAngles[bonus], new Vector(0, 0, 0)));
+
+            playerList[player.UserId ?? 0].Timer.Reset();
+            playerList[player.UserId ?? 0].Timer.IsBonusMode = true;
+        }
+
+        else
+            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid bonus provided. Usage: {ChatColors.Green}!bonus <bonus>");
     }
 
     [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]

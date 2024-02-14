@@ -50,7 +50,7 @@ public partial class SurfTimer
                     }
 
                     // MAP START ZONE
-                    if (!player.Timer.IsStageMode)
+                    if (!player.Timer.IsStageMode && !player.Timer.IsBonusMode)
                     {
                         player.Timer.Start();
                         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_RUN;
