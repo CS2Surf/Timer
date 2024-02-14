@@ -109,6 +109,7 @@ internal class Map
                     if (!foundPlayerSpawn)
                     {
                         this.StageStartZone[stage] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.Stages++;
                     }
                 }
 
@@ -131,8 +132,8 @@ internal class Map
                         if (teleport.Entity!.Name != null && 
                             (IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!) || (Regex.Match(teleport.Entity.Name, "^spawn_b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success && Int32.Parse(Regex.Match(teleport.Entity.Name, "[0-9][0-9]?").Value) == bonus)))
                         {
-                            this.BonusStartZone[bonus - 1] = new Vector(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.BonusStartZoneAngles[bonus - 1] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.BonusStartZone[bonus] = new Vector(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.BonusStartZoneAngles[bonus] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             this.Bonuses++; // Count bonus zones for the map to populate DB
                             foundPlayerSpawn = true;
                             break;
@@ -141,13 +142,14 @@ internal class Map
 
                     if (!foundPlayerSpawn)
                     {
-                        this.BonusStartZone[bonus - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.BonusStartZone[bonus] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.Bonuses++;
                     }
                 }
 
                 else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_end$").Success) 
                 {
-                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 }
             }
         }
@@ -192,8 +194,6 @@ internal class Map
                 this.ID = postWriteMapData.GetInt32("id");
                 this.Author = postWriteMapData.GetString("author");
                 this.Tier = postWriteMapData.GetInt32("tier");
-                // this.Stages = -1;    // this should now be populated accordingly when looping through hookzones for the map
-                // this.Bonuses = -1;   // this should now be populated accordingly when looping through hookzones for the map
                 this.Ranked = postWriteMapData.GetBoolean("ranked");
                 this.DateAdded = postWriteMapData.GetInt32("date_added");
                 this.LastPlayed = this.DateAdded; 

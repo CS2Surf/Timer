@@ -122,7 +122,7 @@ public partial class SurfTimer
             return;
         }
 
-        int bonus = Int32.Parse(command.ArgByIndex(1)) - 1;
+        int bonus = Int32.Parse(command.ArgByIndex(1));
 
         if (CurrentMap.Bonuses <= 0)
         {

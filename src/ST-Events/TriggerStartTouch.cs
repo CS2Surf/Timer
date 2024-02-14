@@ -221,13 +221,15 @@ public partial class SurfTimer
                     #endif
                 }
             
-                // Bonus start zones -- hook into bonus_start
-                else if (trigger.Entity.Name.Contains("bonus_start"))
+                // Bonus start zones -- hook into (b)onus#_start
+                else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success)
                 {
                     // We only want this working if they're in bonus mode, ignore otherwise.
                     if (player.Timer.IsBonusMode) 
                     {
-                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+                        player.Timer.Reset();
+                        player.Timer.IsBonusMode = true;
+                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
                         player.Timer.Bonus = bonus;
 
                         player.Controller.PrintToCenter($"Bonus Start ({trigger.Entity.Name})");
