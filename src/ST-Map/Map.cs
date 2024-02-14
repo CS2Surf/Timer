@@ -152,7 +152,8 @@ internal class Map
             }
         }
 
-        if (this.Stages > 0) this.Stages++; // You did not count the stages right :(
+        if (this.Stages > 0) // Account for stage 1, not counted above
+            this.Stages += 1; 
         Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
 
         // Gather map information OR create entry
