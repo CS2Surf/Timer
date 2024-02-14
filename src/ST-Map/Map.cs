@@ -40,6 +40,9 @@ internal class Map
     public Vector[] CheckpointStartZone {get;} = Enumerable.Repeat(0, 99).Select(x => new Vector(0,0,0)).ToArray();
 
     // Constructor
+    // To-do: This loops through all the triggers. While that's great and comprehensive, some maps have two triggers with the exact same name, because there are two
+    //        for each side of the course (left and right, for example). We should probably work on automatically catching this. 
+    //        Maybe even introduce a new naming convention?
     internal Map(string Name, TimerDatabase DB)
     {
         // Set map name
