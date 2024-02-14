@@ -123,7 +123,7 @@ internal class PlayerStats
             #endif
 
             Checkpoint cp = new(results.GetInt32("cp"),
-                                results.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                                results.GetInt32("run_time"), 
                                 results.GetFloat("start_vel_x"),
                                 results.GetFloat("start_vel_y"),
                                 results.GetFloat("start_vel_z"),

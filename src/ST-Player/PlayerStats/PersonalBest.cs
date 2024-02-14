@@ -22,7 +22,7 @@ internal class PersonalBest
     // Constructor
     public PersonalBest()
     {
-        Ticks = -1; // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+        Ticks = -1;
         Checkpoint = new Dictionary<int, Checkpoint>();
         // Type = type;
         StartVelX = -1.0f;

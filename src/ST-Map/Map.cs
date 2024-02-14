@@ -305,7 +305,7 @@ internal class Map
                 #endif
 
                 Checkpoint cp = new(cpWrData.GetInt32("cp"),
-                                    cpWrData.GetInt32("run_time"),   // To-do: what type of value we use here? DB uses DECIMAL but `.Tick` is int???
+                                    cpWrData.GetInt32("run_time"),
                                     cpWrData.GetFloat("start_vel_x"),
                                     cpWrData.GetFloat("start_vel_y"),
                                     cpWrData.GetFloat("start_vel_z"),

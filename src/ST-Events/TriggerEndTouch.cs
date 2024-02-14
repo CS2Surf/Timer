@@ -103,7 +103,7 @@ public partial class SurfTimer
                         currentCheckpoint.EndVelX = velocity_x;
                         currentCheckpoint.EndVelY = velocity_y;
                         currentCheckpoint.EndVelZ = velocity_z;
-                        currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
+                        currentCheckpoint.EndTouch = player.Timer.Ticks;
                         currentCheckpoint.Attempts += 1;
                         // Assign the updated currentCheckpoint back to the list as `currentCheckpoint` is supposedly a copy of the original object
                         player.Stats.ThisRun.Checkpoint[player.Timer.Checkpoint] = currentCheckpoint;
@@ -139,7 +139,7 @@ public partial class SurfTimer
                         currentCheckpoint.EndVelX = velocity_x;
                         currentCheckpoint.EndVelY = velocity_y;
                         currentCheckpoint.EndVelZ = velocity_z;
-                        currentCheckpoint.EndTouch = player.Timer.Ticks; // To-do: what type of value we store in DB ?
+                        currentCheckpoint.EndTouch = player.Timer.Ticks;
                         currentCheckpoint.Attempts += 1;
                         // Assign the updated currentCheckpoint back to the list as `currentCheckpoint` is supposedly a copy of the original object
                         player.Stats.ThisRun.Checkpoint[player.Timer.Checkpoint] = currentCheckpoint;
