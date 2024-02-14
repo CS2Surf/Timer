@@ -299,7 +299,7 @@ internal class Map
             {
                 #if DEBUG
                 Console.WriteLine($"cp {cpWrData.GetInt32("cp")} ");
-                Console.WriteLine($"run_time {cpWrData.GetFloat("run_time")} ");
+                Console.WriteLine($"run_time {cpWrData.GetInt32("run_time")} ");
                 Console.WriteLine($"sVelX {cpWrData.GetFloat("start_vel_x")} ");
                 Console.WriteLine($"sVelY {cpWrData.GetFloat("start_vel_y")} ");
                 #endif

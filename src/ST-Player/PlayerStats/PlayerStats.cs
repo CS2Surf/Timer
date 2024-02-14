@@ -117,7 +117,7 @@ internal class PlayerStats
         {
             #if DEBUG
             Console.WriteLine($"cp {results.GetInt32("cp")} ");
-            Console.WriteLine($"run_time {results.GetFloat("run_time")} ");
+            Console.WriteLine($"run_time {results.GetInt32("run_time")} ");
             Console.WriteLine($"sVelX {results.GetFloat("start_vel_x")} ");
             Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
             #endif
