@@ -75,7 +75,14 @@ internal class PlayerHUD
                 else
                     timerColor = "#2E9F65";
             }
-            string timerModule = FormatHUDElementHTML("", FormatTime(_player.Timer.Ticks), timerColor);
+
+            string timerModule;
+            if (_player.Timer.IsBonusMode)
+                timerModule = FormatHUDElementHTML("", $"[B{_player.Timer.Bonus}] "+FormatTime(_player.Timer.Ticks), timerColor);
+            else if (_player.Timer.IsStageMode)
+                timerModule = FormatHUDElementHTML("", $"[S{_player.Timer.Stage}] "+FormatTime(_player.Timer.Ticks), timerColor);
+            else
+                timerModule = FormatHUDElementHTML("", FormatTime(_player.Timer.Ticks), timerColor);
 
             // Velocity Module - To-do: Make velocity module configurable (XY or XYZ velocity)
             float velocity = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
