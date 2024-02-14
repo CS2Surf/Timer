@@ -144,7 +144,7 @@ public partial class SurfTimer
                 // Stage start zones -- hook into (s)tage#_start
                 else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
                 {
-                    int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+                    int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
                     player.Timer.Stage = stage;
 
                     #if DEBUG
@@ -156,10 +156,10 @@ public partial class SurfTimer
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*
                     if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count < stage)
                     {
-                        player.Timer.Checkpoint = stage; // Stage = Checkpoint when in a run on a Staged map
+                        player.Timer.Checkpoint = stage - 1; // Stage = Checkpoint when in a run on a Staged map
 
                         #if DEBUG
-                        Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `stage`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
+                        Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `stage`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)}");
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Stats.PB[{style}].Checkpoint.Count = {player.Stats.PB[style].Checkpoint.Count}");
                         #endif
 
@@ -167,7 +167,7 @@ public partial class SurfTimer
                         player.HUD.DisplayCheckpointMessages(PluginPrefix);
 
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                        Checkpoint cp2 = new Checkpoint(stage,
+                        Checkpoint cp2 = new Checkpoint(player.Timer.Checkpoint,
                                                         player.Timer.Ticks,
                                                         velocity_x,
                                                         velocity_y,
@@ -177,7 +177,7 @@ public partial class SurfTimer
                                                         -1.0f,
                                                         -1.0f,
                                                         0);
-                        player.Stats.ThisRun.Checkpoint[stage] = cp2;
+                        player.Stats.ThisRun.Checkpoint[player.Timer.Checkpoint] = cp2;
                     }
 
                     #if DEBUG
@@ -195,7 +195,7 @@ public partial class SurfTimer
                     if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count < checkpoint)
                     {
                         #if DEBUG
-                        Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1}");
+                        Console.WriteLine($"============== Initial entity value: {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} | Assigned to `checkpoint`: {Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)}");
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Checkpoint zones) -> player.Stats.PB[{style}].Checkpoint.Count = {player.Stats.PB[style].Checkpoint.Count}");
                         #endif
                         

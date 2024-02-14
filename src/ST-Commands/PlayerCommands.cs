@@ -60,10 +60,10 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        int stage = Int32.Parse(command.ArgByIndex(1)) - 1;
+        int stage = Int32.Parse(command.ArgByIndex(1));
 
         // Must be 1 argument
-        if (command.ArgCount < 2 || stage < 0)
+        if (command.ArgCount < 2 || stage <= 0)
         {
             #if DEBUG
             player.PrintToChat($"CS2 Surf DEBUG >> css_stage >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
@@ -87,7 +87,7 @@ public partial class SurfTimer
 
         if (CurrentMap.StageStartZone[stage] != new Vector(0, 0, 0))
         {
-            if (stage == 0)
+            if (stage == 1)
                 Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, CurrentMap.StartZoneAngles, new Vector(0, 0, 0)));
             else
                 Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[stage], CurrentMap.StageStartZoneAngles[stage], new Vector(0, 0, 0)));
