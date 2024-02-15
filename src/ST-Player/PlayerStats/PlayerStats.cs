@@ -23,7 +23,9 @@ internal class PlayerStats
         // Add more styles as needed
     }
 
-    // Loads the player's MapTimes data from the database along with `Rank` for the run.
+    /// <summary>
+    /// Loads the player's MapTimes data from the database along with `Rank` for the run.
+    /// </summary>
     // `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
     // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     public void LoadMapTimesData(Player player, TimerDatabase DB, int playerId = 0, int mapId = 0)
@@ -67,7 +69,9 @@ internal class PlayerStats
         playerStats.Close();
     }
 
-    // Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
+    /// <summary>
+    /// Loads the player's Checkpoints data from the database for their personal best run.
+    /// </summary>
     public void LoadCheckpointsData(TimerDatabase DB)
     {
         Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {PB[0].ID};");

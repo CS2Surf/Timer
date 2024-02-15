@@ -7,8 +7,11 @@ namespace SurfTimer;
 
 public partial class SurfTimer
 {
-    // Trigger start touch handler - CBaseTrigger_StartTouchFunc
-    // internal HookResult OnTriggerStartTouch(DynamicHook handler)
+    /// <summary>
+    /// Handler for trigger start touch hook - CBaseTrigger_StartTouchFunc
+    /// </summary>
+    /// <returns>CounterStrikeSharp.API.Core.HookResult</returns>
+    /// <exception cref="Exception"></exception>
     internal HookResult OnTriggerStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         // CBaseTrigger trigger = handler.GetParam<CBaseTrigger>(0);
