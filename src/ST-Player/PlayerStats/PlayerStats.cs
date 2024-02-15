@@ -9,23 +9,23 @@ internal class PlayerStats
     // These account for future style support and a relevant index.
     public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
     public int[,] StageRank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
-    //
 
-    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
-    public CurrentRun ThisRun { get; set; } = new CurrentRun(); // This is a CurrenntRun object that tracks the data for the Player's current run
+    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>(); // Map PB - Refer to as PB[style]
+    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = {new Dictionary<int, PersonalBest>()}; // Bonus PBs - Refer to as BonusPB[style][bonus#]
+    public CurrentRun ThisRun { get; set; } = new CurrentRun(); // This is a CurrentRun object that tracks the data for the Player's current run
+
     // Initialize PersonalBest for each `style` (e.g., 0 for normal) - this is a temporary solution
     // Here we can loop through all available styles at some point and initialize them
     public PlayerStats()
     {
         PB[0] = new PersonalBest();
+        BonusPB[0][0] = new PersonalBest();
         // Add more styles as needed
     }
 
-    /// <summary>
-    /// Loads the player's MapTimes data from the database along with `Rank` for the run.
-    /// `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
-    /// This can populate all the `style` stats the player has for the map - currently only 1 style is supported
-    /// </summary>
+    // Loads the player's MapTimes data from the database along with `Rank` for the run.
+    // `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
+    // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
     public void LoadMapTimesData(Player player, TimerDatabase DB, int playerId = 0, int mapId = 0)
     {
         Task<MySqlDataReader> dbTask2 = DB.Query($@"
@@ -45,17 +45,18 @@ internal class PlayerStats
             while (playerStats.Read())
             {
                 // Load data into PersonalBest object
-                // style = playerStats.GetInt32("style"); // Uncomment when style is implemented
+                // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
                 PB[style].ID = playerStats.GetInt32("id");
+                PB[style].Ticks = playerStats.GetInt32("run_time");
+                PB[style].Type = playerStats.GetInt32("type");
+                PB[style].Rank = playerStats.GetInt32("rank");
                 PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
                 PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
                 PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
                 PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
                 PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
                 PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                PB[style].Ticks = playerStats.GetInt32("run_time");
                 PB[style].RunDate = playerStats.GetInt32("run_date");
-                PB[style].Rank = playerStats.GetInt32("rank");
 
                 Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
                 #if DEBUG
@@ -66,9 +67,7 @@ internal class PlayerStats
         playerStats.Close();
     }
 
-    /// <summary>
-    /// Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
-    /// </summary>
+    // Executes the DB query to get all the checkpoints and store them in the Checkpoint dictionary
     public void LoadCheckpointsData(TimerDatabase DB)
     {
         Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {PB[0].ID};");

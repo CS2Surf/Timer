@@ -279,6 +279,7 @@ internal class Map
                 {    
                     this.WR[style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
                     this.WR[style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+                    this.WR[style].Type = mapWrData.GetInt32("type"); // Bonus type (0 = map, 1+ = bonus index)
                     this.WR[style].StartVelX = mapWrData.GetFloat("start_vel_x"); // Fastest run start velocity X for the Map and Style combo
                     this.WR[style].StartVelY = mapWrData.GetFloat("start_vel_y"); // Fastest run start velocity Y for the Map and Style combo
                     this.WR[style].StartVelZ = mapWrData.GetFloat("start_vel_z"); // Fastest run start velocity Z for the Map and Style combo
