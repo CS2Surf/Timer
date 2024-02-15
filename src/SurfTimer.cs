@@ -60,6 +60,16 @@ public partial class SurfTimer : BasePlugin
         if ((CurrentMap == null || CurrentMap.Name.Equals(mapName) == false) && mapName.Contains("surf_"))
         {
             AddTimer(1.0f, () => CurrentMap = new Map(mapName, DB!)); // Was 3 seconds, now 1 second
+
+            AddTimer(3.0f, () =>Console.WriteLine(String.Format("  ____________    ____         ___\n"
+                                    + " / ___/ __/_  |  / __/_ ______/ _/\n"
+                                    + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
+                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
+                                    + $"[CS2 Surf] SurfTimer {ModuleVersion} - loading map {mapName}.\n"
+                                    + $"[CS2 Surf] This software is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information.\n"
+                                    + $"[CS2 Surf] ---> Source Code: https://github.com/CS2Surf/Timer\n"
+                                    + $"[CS2 Surf] ---> License Agreement: https://github.com/CS2Surf/Timer/blob/main/LICENSE\n"
+            )));
         }
     }
 
@@ -111,7 +121,7 @@ public partial class SurfTimer : BasePlugin
                                     + " / ___/ __/_  |  / __/_ ______/ _/\n"
                                     + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
                                     + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
-                                    + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
+                                    + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}\n"
                                     + $"[CS2 Surf] This plugin is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information. Source code: https://github.com/CS2Surf/Timer\n"
         ));
 
