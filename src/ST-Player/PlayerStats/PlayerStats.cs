@@ -7,12 +7,30 @@ internal class PlayerStats
     // To-Do: Each stat should be a class of its own, with its own methods and properties - easier to work with. 
     //        Temporarily, we store ticks + basic info so we can experiment
     // These account for future style support and a relevant index.
-    public int[,] StagePB { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
-    public int[,] StageRank { get; set; } = { { 0, 0 } }; // First dimension: style (0 = normal), second dimension: stage index
 
-    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>(); // Map PB - Refer to as PB[style]
-    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = {new Dictionary<int, PersonalBest>()}; // Bonus PBs - Refer to as BonusPB[style][bonus#]
-    public CurrentRun ThisRun { get; set; } = new CurrentRun(); // This is a CurrentRun object that tracks the data for the Player's current run
+    /// <summary>
+    /// Stage Personal Best - Refer to as StagePB[style][stage#]
+    /// To-do: DEPRECATE THIS WHEN IMPLEMENTING STAGES, FOLLOW NEW PB STRUCTURE
+    /// </summary>
+    public int[,] StagePB { get; set; } = { { 0, 0 } };
+    /// <summary>
+    /// Stage Personal Best - Refer to as StageRank[style][stage#]
+    /// To-do: DEPRECATE THIS WHEN IMPLEMENTING STAGES, FOLLOW NEW PB STRUCTURE
+    /// </summary>
+    public int[,] StageRank { get; set; } = { { 0, 0 } }; 
+
+    /// <summary>
+    /// Map Personal Best - Refer to as PB[style]
+    /// </summary>
+    public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
+    /// <summary>
+    /// Bonus Personal Best - Refer to as BonusPB[style][bonus#]
+    /// </summary>
+    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = {new Dictionary<int, PersonalBest>()};
+    /// <summary>
+    /// This object tracks data for the Player's current run.
+    /// </summary>
+    public CurrentRun ThisRun { get; set; } = new CurrentRun();
 
     // Initialize PersonalBest for each `style` (e.g., 0 for normal) - this is a temporary solution
     // Here we can loop through all available styles at some point and initialize them
@@ -24,7 +42,7 @@ internal class PlayerStats
     }
 
     /// <summary>
-    /// Loads the player's MapTimes data from the database along with `Rank` for the run.
+    /// Loads the player's map time data from the database along with their ranks.
     /// </summary>
     // `Checkpoints` are loaded separately because inside the while loop we cannot run queries.
     // This can populate all the `style` stats the player has for the map - currently only 1 style is supported
@@ -70,7 +88,7 @@ internal class PlayerStats
     }
 
     /// <summary>
-    /// Loads the player's Checkpoints data from the database for their personal best run.
+    /// Loads the player's checkpoint data from the database for their personal best run.
     /// </summary>
     public void LoadCheckpointsData(TimerDatabase DB)
     {
