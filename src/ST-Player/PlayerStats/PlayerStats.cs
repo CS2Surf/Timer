@@ -129,7 +129,7 @@ internal class PlayerStats
                                 results.GetFloat("end_vel_x"),
                                 results.GetFloat("end_vel_y"),
                                 results.GetFloat("end_vel_z"),
-                                results.GetFloat("end_touch"),
+                                results.GetInt32("end_touch"),
                                 results.GetInt32("attempts"));
             cp.ID = results.GetInt32("cp");
             // To-do: cp.ID = calculate Rank # from DB
