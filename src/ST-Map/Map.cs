@@ -318,7 +318,7 @@ internal class Map
                                     cpWrData.GetFloat("end_vel_x"),
                                     cpWrData.GetFloat("end_vel_y"),
                                     cpWrData.GetFloat("end_vel_z"),
-                                    cpWrData.GetFloat("end_touch"),
+                                    cpWrData.GetInt32("end_touch"),
                                     cpWrData.GetInt32("attempts"));
                 cp.ID = cpWrData.GetInt32("cp");
                 // To-do: cp.ID = calculate Rank # from DB
