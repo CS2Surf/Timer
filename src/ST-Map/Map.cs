@@ -27,7 +27,7 @@ internal class Map
     /// <summary>
     /// Bonus World Record - Refer to as BonusWR[bonus#][style]
     /// </summary>
-    public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = { new Dictionary<int, PersonalBest>() };
+    public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = new Dictionary<int, PersonalBest>[32];
     public List<int> ConnectedMapTimes { get; set; } = new List<int>();
     public List<ReplayPlayer> ReplayBots { get; set; } = new List<ReplayPlayer> { new ReplayPlayer() };
 
@@ -54,7 +54,15 @@ internal class Map
     {
         // Set map name
         this.Name = Name;
+
+        // Initialize WR variables
         this.WR[0] = new PersonalBest(); // To-do: Implement styles
+        for (int i = 0; i < 32; i++)
+        {
+            BonusWR[i] = new Dictionary<int, PersonalBest>();
+            BonusWR[i][0] = new PersonalBest(); // To-do: Implement styles
+        }
+
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
         // Gathering info_teleport_destinations from the map
@@ -266,14 +274,14 @@ internal class Map
     {
         // Get map world records
         Task<MySqlDataReader> reader = DB.Query($@"
-            SELECT MapTimes.*, Player.name
+            SELECT MapTimes.*, MIN(MapTimes.run_time) AS minimum, Player.name
             FROM MapTimes
             JOIN Player ON MapTimes.player_id = Player.id
             WHERE MapTimes.map_id = {this.ID} AND MapTimes.style = {style}
+            GROUP BY MapTimes.type
             ORDER BY MapTimes.run_time ASC;
         ");
         MySqlDataReader mapWrData = reader.Result;
-        int totalRows = 0;
         
         if (mapWrData.HasRows)
         { 
@@ -282,7 +290,22 @@ internal class Map
             this.ConnectedMapTimes.Clear();
             while (mapWrData.Read())
             {
-                if (totalRows == 0) // We are sorting by `run_time ASC` so the first row is always the fastest run for the map and style combo :)
+                if (mapWrData.GetInt32("type") > 0)
+                {
+                    this.BonusWR[mapWrData.GetInt32("type")][style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].Type = mapWrData.GetInt32("type"); // Bonus type (0 = map, 1+ = bonus index)
+                    this.BonusWR[mapWrData.GetInt32("type")][style].StartVelX = mapWrData.GetFloat("start_vel_x"); // Fastest run start velocity X for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].StartVelY = mapWrData.GetFloat("start_vel_y"); // Fastest run start velocity Y for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].StartVelZ = mapWrData.GetFloat("start_vel_z"); // Fastest run start velocity Z for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].EndVelX = mapWrData.GetFloat("end_vel_x"); // Fastest run end velocity X for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].EndVelY = mapWrData.GetFloat("end_vel_y"); // Fastest run end velocity Y for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
+                    this.BonusWR[mapWrData.GetInt32("type")][style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
+                }
+
+                else 
                 {
                     this.WR[style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
                     this.WR[style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
@@ -295,16 +318,42 @@ internal class Map
                     this.WR[style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
                     this.WR[style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
                     this.WR[style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
+                
+                    this.ConnectedMapTimes.Add(mapWrData.GetInt32("id"));
                 }
-                this.ConnectedMapTimes.Add(mapWrData.GetInt32("id"));
-                totalRows++;
             }
         }
         mapWrData.Close();
-        this.TotalCompletions = totalRows; // Total completions for the map and style - this should maybe be added to PersonalBest class
+
+        // Count completions
+        Task<MySqlDataReader> completionStats = DB.Query($@"
+            SELECT MapTimes.type, COUNT(*) as count
+            FROM MapTimes 
+            WHERE MapTimes.map_id = {this.ID}
+            GROUP BY type;
+        ");
+        MySqlDataReader completionStatsResult = completionStats.Result;
+
+        if (completionStatsResult.HasRows)
+        {
+            while (completionStatsResult.Read())
+            {
+                if (completionStatsResult.GetInt32("type") > 0)
+                {
+                    // To-do: bonus completion counts
+                }
+
+                else
+                {
+                    // Total completions for the map and style - this should maybe be added to PersonalBest class
+                    this.TotalCompletions = completionStatsResult.GetInt32("count");
+                }
+            }
+        }
+        completionStatsResult.Close();
 
         // Get map world record checkpoints
-        if (totalRows != 0)
+        if (this.TotalCompletions != 0)
         {
             Task<MySqlDataReader> cpReader = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.WR[style].ID};");
             MySqlDataReader cpWrData = cpReader.Result;
