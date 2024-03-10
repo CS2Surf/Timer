@@ -65,18 +65,38 @@ internal class PlayerStats
             while (playerStats.Read())
             {
                 // Load data into PersonalBest object
-                // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
-                PB[style].ID = playerStats.GetInt32("id");
-                PB[style].Ticks = playerStats.GetInt32("run_time");
-                PB[style].Type = playerStats.GetInt32("type");
-                PB[style].Rank = playerStats.GetInt32("rank");
-                PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
-                PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
-                PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
-                PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
-                PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
-                PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                PB[style].RunDate = playerStats.GetInt32("run_date");
+                if (playerStats.GetInt32("type") > 0) // Bonus time
+                {
+                    int bonus = playerStats.GetInt32("type");
+                    // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
+                    BonusPB[bonus][style].ID = playerStats.GetInt32("id");
+                    BonusPB[bonus][style].Ticks = playerStats.GetInt32("run_time");
+                    BonusPB[bonus][style].Type = playerStats.GetInt32("type");
+                    BonusPB[bonus][style].Rank = playerStats.GetInt32("rank");
+                    BonusPB[bonus][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                    BonusPB[bonus][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                    BonusPB[bonus][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                    BonusPB[bonus][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                    BonusPB[bonus][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                    BonusPB[bonus][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                    BonusPB[bonus][style].RunDate = playerStats.GetInt32("run_date");
+                }
+
+                else // Map time
+                {
+                    // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
+                    PB[style].ID = playerStats.GetInt32("id");
+                    PB[style].Ticks = playerStats.GetInt32("run_time");
+                    PB[style].Type = playerStats.GetInt32("type");
+                    PB[style].Rank = playerStats.GetInt32("rank");
+                    PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                    PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                    PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                    PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                    PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                    PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                    PB[style].RunDate = playerStats.GetInt32("run_date");
+                }
 
                 Console.WriteLine($"============== CS2 Surf DEBUG >> LoadMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
                 #if DEBUG
