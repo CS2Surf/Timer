@@ -26,7 +26,7 @@ internal class PlayerStats
     /// <summary>
     /// Bonus Personal Best - Refer to as BonusPB[bonus#][style]
     /// </summary>
-    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = {new Dictionary<int, PersonalBest>()};
+    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = new Dictionary<int, PersonalBest>[32];
     /// <summary>
     /// This object tracks data for the Player's current run.
     /// </summary>
@@ -37,7 +37,11 @@ internal class PlayerStats
     public PlayerStats()
     {
         PB[0] = new PersonalBest();
-        BonusPB[0][0] = new PersonalBest();
+        for (int i = 0; i < 32; i++)
+        {
+            BonusPB[i] = new Dictionary<int, PersonalBest>();
+            BonusPB[i][0] = new PersonalBest();
+        }
         // Add more styles as needed
     }
 
