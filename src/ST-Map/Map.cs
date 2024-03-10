@@ -20,7 +20,14 @@ internal class Map
     public int DateAdded {get; set;} = 0;
     public int LastPlayed {get; set;} = 0;
     public int TotalCompletions {get; set;} = 0;
+    /// <summary>
+    /// Map World Record - Refer to as WR[style]
+    /// </summary>
     public Dictionary<int, PersonalBest> WR { get; set; } = new Dictionary<int, PersonalBest>();
+    /// <summary>
+    /// Bonus World Record - Refer to as BonusWR[bonus#][style]
+    /// </summary>
+    public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = { new Dictionary<int, PersonalBest>() };
     public List<int> ConnectedMapTimes { get; set; } = new List<int>();
     public List<ReplayPlayer> ReplayBots { get; set; } = new List<ReplayPlayer> { new ReplayPlayer() };
 
@@ -276,7 +283,7 @@ internal class Map
             while (mapWrData.Read())
             {
                 if (totalRows == 0) // We are sorting by `run_time ASC` so the first row is always the fastest run for the map and style combo :)
-                {    
+                {
                     this.WR[style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
                     this.WR[style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
                     this.WR[style].Type = mapWrData.GetInt32("type"); // Bonus type (0 = map, 1+ = bonus index)
