@@ -100,8 +100,14 @@ internal class PlayerHUD
                 rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.TotalCompletions}", "#7882dd");
             }
             // PB & WR Modules
-            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[style].Ticks > 0 ? FormatTime(_player.Stats.PB[style].Ticks) : "N/A", "#7882dd"); // IMPLEMENT IN PlayerStats // To-do: make Style (currently 0) be dynamic
-            string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WR[style].Ticks > 0 ? FormatTime(_player.CurrMap.WR[style].Ticks) : "N/A", "#ffc61a"); // IMPLEMENT IN PlayerStats - This should be part of CurrentMap, not PlayerStats?
+            string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[style].Ticks > 0 ? FormatTime(_player.Stats.PB[style].Ticks) : "N/A", "#7882dd"); // To-do: make Style (currently 0) be dynamic
+            string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WR[style].Ticks > 0 ? FormatTime(_player.CurrMap.WR[style].Ticks) : "N/A", "#ffc61a"); // To-do: make Style (currently 0) be dynamic
+
+            if (_player.Timer.Bonus > 0 && _player.Timer.IsBonusMode) // Show corresponding bonus values
+            {
+                pbModule = FormatHUDElementHTML("PB", _player.Stats.BonusPB[_player.Timer.Bonus][style].Ticks > 0 ? FormatTime(_player.Stats.BonusPB[_player.Timer.Bonus][style].Ticks) : "N/A", "#7882dd"); // To-do: make Style (currently 0) be dynamic
+                wrModule = FormatHUDElementHTML("WR", _player.CurrMap.BonusWR[_player.Timer.Bonus][style].Ticks > 0 ? FormatTime(_player.CurrMap.BonusWR[_player.Timer.Bonus][style].Ticks) : "N/A", "#ffc61a"); // To-do: make Style (currently 0) be dynamic
+            }
 
             // Build HUD
             string hud = $"{timerModule}<br>{velocityModule}<br>{pbModule} | {rankModule}<br>{wrModule}";
