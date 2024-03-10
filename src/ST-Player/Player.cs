@@ -40,7 +40,7 @@ internal class Player
     }
 
     /// <summary>
-    /// Checks if current player is spcetating player <p>
+    /// Checks if current player is spectating player <p>
     /// </summary>
     public bool IsSpectating(CCSPlayerController p)
     {
