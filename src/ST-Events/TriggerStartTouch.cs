@@ -285,6 +285,15 @@ public partial class SurfTimer
                     
                         player.Stats.BonusPB[bonus][style].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
                         // To-do: save to DB
+
+                        if (!player.Timer.IsPracticeMode)
+                        {
+                            AddTimer(1.5f, () => {
+                                player.Stats.ThisRun.SaveMapTime(player, DB, bonus); // Save the bonus time PB data
+                                player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                                CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
+                            });
+                        }
                     }
                 }
             }
