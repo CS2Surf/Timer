@@ -230,6 +230,8 @@ public partial class SurfTimer
                     // We only want this working if they're in bonus mode, ignore otherwise.
                     if (player.Timer.IsBonusMode) 
                     {
+                        player.ReplayRecorder.Start(); // Start replay recording
+
                         player.Timer.Reset();
                         player.Timer.IsBonusMode = true;
                         int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
@@ -259,7 +261,9 @@ public partial class SurfTimer
                         }
 
                         player.Timer.Stop();
-                        // To-do: bonus replays
+                        player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_RUN;
+
+                        // To-do: Bonus prespeeds
 
                         string PracticeString = "";
                         if (player.Timer.IsPracticeMode)
@@ -284,8 +288,8 @@ public partial class SurfTimer
                             throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Bonus end zone) -> DB object is null, this shouldn't happen.");
                     
                         player.Stats.BonusPB[bonus][style].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
+                        
                         // To-do: save to DB
-
                         if (!player.Timer.IsPracticeMode)
                         {
                             AddTimer(1.5f, () => {
