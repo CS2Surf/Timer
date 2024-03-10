@@ -263,7 +263,10 @@ public partial class SurfTimer
                         player.Timer.Stop();
                         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_RUN;
 
-                        // To-do: Bonus prespeeds
+                        player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
+                        player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
+                        player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
 
                         string PracticeString = "";
                         if (player.Timer.IsPracticeMode)
