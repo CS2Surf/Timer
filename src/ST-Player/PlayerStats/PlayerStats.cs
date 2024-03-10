@@ -24,7 +24,7 @@ internal class PlayerStats
     /// </summary>
     public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
     /// <summary>
-    /// Bonus Personal Best - Refer to as BonusPB[style][bonus#]
+    /// Bonus Personal Best - Refer to as BonusPB[bonus#][style]
     /// </summary>
     public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = {new Dictionary<int, PersonalBest>()};
     /// <summary>
