@@ -111,18 +111,22 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        // Must be 1 argument
+        int bonus;
+
+        // Check for argument count
         if (command.ArgCount < 2)
         {
-            #if DEBUG
-            player.PrintToChat($"CS2 Surf DEBUG >> css_bonus >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
-            #endif
-
-            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!bonus <bonus>");
-            return;
+            if (CurrentMap.Bonuses > 0)
+                bonus = 1;
+            else
+            {
+                player.PrintToChat($"{PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!bonus <bonus>");
+                return;
+            }
         }
 
-        int bonus = Int32.Parse(command.ArgByIndex(1));
+        else
+            bonus = Int32.Parse(command.ArgByIndex(1));
 
         if (CurrentMap.Bonuses <= 0)
         {
