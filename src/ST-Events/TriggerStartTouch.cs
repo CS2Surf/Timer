@@ -100,7 +100,7 @@ public partial class SurfTimer
                         #endif
 
                         // Add entry in DB for the run
-                        if(!player.Timer.IsPracticeMode) {
+                        if (!player.Timer.IsPracticeMode) {
                             AddTimer(1.5f, async () => {
                                 player.Stats.ThisRun.SaveMapTime(player, DB); // Save the MapTime PB data
                                 player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
@@ -241,6 +241,50 @@ public partial class SurfTimer
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
                         Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> !player.Timer.IsBonusMode: {!player.Timer.IsBonusMode}");
                         #endif
+                    }
+                }
+
+                // Bonus end zones -- hook into (b)onus#_end
+                else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_end$").Success)
+                {
+                    // We only want this working if they're in bonus mode, ignore otherwise.
+                    if (player.Timer.IsBonusMode && player.Timer.IsRunning) 
+                    {
+                        // To-do: verify the bonus trigger being hit!
+                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
+                        if (bonus != player.Timer.Bonus)
+                        {
+                            // Exit hook as this end zone is not relevant to the player's current bonus
+                            return HookResult.Continue;
+                        }
+
+                        player.Timer.Stop();
+                        // To-do: bonus replays
+
+                        string PracticeString = "";
+                        if (player.Timer.IsPracticeMode)
+                            PracticeString = $"({ChatColors.Grey}Practice{ChatColors.Default}) ";
+                    
+                        // To-do: make Style (currently 0) be dynamic
+                        if (player.Stats.BonusPB[bonus][style].Ticks <= 0) // Player first ever PB for the bonus
+                        {
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{player.Controller.PlayerName} finished bonus {bonus} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                        }
+                        else if (player.Timer.Ticks < player.Stats.BonusPB[bonus][style].Ticks) // Player beating their existing PB for the bonus
+                        {
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their bonus {bonus} PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.BonusPB[bonus][style].Ticks)}{ChatColors.Default})!");
+                        }
+                        else // Player did not beat their existing personal best for the bonus
+                        {
+                            player.Controller.PrintToChat($"{PluginPrefix} {PracticeString}You finished bonus {bonus} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                            return HookResult.Continue; // Exit here so we don't write to DB
+                        }
+
+                        if (DB == null)
+                            throw new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Bonus end zone) -> DB object is null, this shouldn't happen.");
+                    
+                        player.Stats.BonusPB[bonus][style].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
+                        // To-do: save to DB
                     }
                 }
             }
