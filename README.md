@@ -26,7 +26,7 @@ Bold & Italics = being worked on.
       - [ ] Save Stage times
     - [X] Support for bonuses
       - [X] Hook to their start/end zones
-      - [ ] Save Bonus times
+      - [X] Save Bonus times
     - [X] Start/End trigger touch hooks
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
     - [X] Support for stages (`/rs`, teleporting with `/s`)
@@ -44,7 +44,7 @@ Bold & Italics = being worked on.
     - [x] Map times
     - [x] Checkpoint times
     - [ ] Stage times
-    - [ ] Bonus times
+    - [X] Bonus times
   - [X] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
