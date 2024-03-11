@@ -66,8 +66,8 @@ internal class Map
         this.WR[0] = new PersonalBest(); // To-do: Implement styles
         for (int i = 0; i < 32; i++)
         {
-            BonusWR[i] = new Dictionary<int, PersonalBest>();
-            BonusWR[i][0] = new PersonalBest(); // To-do: Implement styles
+            this.BonusWR[i] = new Dictionary<int, PersonalBest>();
+            this.BonusWR[i][0] = new PersonalBest(); // To-do: Implement styles
         }
 
         // Gathering zones from the map
