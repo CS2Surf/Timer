@@ -68,6 +68,7 @@ internal class Map
         {
             this.BonusWR[i] = new Dictionary<int, PersonalBest>();
             this.BonusWR[i][0] = new PersonalBest(); // To-do: Implement styles
+            this.BonusCompletions[i] = new Dictionary<int, int>();
         }
 
         // Gathering zones from the map
