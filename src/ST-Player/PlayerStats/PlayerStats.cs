@@ -55,7 +55,7 @@ internal class PlayerStats
         Task<MySqlDataReader> dbTask2 = DB.Query($@"
             SELECT mainquery.*, (SELECT COUNT(*) FROM `MapTimes` AS subquery 
             WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` 
-            AND subquery.`run_time` <= mainquery.`run_time`) AS `rank` FROM `MapTimes` AS mainquery 
+            AND subquery.`run_time` <= mainquery.`run_time` AND subquery.`type` = mainquery.`type`) AS `rank` FROM `MapTimes` AS mainquery 
             WHERE mainquery.`player_id` = {player.Profile.ID} AND mainquery.`map_id` = {player.CurrMap.ID}; 
         ");
         MySqlDataReader playerStats = dbTask2.Result;
