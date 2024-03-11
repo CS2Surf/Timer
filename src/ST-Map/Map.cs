@@ -348,6 +348,7 @@ internal class Map
                 if (completionStatsResult.GetInt32("type") > 0)
                 {
                     // To-do: bonus completion counts
+                    this.BonusCompletions[completionStatsResult.GetInt32("type")][style] = completionStatsResult.GetInt32("count");
                 }
 
                 else
