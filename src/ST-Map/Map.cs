@@ -19,7 +19,14 @@ internal class Map
     public bool Ranked {get; set;} = false;
     public int DateAdded {get; set;} = 0;
     public int LastPlayed {get; set;} = 0;
-    public int TotalCompletions {get; set;} = 0;
+    /// <summary>
+    /// Map Completion Count - Refer to as MapCompletions[style]
+    /// </summary>
+    public Dictionary<int, int> MapCompletions {get; set;} = new Dictionary<int, int>(); 
+    /// <summary>
+    /// Bonus Completion Count - Refer to as BonusCompletions[bonus#][style]
+    /// </summary>
+    public Dictionary<int, int>[] BonusCompletions { get; set; } = new Dictionary<int, int>[32];
     /// <summary>
     /// Map World Record - Refer to as WR[style]
     /// </summary>
@@ -346,14 +353,14 @@ internal class Map
                 else
                 {
                     // Total completions for the map and style - this should maybe be added to PersonalBest class
-                    this.TotalCompletions = completionStatsResult.GetInt32("count");
+                    this.MapCompletions[style] = completionStatsResult.GetInt32("count");
                 }
             }
         }
         completionStatsResult.Close();
 
         // Get map world record checkpoints
-        if (this.TotalCompletions != 0)
+        if (this.MapCompletions[style] != 0)
         {
             Task<MySqlDataReader> cpReader = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.WR[style].ID};");
             MySqlDataReader cpWrData = cpReader.Result;

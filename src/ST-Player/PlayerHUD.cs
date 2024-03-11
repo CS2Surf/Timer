@@ -93,11 +93,11 @@ internal class PlayerHUD
             string rankModule = FormatHUDElementHTML("Rank", $"N/A", "#7882dd");
             if (_player.Stats.PB[style].ID != -1 && _player.CurrMap.WR[style].ID != -1)
             {
-                rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[style].Rank}/{_player.CurrMap.TotalCompletions}", "#7882dd");
+                rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[style].Rank}/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
             }
             else if (_player.CurrMap.WR[style].ID != -1)
             {
-                rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.TotalCompletions}", "#7882dd");
+                rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
             }
             // PB & WR Modules
             string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[style].Ticks > 0 ? FormatTime(_player.Stats.PB[style].Ticks) : "N/A", "#7882dd"); // To-do: make Style (currently 0) be dynamic
