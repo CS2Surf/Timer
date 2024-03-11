@@ -91,14 +91,22 @@ internal class PlayerHUD
             string velocityModule = FormatHUDElementHTML("Speed", velocity.ToString("0"), "#79d1ed") + " u/s";
             // Rank Module
             string rankModule = FormatHUDElementHTML("Rank", $"N/A", "#7882dd");
-            if (_player.Stats.PB[style].ID != -1 && _player.CurrMap.WR[style].ID != -1)
+            if (_player.Timer.IsBonusMode)
             {
-                rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[style].Rank}/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
+                if (_player.Stats.BonusPB[_player.Timer.Bonus][style].ID != -1 && _player.CurrMap.BonusWR[_player.Timer.Bonus][style].ID != -1)
+                    rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.BonusPB[_player.Timer.Bonus][style].Rank}/{_player.CurrMap.BonusCompletions[_player.Timer.Bonus][style]}", "#7882dd");
+                else if (_player.CurrMap.BonusWR[_player.Timer.Bonus][style].ID != -1)
+                    rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.BonusCompletions[_player.Timer.Bonus][style]}", "#7882dd");
             }
-            else if (_player.CurrMap.WR[style].ID != -1)
+
+            else
             {
-                rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
+                if (_player.Stats.PB[style].ID != -1 && _player.CurrMap.WR[style].ID != -1)
+                    rankModule = FormatHUDElementHTML("Rank", $"{_player.Stats.PB[style].Rank}/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
+                else if (_player.CurrMap.WR[style].ID != -1)
+                    rankModule = FormatHUDElementHTML("Rank", $"-/{_player.CurrMap.MapCompletions[style]}", "#7882dd");
             }
+            
             // PB & WR Modules
             string pbModule = FormatHUDElementHTML("PB", _player.Stats.PB[style].Ticks > 0 ? FormatTime(_player.Stats.PB[style].Ticks) : "N/A", "#7882dd"); // To-do: make Style (currently 0) be dynamic
             string wrModule = FormatHUDElementHTML("WR", _player.CurrMap.WR[style].Ticks > 0 ? FormatTime(_player.CurrMap.WR[style].Ticks) : "N/A", "#ffc61a"); // To-do: make Style (currently 0) be dynamic
