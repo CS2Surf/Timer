@@ -94,6 +94,14 @@ public partial class SurfTimer
                     // This will populate the End velocities for the given Checkpoint zone (Stage = Checkpoint when in a Map Run)
                     if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Stats.ThisRun.Checkpoint.Count)
                     {
+                        int stage_num = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+
+                        if(player.Timer.IsRunning && player.ReplayRecorder.IsRecording)
+                        {
+                            if (stage_num != 0)
+                                player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_STAGE;
+                        }
+
                         var currentCheckpoint = player.Stats.ThisRun.Checkpoint[player.Timer.Checkpoint];
                         #if DEBUG
                         Console.WriteLine($"currentCheckpoint.EndVelX {currentCheckpoint.EndVelX} - velocity_x {velocity_x}");
@@ -163,11 +171,17 @@ public partial class SurfTimer
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Yellow}Bonus {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} Start Zone");
                     #endif
 
+                    if(player.ReplayRecorder.IsRecording) 
+                    {
+                        // Saveing 2 seconds before leaving the start zone
+                        player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (64*2))); // Todo make a plugin convar for the time saved before start of run 
+                    }
+
                     // BONUS START ZONE
                     if (!player.Timer.IsStageMode && player.Timer.IsBonusMode)
                     {
                         player.Timer.Start();
-                        // To-do: bonus replay
+                        player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_RUN;
                     }
 
                     // Prespeed display

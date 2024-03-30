@@ -3,6 +3,11 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using MySqlConnector;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Text;
+using System;
+using System.Net.Http.Json;
 
 namespace SurfTimer;
 
@@ -27,6 +32,7 @@ internal class Map
     /// Bonus Completion Count - Refer to as BonusCompletions[bonus#][style]
     /// </summary>
     public Dictionary<int, int>[] BonusCompletions { get; set; } = new Dictionary<int, int>[32];
+    public Dictionary<int, int>[] StageCompletions { get; set; } = new Dictionary<int, int>[32];
     /// <summary>
     /// Map World Record - Refer to as WR[style]
     /// </summary>
@@ -35,6 +41,7 @@ internal class Map
     /// Bonus World Record - Refer to as BonusWR[bonus#][style]
     /// </summary>
     public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = new Dictionary<int, PersonalBest>[32];
+    public Dictionary<int, PersonalBest>[] StageWR { get; set; } = new Dictionary<int, PersonalBest>[32];
     public List<int> ConnectedMapTimes { get; set; } = new List<int>();
     public List<ReplayPlayer> ReplayBots { get; set; } = new List<ReplayPlayer> { new ReplayPlayer() };
 
@@ -69,6 +76,10 @@ internal class Map
             this.BonusWR[i] = new Dictionary<int, PersonalBest>();
             this.BonusWR[i][0] = new PersonalBest(); // To-do: Implement styles
             this.BonusCompletions[i] = new Dictionary<int, int>();
+
+            this.StageWR[i] = new Dictionary<int, PersonalBest>();
+            this.StageWR[i][0] = new PersonalBest(); // To-do: Implement styles
+            this.StageCompletions[i] = new Dictionary<int, int>();
         }
 
         // Gathering zones from the map
@@ -183,75 +194,187 @@ internal class Map
         if (this.Stages > 0) // Account for stage 1, not counted above
             this.Stages += 1; 
         Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
-
-        // Gather map information OR create entry
-        Task<MySqlDataReader> reader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
-        MySqlDataReader mapData = reader.Result;
+        
         bool updateData = false;
-        if (mapData.HasRows && mapData.Read()) // In here we can check whether MapData in DB is the same as the newly extracted data, if not, update it (as hookzones may have changed on map updates)
+        var mapinfo = APICall.GET<API_MapInfo>($"http://2.56.245.29:42069/surftimer/mapinfo?mapname={Name}").Result;
+        if (mapinfo != null)
         {
-            this.ID = mapData.GetInt32("id");
-            this.Author = mapData.GetString("author") ?? "Unknown";
-            this.Tier = mapData.GetInt32("tier");
-            if (this.Stages != mapData.GetInt32("stages") || this.Bonuses != mapData.GetInt32("bonuses"))
+            this.ID = mapinfo.id;
+            this.Author = mapinfo.author;
+            this.Tier = mapinfo.tier;
+            if (this.Stages != mapinfo.stages || this.Bonuses != mapinfo.bonuses)
                 updateData = true;
-            // this.Stages = mapData.GetInt32("stages");    // this should now be populated accordingly when looping through hookzones for the map
-            // this.Bonuses = mapData.GetInt32("bonuses");  // this should now be populated accordingly when looping through hookzones for the map
-            this.Ranked = mapData.GetBoolean("ranked");
-            this.DateAdded = mapData.GetInt32("date_added");
-            this.LastPlayed = mapData.GetInt32("last_played");
-            updateData = true;
-            mapData.Close();
+            this.Ranked = mapinfo.ranked == 1 ? true : false;
+            this.DateAdded = (int)mapinfo.date_added!;
+            this.LastPlayed = (int)mapinfo.last_played!;
         }
-
         else
         {
-            mapData.Close();
-            Task<int> writer = DB.Write($"INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})");
-            int writerRows = writer.Result;
-            if (writerRows != 1)
-                throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> new Map() -> Failed to write new map to database, this shouldn't happen. Map: {Name}");
-            writer.Dispose();
-
-            Task<MySqlDataReader> postWriteReader = DB.Query($"SELECT * FROM Maps WHERE name='{MySqlHelper.EscapeString(Name)}'");
-            MySqlDataReader postWriteMapData = postWriteReader.Result;
-            if (postWriteMapData.HasRows && postWriteMapData.Read())
+            API_MapInfo inserted = new API_MapInfo
             {
-                this.ID = postWriteMapData.GetInt32("id");
-                this.Author = postWriteMapData.GetString("author");
-                this.Tier = postWriteMapData.GetInt32("tier");
-                this.Ranked = postWriteMapData.GetBoolean("ranked");
-                this.DateAdded = postWriteMapData.GetInt32("date_added");
-                this.LastPlayed = this.DateAdded; 
-            }
-            postWriteMapData.Close();
+                id = -1, // Shouldn't really use this at all at api side
+                name = Name,
+                author = "Unknown",
+                tier = this.Tier,
+                stages = this.Stages,
+                bonuses = this.Bonuses,
+                ranked = 0,
+            };
 
+            _ = APICall.POST($"http://2.56.245.29:42069/surftimer/insertmap", inserted).Result;
             return;
         }
 
-        // Update the map's last played data in the DB
-        // Update last_played data or update last_played, stages, and bonuses data
-        string query = $"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()} WHERE id={this.ID}";
-        if (updateData) query = $"UPDATE Maps SET last_played={(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, stages={this.Stages}, bonuses={this.Bonuses} WHERE id={this.ID}";
-        #if DEBUG
-        Console.WriteLine($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Update MapData: {query}");
-        #endif
-        
-        Task<int> updater = DB.Write(query);
-        int lastPlayedUpdateRows = updater.Result;
-        if (lastPlayedUpdateRows != 1)
-            throw new Exception($"CS2 Surf ERROR >> OnRoundStart -> update Map() -> Failed to update map in database, this shouldnt happen. Map: {Name} | was it 'big' update? {updateData}");
-        updater.Dispose();
+        API_MapInfo updated = new API_MapInfo
+        {
+                id = this.ID,
+                name = Name,
+                author = "Unknown",
+                tier = this.Tier,
+                stages = this.Stages,
+                bonuses = this.Bonuses,
+                ranked = 0,
+                last_played = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        if (updateData)
+        {
+            updated.stages = this.Stages;
+            updated.bonuses = this.Bonuses;
+        }
+
+        _ = APICall.PUT($"http://2.56.245.29:42069/surftimer/updateMap", updated).Result;
 
         // Initiates getting the World Records for the map
         GetMapRecordAndTotals(DB); // To-do: Implement styles
 
-        this.ReplayBots[0].Stat_MapTimeID = this.WR[0].ID; // Sets WrIndex to WR maptime_id
+        // this.ReplayBots[0].Stat_MapTimeID = this.WR[0].ID; // Sets WrIndex to WR maptime_id
+        this.ReplayBots[0].RecordRank = 1;
+        this.ReplayBots[0].Type = 0;
+        this.ReplayBots[0].Stage = 0;
+        
         if(this.Stages > 0) // If stages map adds bot
             this.ReplayBots = this.ReplayBots.Prepend(new ReplayPlayer()).ToList();
+            this.ReplayBots[0].RecordRank = 1;
+            this.ReplayBots[0].Type = 2;
+            this.ReplayBots[0].Stage = 0;
+            // Add stage MapTimeID
 
         if(this.Bonuses > 0) // If has bonuses adds bot
             this.ReplayBots = this.ReplayBots.Prepend(new ReplayPlayer()).ToList();
+            // int idx = this.Stages > 0 ? 1 : 0;
+            this.ReplayBots[0].RecordRank = 1;
+            this.ReplayBots[0].Type = 1;
+            this.ReplayBots[0].Stage = 0;
+    }
+
+
+    // Leaving this outside of the constructor for `Map` so we can call it to ONLY update the data when a new world record is set
+    internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
+    {
+        var maptimes = APICall.GET<API_MapTime[]>($"http://2.56.245.29:42069/surftimer/maptotals?map_id={this.ID}&style={style}").Result; // TODO: Implement styles
+        if (maptimes == null)
+            return;
+
+        foreach (API_MapTime mt in maptimes)
+        {
+            if (mt.type == 1)
+            {
+                this.BonusWR[mt.stage][style].ID = mt.id;
+                this.BonusWR[mt.stage][style].Type = mt.type;
+                this.BonusWR[mt.stage][style].Ticks = mt.run_time;
+                this.BonusWR[mt.stage][style].StartVelX = mt.start_vel_x;
+                this.BonusWR[mt.stage][style].StartVelY = mt.start_vel_y;
+                this.BonusWR[mt.stage][style].StartVelZ = mt.start_vel_z;
+                this.BonusWR[mt.stage][style].EndVelX = mt.end_vel_x;
+                this.BonusWR[mt.stage][style].EndVelY = mt.end_vel_y;
+                this.BonusWR[mt.stage][style].EndVelZ = mt.end_vel_z;
+                this.BonusWR[mt.stage][style].RunDate = (int)mt.run_date!;
+                this.BonusWR[mt.stage][style].Name = mt.name;
+
+                if (!this.BonusCompletions[mt.stage].ContainsKey(style))
+                {
+                    this.BonusCompletions[mt.stage][style] = 0;
+                }
+                else
+                {
+                    this.BonusCompletions[mt.stage][style]++;
+                }
+
+            }
+            else if (mt.type == 2)
+            {
+                this.StageWR[mt.stage][style].ID = mt.id;
+                this.StageWR[mt.stage][style].Type = mt.type;
+                this.StageWR[mt.stage][style].Ticks = mt.run_time;
+                this.StageWR[mt.stage][style].StartVelX = mt.start_vel_x;
+                this.StageWR[mt.stage][style].StartVelY = mt.start_vel_y;
+                this.StageWR[mt.stage][style].StartVelZ = mt.start_vel_z;
+                this.StageWR[mt.stage][style].EndVelX = mt.end_vel_x;
+                this.StageWR[mt.stage][style].EndVelY = mt.end_vel_y;
+                this.StageWR[mt.stage][style].EndVelZ = mt.end_vel_z;
+                this.StageWR[mt.stage][style].RunDate = (int)mt.run_date!;
+                this.StageWR[mt.stage][style].Name = mt.name;
+
+                if (!this.StageCompletions[mt.stage].ContainsKey(style))
+                {
+                    this.StageCompletions[mt.stage][style] = 0;
+                }
+                else
+                {
+                    this.StageCompletions[mt.stage][style]++;
+                }
+            }
+            else
+            {
+                this.WR[style].ID = mt.id;
+                this.WR[style].Type = mt.type;
+                this.WR[style].Ticks = mt.run_time;
+                this.WR[style].StartVelX = mt.start_vel_x;
+                this.WR[style].StartVelY = mt.start_vel_y;
+                this.WR[style].StartVelZ = mt.start_vel_z;
+                this.WR[style].EndVelX = mt.end_vel_x;
+                this.WR[style].EndVelY = mt.end_vel_y;
+                this.WR[style].EndVelZ = mt.end_vel_z;
+                this.WR[style].RunDate = (int)mt.run_date!;
+                this.WR[style].Name = mt.name;
+
+                this.ConnectedMapTimes.Add(mt.id);
+
+                if (!this.MapCompletions.ContainsKey(style))
+                {
+                    this.MapCompletions[style] = 0;
+                }
+                else
+                {
+                    this.MapCompletions[style]++;
+                }
+            }
+        }
+
+        var checkpoints = APICall.GET<API_Checkpoint[]>($"http://2.56.245.29:42069/surftimer/mapcheckpointsdata?maptime_id={this.WR[style].ID}").Result;
+        if (checkpoints == null || checkpoints.Length == 0)
+            return;
+
+        foreach (API_Checkpoint checkpoint in checkpoints)
+        {
+            Checkpoint cp = new Checkpoint
+            (
+                checkpoint.cp,
+                checkpoint.ticks,
+                checkpoint.start_vel_x,
+                checkpoint.start_vel_y,
+                checkpoint.start_vel_z,
+                checkpoint.end_vel_x,
+                checkpoint.end_vel_y,
+                checkpoint.end_vel_z,
+                checkpoint.end_touch,
+                checkpoint.attempts
+            );
+            cp.ID = checkpoint.cp;
+
+            this.WR[style].Checkpoint[cp.CP] = cp;
+        }
     }
 
     public void KickReplayBot(int index)
@@ -275,130 +398,5 @@ internal class Map
             return true;
         else
             return false;
-    }
-
-    // Leaving this outside of the constructor for `Map` so we can call it to ONLY update the data when a new world record is set
-    internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
-    {
-        // Get map world records
-        Task<MySqlDataReader> reader = DB.Query($@"
-            SELECT MapTimes.*, MIN(MapTimes.run_time) AS minimum, Player.name
-            FROM MapTimes
-            JOIN Player ON MapTimes.player_id = Player.id
-            WHERE MapTimes.map_id = {this.ID} AND MapTimes.style = {style}
-            GROUP BY MapTimes.type
-            ORDER BY MapTimes.run_time ASC;
-        ");
-        MySqlDataReader mapWrData = reader.Result;
-        
-        if (mapWrData.HasRows)
-        { 
-            // To-do: Implement bonuses WR
-            // To-do: Implement stages WR
-            this.ConnectedMapTimes.Clear();
-            while (mapWrData.Read())
-            {
-                if (mapWrData.GetInt32("type") == 1)
-                {
-                    int bonusNum = mapWrData.GetInt32("stage") - 1;
-                    this.BonusWR[bonusNum][style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
-                    this.BonusWR[bonusNum][style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
-                    this.BonusWR[bonusNum][style].Type = mapWrData.GetInt32("type"); // Bonus type (0 = map, 1+ = bonus index)
-                    this.BonusWR[bonusNum][style].StartVelX = mapWrData.GetFloat("start_vel_x"); // Fastest run start velocity X for the Map and Style combo
-                    this.BonusWR[bonusNum][style].StartVelY = mapWrData.GetFloat("start_vel_y"); // Fastest run start velocity Y for the Map and Style combo
-                    this.BonusWR[bonusNum][style].StartVelZ = mapWrData.GetFloat("start_vel_z"); // Fastest run start velocity Z for the Map and Style combo
-                    this.BonusWR[bonusNum][style].EndVelX = mapWrData.GetFloat("end_vel_x"); // Fastest run end velocity X for the Map and Style combo
-                    this.BonusWR[bonusNum][style].EndVelY = mapWrData.GetFloat("end_vel_y"); // Fastest run end velocity Y for the Map and Style combo
-                    this.BonusWR[bonusNum][style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
-                    this.BonusWR[bonusNum][style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
-                    this.BonusWR[bonusNum][style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
-                }
-
-                else 
-                {
-                    this.WR[style].ID = mapWrData.GetInt32("id"); // WR ID for the Map and Style combo
-                    this.WR[style].Ticks = mapWrData.GetInt32("run_time"); // Fastest run time (WR) for the Map and Style combo
-                    this.WR[style].Type = mapWrData.GetInt32("type"); // Bonus type (0 = map, 1+ = bonus index)
-                    this.WR[style].StartVelX = mapWrData.GetFloat("start_vel_x"); // Fastest run start velocity X for the Map and Style combo
-                    this.WR[style].StartVelY = mapWrData.GetFloat("start_vel_y"); // Fastest run start velocity Y for the Map and Style combo
-                    this.WR[style].StartVelZ = mapWrData.GetFloat("start_vel_z"); // Fastest run start velocity Z for the Map and Style combo
-                    this.WR[style].EndVelX = mapWrData.GetFloat("end_vel_x"); // Fastest run end velocity X for the Map and Style combo
-                    this.WR[style].EndVelY = mapWrData.GetFloat("end_vel_y"); // Fastest run end velocity Y for the Map and Style combo
-                    this.WR[style].EndVelZ = mapWrData.GetFloat("end_vel_z"); // Fastest run end velocity Z for the Map and Style combo
-                    this.WR[style].RunDate = mapWrData.GetInt32("run_date"); // Fastest run date for the Map and Style combo
-                    this.WR[style].Name = mapWrData.GetString("name"); // Fastest run player name for the Map and Style combo
-                
-                    this.ConnectedMapTimes.Add(mapWrData.GetInt32("id"));
-                }
-            }
-        }
-        mapWrData.Close();
-
-        // Count completions
-        Task<MySqlDataReader> completionStats = DB.Query($@"
-            SELECT MapTimes.type, MapTimes.stage, COUNT(*) as count
-            FROM MapTimes 
-            WHERE MapTimes.map_id = {this.ID}
-            GROUP BY type;
-        ");
-        MySqlDataReader completionStatsResult = completionStats.Result;
-
-        if (completionStatsResult.HasRows)
-        {
-            while (completionStatsResult.Read())
-            {
-                if (completionStatsResult.GetInt32("type") == 1)
-                {
-                    // To-do: bonus completion counts
-                    this.BonusCompletions[completionStatsResult.GetInt32("stage")][style] = completionStatsResult.GetInt32("count");
-                }
-
-                // Add stage completions
-
-                else
-                {
-                    // Total completions for the map and style - this should maybe be added to PersonalBest class
-                    this.MapCompletions[style] = completionStatsResult.GetInt32("count");
-                }
-            }
-        }
-        completionStatsResult.Close();
-
-        // Get map world record checkpoints
-        System.Console.WriteLine("Testy Test 2 =====================");
-        if (this.MapCompletions.ContainsKey(style) && this.MapCompletions[style] != 0)
-        {
-            Task<MySqlDataReader> cpReader = DB.Query($"SELECT * FROM `Checkpoints` WHERE `maptime_id` = {this.WR[style].ID};");
-            MySqlDataReader cpWrData = cpReader.Result;
-            while (cpWrData.Read())
-            {
-                #if DEBUG
-                Console.WriteLine($"cp {cpWrData.GetInt32("cp")} ");
-                Console.WriteLine($"run_time {cpWrData.GetInt32("run_time")} ");
-                Console.WriteLine($"sVelX {cpWrData.GetFloat("start_vel_x")} ");
-                Console.WriteLine($"sVelY {cpWrData.GetFloat("start_vel_y")} ");
-                #endif
-
-                Checkpoint cp = new(cpWrData.GetInt32("cp"),
-                                    cpWrData.GetInt32("run_time"),
-                                    cpWrData.GetFloat("start_vel_x"),
-                                    cpWrData.GetFloat("start_vel_y"),
-                                    cpWrData.GetFloat("start_vel_z"),
-                                    cpWrData.GetFloat("end_vel_x"),
-                                    cpWrData.GetFloat("end_vel_y"),
-                                    cpWrData.GetFloat("end_vel_z"),
-                                    cpWrData.GetInt32("end_touch"),
-                                    cpWrData.GetInt32("attempts"));
-                cp.ID = cpWrData.GetInt32("cp");
-                // To-do: cp.ID = calculate Rank # from DB
-
-                this.WR[style].Checkpoint[cp.CP] = cp;
-
-                #if DEBUG
-                Console.WriteLine($"======= CS2 Surf DEBUG >> internal void GetMapRecordAndTotals : Map -> Loaded WR CP {cp.CP} with RunTime {cp.Ticks} for MapTimeID {WR[0].ID} (MapId = {this.ID}).");
-                #endif
-            }
-            cpWrData.Close();
-        }
     }
 }

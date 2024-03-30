@@ -29,9 +29,32 @@ public partial class SurfTimer
 
         for(int i = 0; i < CurrentMap!.ReplayBots.Count; i++)
         {
+            if (CurrentMap.ReplayBots[i].MapID != CurrentMap.ID)
+                CurrentMap.ReplayBots[i].MapID = CurrentMap.ID;
+
             CurrentMap.ReplayBots[i].Tick();
             if (CurrentMap.ReplayBots[i].RepeatCount == 0)
-                CurrentMap.KickReplayBot(i);
+            {
+                int m = 1 + (CurrentMap.Stages > 0 ? 1 : 0) + (CurrentMap.Bonuses > 0 ? 1 :0);
+                
+                if(i == CurrentMap.ReplayBots.Count - 1)
+                    continue;
+
+                if (i < CurrentMap.ReplayBots.Count - m)
+                {
+                    CurrentMap.KickReplayBot(i);
+                    continue;
+                }
+
+                if (CurrentMap.ReplayBots[i].Type == 1)
+                    CurrentMap.ReplayBots[i].Stage = (CurrentMap.ReplayBots[i].Stage + 1) % CurrentMap.Bonuses;
+                else if (CurrentMap.ReplayBots[i].Type == 2)
+                    CurrentMap.ReplayBots[i].Stage = (CurrentMap.ReplayBots[i].Stage + 1) % CurrentMap.Stages;
+
+                CurrentMap.ReplayBots[i].LoadReplayData(DB!);
+                CurrentMap.ReplayBots[i].ResetReplay();
+                CurrentMap.ReplayBots[i].RepeatCount = 3;
+            }
         }
     }
 }

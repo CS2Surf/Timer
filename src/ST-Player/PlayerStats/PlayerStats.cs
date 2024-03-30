@@ -68,26 +68,32 @@ internal class PlayerStats
         {
             while (playerStats.Read())
             {
+                #if DEBUG
+                System.Console.WriteLine("DEBUG >> (func) LoadMapTimesData >> BonusPB");
+                #endif
                 // Load data into PersonalBest object
-                if (playerStats.GetInt32("type") > 0) // Bonus time
+                if (playerStats.GetInt32("type") == 1) // Bonus time
                 {
-                    int bonus = playerStats.GetInt32("type");
+                    int bonusNum = playerStats.GetInt32("stage");
                     // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
-                    BonusPB[bonus][style].ID = playerStats.GetInt32("id");
-                    BonusPB[bonus][style].Ticks = playerStats.GetInt32("run_time");
-                    BonusPB[bonus][style].Type = playerStats.GetInt32("type");
-                    BonusPB[bonus][style].Rank = playerStats.GetInt32("rank");
-                    BonusPB[bonus][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
-                    BonusPB[bonus][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
-                    BonusPB[bonus][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
-                    BonusPB[bonus][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
-                    BonusPB[bonus][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
-                    BonusPB[bonus][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                    BonusPB[bonus][style].RunDate = playerStats.GetInt32("run_date");
+                    BonusPB[bonusNum][style].ID = playerStats.GetInt32("id");
+                    BonusPB[bonusNum][style].Ticks = playerStats.GetInt32("run_time");
+                    BonusPB[bonusNum][style].Type = playerStats.GetInt32("type");
+                    BonusPB[bonusNum][style].Rank = playerStats.GetInt32("rank");
+                    BonusPB[bonusNum][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                    BonusPB[bonusNum][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                    BonusPB[bonusNum][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                    BonusPB[bonusNum][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                    BonusPB[bonusNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                    BonusPB[bonusNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                    BonusPB[bonusNum][style].RunDate = playerStats.GetInt32("run_date");
                 }
 
                 else // Map time
                 {
+                    #if DEBUG
+                    System.Console.WriteLine("DEBUG >> (func) LoadMapTimesData >> MapPB");
+                    #endif
                     // style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
                     PB[style].ID = playerStats.GetInt32("id");
                     PB[style].Ticks = playerStats.GetInt32("run_time");

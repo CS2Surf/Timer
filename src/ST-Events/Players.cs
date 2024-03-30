@@ -22,7 +22,7 @@ public partial class SurfTimer
                 continue;
 
             int repeats = -1;
-            if(CurrentMap.ReplayBots[i].Stat_Prefix == "PB")
+            if(CurrentMap.ReplayBots[i].RecordRank != 1 || CurrentMap.ReplayBots[i].Type != 0)
                 repeats = 3;
             
             CurrentMap.ReplayBots[i].SetController(controller, repeats);
@@ -168,7 +168,7 @@ public partial class SurfTimer
         var player = @event.Userid;
 
         for (int i = 0; i < CurrentMap.ReplayBots.Count; i++)
-            if (CurrentMap.ReplayBots[i].IsPlayable && CurrentMap.ReplayBots[i].Controller!.Equals(player) && CurrentMap.ReplayBots[i].Stat_MapTimeID != -1)
+            if (CurrentMap.ReplayBots[i].IsPlayable && CurrentMap.ReplayBots[i].Controller!.Equals(player) && CurrentMap.ReplayBots[i].MapTimeID != -1)
                 CurrentMap.ReplayBots[i].Reset();
 
         if (player.IsBot || !player.IsValid)

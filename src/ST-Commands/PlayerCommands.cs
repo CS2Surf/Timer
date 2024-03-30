@@ -198,46 +198,46 @@ public partial class SurfTimer
         }
     }
 
-    [ConsoleCommand("css_pbreplay", "Allows for replay of player's PB")]
-    public void PbReplay(CCSPlayerController? player, CommandInfo command)
-    {
-        if(player == null)
-            return;
+    // [ConsoleCommand("css_pbreplay", "Allows for replay of player's PB")]
+    // public void PbReplay(CCSPlayerController? player, CommandInfo command)
+    // {
+    //     if(player == null)
+    //         return;
 
-        int maptime_id = playerList[player!.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].ID;
-        if (command.ArgCount > 1)
-        {
-            try
-            {
-                maptime_id = int.Parse(command.ArgByIndex(1));
-            }
-            catch {}
-        }
+    //     int maptime_id = playerList[player!.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].ID;
+    //     if (command.ArgCount > 1)
+    //     {
+    //         try
+    //         {
+    //             maptime_id = int.Parse(command.ArgByIndex(1));
+    //         }
+    //         catch {}
+    //     }
 
-        if(maptime_id == -1 || !CurrentMap.ConnectedMapTimes.Contains(maptime_id))
-        {
-            player.PrintToChat($"{PluginPrefix} {ChatColors.Red}No time was found");
-            return;
-        }
+    //     if(maptime_id == -1 || !CurrentMap.ConnectedMapTimes.Contains(maptime_id))
+    //     {
+    //         player.PrintToChat($"{PluginPrefix} {ChatColors.Red}No time was found");
+    //         return;
+    //     }
         
-        for(int i = 0; i < CurrentMap.ReplayBots.Count; i++)
-        {
-            if(CurrentMap.ReplayBots[i].Stat_MapTimeID == maptime_id)
-            {
-                player.PrintToChat($"{PluginPrefix} {ChatColors.Red}A bot of this run already playing");
-                return;
-            }
-        }
+    //     for(int i = 0; i < CurrentMap.ReplayBots.Count; i++)
+    //     {
+    //         if(CurrentMap.ReplayBots[i].MapTimeID == maptime_id)
+    //         {
+    //             player.PrintToChat($"{PluginPrefix} {ChatColors.Red}A bot of this run already playing");
+    //             return;
+    //         }
+    //     }
 
-        CurrentMap.ReplayBots = CurrentMap.ReplayBots.Prepend(new ReplayPlayer() {
-            Stat_MapTimeID = maptime_id,
-            Stat_Prefix = "PB"
-        }).ToList();
+    //     CurrentMap.ReplayBots = CurrentMap.ReplayBots.Prepend(new ReplayPlayer() {
+    //         Stat_MapTimeID = maptime_id,
+    //         Stat_Prefix = "PB"
+    //     }).ToList();
 
-        Server.NextFrame(() => {
-            Server.ExecuteCommand($"bot_quota {CurrentMap.ReplayBots.Count}");
-        });
-    }
+    //     Server.NextFrame(() => {
+    //         Server.ExecuteCommand($"bot_quota {CurrentMap.ReplayBots.Count}");
+    //     });
+    // }
 
         /*
     ########################

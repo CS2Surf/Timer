@@ -114,7 +114,7 @@ public partial class SurfTimer
                             {
                                 int WrIndex = CurrentMap.ReplayBots.Count-1; // As the ReplaysBot is set, WR Index will always be at the end of the List
                                 AddTimer(2f, () => {
-                                    CurrentMap.ReplayBots[WrIndex].Stat_MapTimeID = CurrentMap.WR[player.Timer.Style].ID;
+                                    // CurrentMap.ReplayBots[WrIndex].Stat_MapTimeID = CurrentMap.WR[player.Timer.Style].ID; // Now should work with just the rank
                                     CurrentMap.ReplayBots[WrIndex].LoadReplayData(DB!);
                                     CurrentMap.ReplayBots[WrIndex].ResetReplay();
                                 });
@@ -148,7 +148,13 @@ public partial class SurfTimer
                 else if (Regex.Match(trigger.Entity.Name, "^s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success)
                 {
                     int stage = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
+
+                    bool failed_stage = false;
+                    if(player.Timer.Stage == stage)
+                        failed_stage = true;
+
                     player.Timer.Stage = stage;
+                    int stage_idx = stage - 1;
 
                     #if DEBUG
                     Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Stage start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
@@ -159,6 +165,46 @@ public partial class SurfTimer
                     // This should patch up re-triggering *player.Stats.ThisRun.Checkpoint.Count < stage*
                     if (player.Timer.IsRunning && !player.Timer.IsStageMode && player.Stats.ThisRun.Checkpoint.Count < stage)
                     {
+                        if (stage_idx > 0 && !failed_stage && !player.Timer.IsPracticeMode)
+                        {
+                            int stage_end = player.ReplayRecorder.CalculateTicksFromLastSituation();
+                            int stage_start = player.ReplayRecorder.CalculateTicksFromLastSituation(stage_end-1);
+                            AddTimer(1.5f, () => {
+                                API_CurrentRun stage_time = new API_CurrentRun
+                                {
+                                    player_id = player.Profile.ID,
+                                    map_id = player.CurrMap.ID,
+                                    style = style,
+                                    type = 2,
+                                    stage = stage_idx,
+                                    run_time = stage_end-stage_start,
+                                    run_date = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                                    replay_frames = player.ReplayRecorder.SerializeReplayPortion(stage_start, stage_end-stage_start)
+                                };
+
+                                _ = Task.Run(async () => await APICall.POST("http://2.56.245.29:42069/surftimer/savestagetime", stage_time));
+
+                                // player.Stats.ThisRun.SaveMapTime(player, DB!, 2, stage_idx-1, stage_time); // Save the bonus time PB data
+                                player.Stats.LoadMapTimesData(player, DB!); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                                CurrentMap.GetMapRecordAndTotals(DB!); // Reload the Map record and totals for the HUD
+                            });
+
+                            if(player.Timer.Ticks < CurrentMap.StageWR[stage_idx][player.Timer.Style].Ticks || CurrentMap.StageWR[stage_idx][player.Timer.Style].ID == -1)
+                            {
+                                int StageWrIndex = CurrentMap.ReplayBots.Count - 2;
+                                AddTimer(2f, () => {
+                                    // CurrentMap.ReplayBots[StageWrIndex].Stat_MapTimeID = CurrentMap.BonusWR[bonus][player.Timer.Style].ID; // Should work with the rank
+                                    CurrentMap.ReplayBots[StageWrIndex].Type = 2;
+                                    CurrentMap.ReplayBots[StageWrIndex].Stage = stage_idx-1;
+                                    CurrentMap.ReplayBots[StageWrIndex].LoadReplayData(DB!);
+                                    CurrentMap.ReplayBots[StageWrIndex].ResetReplay();
+                                    CurrentMap.ReplayBots[StageWrIndex].RepeatCount = 3;
+
+                                });
+                            }
+                        }
+
+
                         player.Timer.Checkpoint = stage - 1; // Stage = Checkpoint when in a run on a Staged map
 
                         #if DEBUG
@@ -253,8 +299,8 @@ public partial class SurfTimer
                     if (player.Timer.IsBonusMode && player.Timer.IsRunning) 
                     {
                         // To-do: verify the bonus trigger being hit!
-                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
-                        if (bonus != player.Timer.Bonus)
+                        int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
+                        if (1 != player.Timer.Bonus) // Realy????!!
                         {
                             // Exit hook as this end zone is not relevant to the player's current bonus
                             return HookResult.Continue;
@@ -275,15 +321,15 @@ public partial class SurfTimer
                         // To-do: make Style (currently 0) be dynamic
                         if (player.Stats.BonusPB[bonus][style].Ticks <= 0) // Player first ever PB for the bonus
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{player.Controller.PlayerName} finished bonus {bonus} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{player.Controller.PlayerName} finished bonus {bonus+1} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
                         }
                         else if (player.Timer.Ticks < player.Stats.BonusPB[bonus][style].Ticks) // Player beating their existing PB for the bonus
                         {
-                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their bonus {bonus} PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.BonusPB[bonus][style].Ticks)}{ChatColors.Default})!");
+                            Server.PrintToChatAll($"{PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their bonus {bonus+1} PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.BonusPB[bonus][style].Ticks)}{ChatColors.Default})!");
                         }
                         else // Player did not beat their existing personal best for the bonus
                         {
-                            player.Controller.PrintToChat($"{PluginPrefix} {PracticeString}You finished bonus {bonus} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                            player.Controller.PrintToChat($"{PluginPrefix} {PracticeString}You finished bonus {bonus+1} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
                             return HookResult.Continue; // Exit here so we don't write to DB
                         }
 
@@ -296,10 +342,23 @@ public partial class SurfTimer
                         if (!player.Timer.IsPracticeMode)
                         {
                             AddTimer(1.5f, () => {
-                                player.Stats.ThisRun.SaveMapTime(player, DB, bonus); // Save the bonus time PB data
+                                player.Stats.ThisRun.SaveMapTime(player, DB, 1, bonus); // Save the bonus time PB data
                                 player.Stats.LoadMapTimesData(player, DB); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
                                 CurrentMap.GetMapRecordAndTotals(DB); // Reload the Map record and totals for the HUD
                             });
+
+                            if(player.Timer.Ticks < CurrentMap.BonusWR[bonus][player.Timer.Style].Ticks || CurrentMap.BonusWR[bonus][player.Timer.Style].ID == -1)
+                            {
+                                int BonusWrIndex = CurrentMap.ReplayBots.Count - ((CurrentMap.Stages > 0) ? 3 : 2);
+                                AddTimer(2f, () => {
+                                    // CurrentMap.ReplayBots[BonusWrIndex].Stat_MapTimeID = CurrentMap.BonusWR[bonus][player.Timer.Style].ID; // Should work with the rank
+                                    CurrentMap.ReplayBots[BonusWrIndex].Type = 1;
+                                    CurrentMap.ReplayBots[BonusWrIndex].Stage = bonus;
+                                    CurrentMap.ReplayBots[BonusWrIndex].LoadReplayData(DB!);
+                                    CurrentMap.ReplayBots[BonusWrIndex].ResetReplay();
+                                    CurrentMap.ReplayBots[BonusWrIndex].RepeatCount = 3;
+                                });
+                            }
                         }
                     }
                 }

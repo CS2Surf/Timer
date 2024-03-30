@@ -6,6 +6,28 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
+internal class JsonSelp
+{
+    public static Dictionary<string, string> ConstructJsonDictFromString(string str)
+    {
+        using (JsonDocument document = JsonDocument.Parse(str))
+        {
+            // Access the root element
+            JsonElement root = document.RootElement;
+
+            // Create a dictionary to store the parsed JSON data
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+
+            foreach (JsonProperty property in root.EnumerateObject())
+            {
+                dictionary[property.Name] = property.Value.ToString();
+            }
+
+            return dictionary;
+        }
+    }
+}
+
 internal class VectorConverter : JsonConverter<Vector>
 {
     public override Vector Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

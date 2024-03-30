@@ -47,16 +47,23 @@ internal class CurrentRun
     /// <summary>
     /// Saves the player's run to the database. 
     /// </summary>
-    public void SaveMapTime(Player player, TimerDatabase DB, int bonus = 0)
+    public void SaveMapTime(Player player, TimerDatabase DB, int bonus = 0, int stage = 0, int run_ticks = -1)
     {
         // Add entry in DB for the run
         // To-do: add `type`
-        int style = player.Timer.Style;
         string replay_frames = player.ReplayRecorder.SerializeReplay();
+
+        if (run_ticks == -1 || bonus != 2)
+        {
+            run_ticks = player.Stats.ThisRun.Ticks;
+            replay_frames = player.ReplayRecorder.SerializeReplayPortion(player.ReplayRecorder.Frames.Count-1-run_ticks, run_ticks);
+        }
+
+        int style = player.Timer.Style;
         Task<int> updatePlayerRunTask = DB.Write($@"
             INSERT INTO `MapTimes` 
             (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`, `replay_frames`) 
-            VALUES ({player.Profile.ID}, {player.CurrMap.ID}, {style}, {bonus}, 0, {player.Stats.ThisRun.Ticks}, 
+            VALUES ({player.Profile.ID}, {player.CurrMap.ID}, {style}, {bonus}, {stage}, {run_ticks}, 
             {player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {player.Stats.ThisRun.EndVelX}, {player.Stats.ThisRun.EndVelY}, {player.Stats.ThisRun.EndVelZ}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, '{replay_frames}') 
             ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), 
             start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date), replay_frames=VALUES(replay_frames);
