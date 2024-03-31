@@ -182,7 +182,7 @@ public partial class SurfTimer
                                     replay_frames = player.ReplayRecorder.SerializeReplayPortion(stage_start, stage_end-stage_start)
                                 };
 
-                                _ = Task.Run(async () => await APICall.POST("http://2.56.245.29:42069/surftimer/savestagetime", stage_time));
+                                _ = Task.Run(async () => await APICall.POST("/surftimer/savestagetime", stage_time));
 
                                 // player.Stats.ThisRun.SaveMapTime(player, DB!, 2, stage_idx-1, stage_time); // Save the bonus time PB data
                                 player.Stats.LoadMapTimesData(player, DB!); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)

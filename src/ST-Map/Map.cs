@@ -196,7 +196,7 @@ internal class Map
         Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
         
         bool updateData = false;
-        var mapinfo = APICall.GET<API_MapInfo>($"http://2.56.245.29:42069/surftimer/mapinfo?mapname={Name}").Result;
+        var mapinfo = APICall.GET<API_MapInfo>($"/surftimer/mapinfo?mapname={Name}").Result;
         if (mapinfo != null)
         {
             this.ID = mapinfo.id;
@@ -221,7 +221,7 @@ internal class Map
                 ranked = 0,
             };
 
-            _ = APICall.POST($"http://2.56.245.29:42069/surftimer/insertmap", inserted).Result;
+            _ = APICall.POST($"/surftimer/insertmap", inserted).Result;
             return;
         }
 
@@ -243,7 +243,7 @@ internal class Map
             updated.bonuses = this.Bonuses;
         }
 
-        _ = APICall.PUT($"http://2.56.245.29:42069/surftimer/updateMap", updated).Result;
+        _ = APICall.PUT($"/surftimer/updateMap", updated).Result;
 
         // Initiates getting the World Records for the map
         GetMapRecordAndTotals(DB); // To-do: Implement styles
@@ -272,7 +272,7 @@ internal class Map
     // Leaving this outside of the constructor for `Map` so we can call it to ONLY update the data when a new world record is set
     internal void GetMapRecordAndTotals(TimerDatabase DB, int style = 0 ) // To-do: Implement styles
     {
-        var maptimes = APICall.GET<API_MapTime[]>($"http://2.56.245.29:42069/surftimer/maptotals?map_id={this.ID}&style={style}").Result; // TODO: Implement styles
+        var maptimes = APICall.GET<API_MapTime[]>($"/surftimer/maptotals?map_id={this.ID}&style={style}").Result; // TODO: Implement styles
         if (maptimes == null)
             return;
 
@@ -352,7 +352,7 @@ internal class Map
             }
         }
 
-        var checkpoints = APICall.GET<API_Checkpoint[]>($"http://2.56.245.29:42069/surftimer/mapcheckpointsdata?maptime_id={this.WR[style].ID}").Result;
+        var checkpoints = APICall.GET<API_Checkpoint[]>($"/surftimer/mapcheckpointsdata?maptime_id={this.WR[style].ID}").Result;
         if (checkpoints == null || checkpoints.Length == 0)
             return;
 

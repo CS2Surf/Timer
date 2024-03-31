@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using CounterStrikeSharp.API;
 
 namespace SurfTimer;
 
@@ -6,7 +8,8 @@ internal class APICall
 {
     private APICall()
     {
-
+        JsonElement config = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/api.json")).RootElement;
+        _client.BaseAddress = new Uri(config.GetProperty("base_url").GetString()!);
     }
 
     private static readonly HttpClient _client = new HttpClient();
