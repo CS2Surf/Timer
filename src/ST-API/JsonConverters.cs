@@ -6,6 +6,28 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
+internal static class JsonSelp
+{
+    public static Dictionary<string, string> ConstructJsonDictFromString(string str)
+    {
+        using (JsonDocument document = JsonDocument.Parse(str))
+        {
+            // Access the root element
+            JsonElement root = document.RootElement;
+
+            // Create a dictionary to store the parsed JSON data
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+
+            foreach (JsonProperty property in root.EnumerateObject())
+            {
+                dictionary[property.Name] = property.Value.ToString();
+            }
+
+            return dictionary;
+        }
+    }
+}
+
 internal class VectorConverter : JsonConverter<Vector>
 {
     public override Vector Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -102,7 +124,7 @@ internal class QAngleConverter : JsonConverter<QAngle>
     }
 }
 
-internal class Compressor
+internal static class Compressor
 {
     public static string Decompress(string input)
     {
@@ -126,22 +148,20 @@ internal class Compressor
             source.Read(lengthBytes, 0, 4);
 
             var length = BitConverter.ToInt32(lengthBytes, 0);
-            using (var decompressionStream = new GZipStream(source,
-                CompressionMode.Decompress))
+            using (var decompressionStream = new GZipStream(source, CompressionMode.Decompress))
             {
                 var result = new byte[length];
                 int totalRead = 0, bytesRead;
                 while ((bytesRead = decompressionStream.Read(result, totalRead, length - totalRead)) > 0)
                 {
-                totalRead += bytesRead;
+                    totalRead += bytesRead;
                 }
-
                 return result;
             }
         }
     }
 
-    public static byte[] Compress(byte[] input) 
+    public static byte[] Compress(byte[] input)
     {
         using (var result = new MemoryStream())
         {
@@ -157,5 +177,10 @@ internal class Compressor
             }
             return result.ToArray();
         }
+    }
+
+    internal static string Decompress(byte v)
+    {
+        throw new NotImplementedException();
     }
 }

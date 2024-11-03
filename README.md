@@ -14,7 +14,7 @@ Bold & Italics = being worked on.
   - [X] Base database class implementation
 - [ ] Maps
   - [X] Implement map info object (DB)
-  - [ ] Zoning
+  - [X] Zoning
     - [X] Hook zones from map triggers
       - [X] Map start/end zones
       - [X] Stage zones
@@ -23,15 +23,15 @@ Bold & Italics = being worked on.
     - [X] Support for stages/checkpoints
       - [X] Hook to their start/end zones
       - [X] Save/Compare checkpoint times
-      - [ ] Save Stage times
+      - [X] Save Stage times
     - [X] Support for bonuses
       - [X] Hook to their start/end zones
-      - [ ] Save Bonus times
+      - [X] Save Bonus times
     - [X] Start/End trigger touch hooks
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
-    - [X] _**Support for stages (`/rs`, teleporting with `/s`)**_
-    - [ ] _**Support for bonuses (`/rs`, teleporting with `/b #`)**_
-    - [ ] _**Start/End touch hooks implemented for all zones**_
+    - [X] Support for stages (`/rs`, teleporting with `/s`)
+    - [X] Support for bonuses (`/rs`, teleporting with `/b #`)
+    - [X] _**Start/End touch hooks implemented for all zones**_
 - [ ] Surf configs
   - [X] Server settings configuration
   - [ ] Plugin configuration
@@ -40,10 +40,10 @@ Bold & Italics = being worked on.
   - [X] Base timer class implementation
   - [X] Base timer HUD implementation
   - [X] Prespeed measurement and display
-  - [ ] Save/load times
+  - [X] Save/load times
     - [x] Map times
     - [x] Checkpoint times
-    - [ ] Stage times
+    - [X] Stage times
     - [ ] Bonus times
   - [X] Practice Mode implementation
   - [ ] Announce records to Discord
@@ -57,11 +57,11 @@ Bold & Italics = being worked on.
 - [x] Replays - Not tracking Stage/Bonus times but Replay functionality for them is there
    - [x] Personal Best 
       - [x] Map Record
-      - [ ] Stage Record
+      - [X] Stage Record
       - [ ] Bonus Record
    - [x] World Record
       - [X] Map Record
-      - [ ] Stage Record
+      - [X] Stage Record
       - [ ] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)

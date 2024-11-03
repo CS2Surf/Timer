@@ -2,7 +2,7 @@ using CounterStrikeSharp.API.Modules.Cvars;
 
 namespace SurfTimer;
 
-internal class ConVarHelper
+internal static class ConVarHelper
 {
     public static void RemoveCheatFlagFromConVar(string cv_name)
     {
