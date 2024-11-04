@@ -7,7 +7,6 @@
 - Change `DB_QUERY_MAP_GET_RUNS` query with `DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT` in API and edit code in plugin
 - Change `DB_QUERY_PB_GET_RUNTIME` query in API
 
-
 - Double check the Start/End velocities for End Zone,Checkpoints, Stages, Bonuses
   + Maps
   + Checkpoints
@@ -15,9 +14,11 @@
     - Try and get the Start/End velocity values from the Checkpoint object in Map Run
   + Bonuses
 
-
 - Using `!spec` from any start zone and going back to CT starts your timer 
 
+- Try and determine Left/Right side for Bonuses (surf_ace)
+- Try and determine Left/Right side for Maps
+- Try and determine Left/Right side for Stages
 # Done
 + Hibernation fucks up the creation of `CurrentMap`, if nobody has joined the first map it was on and you change to another map, server segfaults. I guess a query is being held?? :think:
   + Solution is to use `Server.NextWorldUpdate` as hibernation stops all `Timer`s :peepoHappy:

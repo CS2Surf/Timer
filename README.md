@@ -44,7 +44,7 @@ Bold & Italics = being worked on.
     - [x] Map times
     - [x] Checkpoint times
     - [X] Stage times
-    - [ ] Bonus times
+    - [X] Bonus times
   - [X] Practice Mode implementation
   - [ ] Announce records to Discord
   - [ ] Stretch goal: sub-tick timing
@@ -54,14 +54,14 @@ Bold & Italics = being worked on.
   - [ ] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
-- [x] Replays - Not tracking Stage/Bonus times but Replay functionality for them is there
+- [x] Replays
    - [x] Personal Best 
       - [x] Map Record
       - [X] Stage Record
-      - [ ] Bonus Record
+      - [X] Bonus Record
    - [x] World Record
       - [X] Map Record
       - [X] Stage Record
-      - [ ] Bonus Record
+      - [X] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
