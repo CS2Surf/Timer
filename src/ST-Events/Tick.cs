@@ -18,6 +18,7 @@ public partial class SurfTimer
 
         // Need to disable maps from executing their cfgs. Currently idk how (But seriusly it a security issue)
         ConVar? bot_quota = ConVar.Find("bot_quota");
+        // Console.WriteLine($"======== public void OnTick -> bot_quota not null? {bot_quota != null}");
         if (bot_quota != null)
         {
             int cbq = bot_quota.GetPrimitiveValue<int>();
@@ -31,9 +32,10 @@ public partial class SurfTimer
             {
                 bot_quota.SetValue(replaybot_count);
             }
+
+            // Console.WriteLine($"======== public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}");
         }
 
-        // Console.WriteLine($"======== public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}");
         CurrentMap.ReplayManager.MapWR.Tick();
         CurrentMap.ReplayManager.StageWR?.Tick();
         CurrentMap.ReplayManager.BonusWR?.Tick();
@@ -58,14 +60,19 @@ public partial class SurfTimer
 
         if (CurrentMap.ReplayManager.BonusWR?.RepeatCount == 0)
         {
-            CurrentMap.ReplayManager.BonusWR.Stage = (CurrentMap.ReplayManager.BonusWR.Stage % CurrentMap.Bonuses) + 1;
+            int next_bonus;
+            if (CurrentMap.ReplayManager.AllBonusWR[(CurrentMap.ReplayManager.BonusWR.Stage % CurrentMap.Bonuses) + 1][0].MapTimeID == -1)
+                next_bonus = 1;
+            else
+                next_bonus = (CurrentMap.ReplayManager.BonusWR.Stage % CurrentMap.Bonuses) + 1;
+
+            CurrentMap.ReplayManager.AllBonusWR[next_bonus][0].Controller = CurrentMap.ReplayManager.BonusWR.Controller;
+
+            // Console.WriteLine($"======== public void OnTick() -> Finished replay cycle for bonus {CurrentMap.ReplayManager.BonusWR.Stage}, changing to bonus {next_bonus}");
+            CurrentMap.ReplayManager.BonusWR = CurrentMap.ReplayManager.AllBonusWR[next_bonus][0];
             CurrentMap.ReplayManager.BonusWR.LoadReplayData(repeat_count: 3);
-
-            AddTimer(1.5f, () => CurrentMap.ReplayManager.BonusWR.FormatBotName());
-
-            // CurrentMap.ReplayManager.BonusWR.ResetReplay();
-            // //CurrentMap.ReplayManager.BonusWR.FormatBotName();
-            // CurrentMap.ReplayManager.BonusWR.RepeatCount = 3;
+            CurrentMap.ReplayManager.BonusWR.FormatBotName();
+            CurrentMap.ReplayManager.BonusWR.Start();
         }
 
         for (int i = 0; i < CurrentMap.ReplayManager.CustomReplays.Count; i++)

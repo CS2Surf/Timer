@@ -76,7 +76,7 @@ public partial class SurfTimer
                     {
                         saveMapTime = true;
                         int timeImprove = CurrentMap.WR[pStyle].Ticks - player.Timer.Ticks;
-                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Map{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}!");
+                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Map{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.WR[pStyle].Ticks)}{ChatColors.Default})");
                     }
                     else if (CurrentMap.WR[pStyle].ID == -1) // No record was set on the map
                     {
@@ -92,7 +92,7 @@ public partial class SurfTimer
                     {
                         saveMapTime = true;
                         int timeImprove = player.Stats.PB[pStyle].Ticks - player.Timer.Ticks;
-                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Map{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)}{ChatColors.Default})!");
+                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Map{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)}{ChatColors.Default})");
                     }
                     else // Player did not beat their existing PersonalBest for the map nor the map record
                     {
@@ -141,12 +141,8 @@ public partial class SurfTimer
                             AddTimer(2f, () =>
                             {
                                 Console.WriteLine("CS2 Surf DEBUG >> OnTriggerStartTouch (Map end zone) -> WR/PB");
-                                // CurrentMap.ReplayManager.MapWR.LoadReplayData();
                                 CurrentMap.ReplayManager.MapWR.Start(); // Start the replay again
-                                AddTimer(1.5f, () =>
-                                {
-                                    CurrentMap.ReplayManager.MapWR.FormatBotName();
-                                });
+                                CurrentMap.ReplayManager.MapWR.FormatBotName();
                             });
                         }
 
@@ -439,40 +435,33 @@ public partial class SurfTimer
 
             // Bonus start zones -- hook into (b)onus#_start
             else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success)
-            {
-                // We only want this working if they're in bonus mode, ignore otherwise.
-                if (player.Timer.IsBonusMode)
-                {
-                    player.ReplayRecorder.Start(); // Start replay recording
-                    player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_ENTER;
-                    // player.ReplayRecorder.Frames[player.ReplayRecorder.Frames.Count].Situation = (byte)ReplayFrameSituation.START_ZONE_ENTER;
-                    player.ReplayRecorder.BonusSituations.Add(player.ReplayRecorder.Frames.Count);
-                    Console.WriteLine($"START_ZONE_ENTER: player.ReplayRecorder.BonusSituations.Add({player.ReplayRecorder.Frames.Count})");
+            {            
+                int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
+                player.Timer.Bonus = bonus;
 
-                    player.Timer.Reset();
-                    player.Timer.IsBonusMode = true;
-                    int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
-                    player.Timer.Bonus = bonus;
+                player.Timer.Reset();
+                player.Timer.IsBonusMode = true;
 
-                    player.Controller.PrintToCenter($"Bonus Start ({trigger.Entity.Name})");
+
+                player.ReplayRecorder.Reset();
+                player.ReplayRecorder.Start(); // Start replay recording
+                player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_ENTER;
+                player.ReplayRecorder.BonusSituations.Add(player.ReplayRecorder.Frames.Count);
+                Console.WriteLine($"START_ZONE_ENTER: player.ReplayRecorder.BonusSituations.Add({player.ReplayRecorder.Frames.Count})");
+
+                player.Controller.PrintToCenter($"Bonus Start ({trigger.Entity.Name})");
 
 #if DEBUG
-                    Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
-                    Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> !player.Timer.IsBonusMode: {!player.Timer.IsBonusMode}");
+                Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> player.Timer.IsRunning: {player.Timer.IsRunning}");
+                Console.WriteLine($"CS2 Surf DEBUG >> CBaseTrigger_StartTouchFunc (Bonus start zones) -> !player.Timer.IsBonusMode: {!player.Timer.IsBonusMode}");
 #endif
-                }
             }
 
             // Bonus end zones -- hook into (b)onus#_end
             else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_end$").Success && player.Timer.IsBonusMode && player.Timer.IsRunning)
             {
                 // To-do: verify the bonus trigger being hit!
-                int bonus_idx = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value) - 1;
-                if (1 != player.Timer.Bonus) // Realy????!!
-                {
-                    // Exit hook as this end zone is not relevant to the player's current bonus
-                    return HookResult.Continue;
-                }
+                int bonus_idx = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
 
                 player.Timer.Stop();
                 player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_ZONE_ENTER;
@@ -483,36 +472,42 @@ public partial class SurfTimer
                 player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
                 player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
 
+                bool saveBonusTime = false;
                 string PracticeString = "";
                 if (player.Timer.IsPracticeMode)
                     PracticeString = $"({ChatColors.Grey}Practice{ChatColors.Default}) ";
 
-                // To-do: make Style (currently 0) be dynamic
-                if (player.Stats.BonusPB[bonus_idx][pStyle].Ticks <= 0) // Player first ever PB for the bonus
+                if (player.Timer.Ticks < CurrentMap.BonusWR[bonus_idx][pStyle].Ticks) // Player beat the Bonus WR
                 {
-                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{player.Controller.PlayerName} finished bonus {bonus_idx + 1} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} ({player.Timer.Ticks})!");
+                    saveBonusTime = true;
+                    int timeImprove = CurrentMap.BonusWR[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.BonusWR[bonus_idx][pStyle].Ticks)}{ChatColors.Default})");
                 }
-                else if (player.Timer.Ticks < player.Stats.BonusPB[bonus_idx][pStyle].Ticks) // Player beating their existing PB for the bonus
+                else if (CurrentMap.BonusWR[bonus_idx][pStyle].ID == -1) // No Bonus record was set on the map
                 {
-                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Profile.Name}{ChatColors.Default} beat their bonus {bonus_idx + 1} PB in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default} (Old: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.BonusPB[bonus_idx][pStyle].Ticks)}{ChatColors.Default})!");
+                    saveBonusTime = true;
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} set the first {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} record at {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                }
+                else if (player.Stats.BonusPB[bonus_idx][pStyle].Ticks <= 0) // Player first ever PersonalBest for the bonus
+                {
+                    saveBonusTime = true;
+                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished the {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, setting your new Personal Best!");
+                }
+                else if (player.Timer.Ticks < player.Stats.BonusPB[bonus_idx][pStyle].Ticks) // Player beating their existing PersonalBest for the bonus
+                {
+                    saveBonusTime = true;
+                    int timeImprove = player.Stats.BonusPB[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)}{ChatColors.Default})");
                 }
                 else // Player did not beat their existing personal best for the bonus
                 {
-                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished bonus {bonus_idx + 1} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
-                    return HookResult.Continue; // Exit here so we don't write to DB
+                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
                 }
-
-                if (DB == null)
-                {
-                    Exception exception = new Exception("CS2 Surf ERROR >> OnTriggerStartTouch (Bonus end zone) -> DB object is null, this shouldn't happen.");
-                    throw exception;
-                }
-
-                player.Stats.BonusPB[bonus_idx][pStyle].Ticks = player.Timer.Ticks; // Reload the run_time for the HUD and also assign for the DB query
 
                 // To-do: save to DB
                 if (!player.Timer.IsPracticeMode)
                 {
+                    /*
                     AddTimer(1.5f, () =>
                     {
                         API_CurrentRun bonus_time = new API_CurrentRun
@@ -535,18 +530,13 @@ public partial class SurfTimer
                                                                     // await CurrentMap.ApiGetMapRecordAndTotals(); // Reload the Map record and totals for the HUD
                         });
                     });
-
-                    if (player.Timer.Ticks < CurrentMap.BonusWR[bonus_idx][pStyle].Ticks || CurrentMap.BonusWR[bonus_idx][pStyle].ID == -1)
+                    */
+                    if (saveBonusTime)
                     {
-                        AddTimer(2f, () =>
+                        player.ReplayRecorder.IsSaving = true;
+                        AddTimer(1.0f, async () =>
                         {
-                            CurrentMap.ReplayManager.BonusWR!.Stage = bonus_idx;
-                            CurrentMap.ReplayManager.BonusWR.LoadReplayData(repeat_count: 3);
-
-                            AddTimer(1.5f, () =>
-                            {
-                                CurrentMap.ReplayManager.BonusWR.FormatBotName();
-                            });
+                            await player.Stats.ThisRun.SaveMapTime(player, bonus: bonus_idx); // Save the Bonus MapTime data
                         });
                     }
                 }
@@ -576,7 +566,7 @@ public partial class SurfTimer
             if (stage_run_time < CurrentMap.StageWR[stage][pStyle].Ticks) // Player beat the Stage WR
             {
                 int timeImprove = CurrentMap.StageWR[stage][pStyle].Ticks - stage_run_time;
-                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Stage {stage}{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}!");
+                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Stage {stage}{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.StageWR[stage][pStyle].Ticks)}{ChatColors.Default})");
             }
             else if (CurrentMap.StageWR[stage][pStyle].ID == -1) // No Stage record was set on the map
             {
@@ -589,7 +579,7 @@ public partial class SurfTimer
             else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].Ticks > stage_run_time) // Player beating their existing Stage personal best
             {
                 int timeImprove = player.Stats.StagePB[stage][pStyle].Ticks - stage_run_time;
-                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Stage {stage}{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}!");
+                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Stage {stage}{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.StagePB[stage][pStyle].Ticks)}{ChatColors.Default})");
             }
 
             player.ReplayRecorder.IsSaving = true;

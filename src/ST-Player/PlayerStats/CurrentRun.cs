@@ -68,7 +68,7 @@ internal class CurrentRun
 
             if (stage != 0 || bonus != 0)
             {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task SaveMapTime -> Inserted an entry for Stage {stage} - {run_ticks}");
+                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task SaveMapTime -> Inserted an entry for {(stage != 0 ? "Stage" : "Bonus")} {(stage != 0 ? stage : bonus)} - {run_ticks}");
             }
             else
             {
@@ -158,17 +158,17 @@ internal class CurrentRun
             if (reloadData && type == 0)
             {
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.PB[player.Timer.Style].ID}))");
-                await player.Stats.PB[style].PB_LoadPlayerSpecificMapTimeData(player); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                await player.Stats.PB[style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Map MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
             }
             else if (reloadData && type == 1)
             {
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload Bonus MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.BonusPB[bonus][style].ID}))");
-                await player.Stats.BonusPB[bonus][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                await player.Stats.BonusPB[bonus][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Bonus MapTime PB data again (will refresh the MapTime ID)
             }
             else if (reloadData && type == 2)
             {
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload Stage MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.StagePB[stage][style].ID}))");
-                await player.Stats.StagePB[stage][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
+                await player.Stats.StagePB[stage][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Stage MapTime PB data again (will refresh the MapTime ID)
             }
         }
     }

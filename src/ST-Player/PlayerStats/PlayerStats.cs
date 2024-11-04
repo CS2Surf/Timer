@@ -53,11 +53,11 @@ internal class PlayerStats
         for (int i = 0; i < 32; i++)
         {
             this.BonusPB[i] = new Dictionary<int, PersonalBest>();
-            this.BonusPB[i][0] = new PersonalBest(); // To-do: Implement styles
+            this.BonusPB[i][0] = new PersonalBest();
             this.BonusPB[i][0].Type = 1;
 
             this.StagePB[i] = new Dictionary<int, PersonalBest>();
-            this.StagePB[i][0] = new PersonalBest(); // To-do: Implement styles
+            this.StagePB[i][0] = new PersonalBest();
             this.StagePB[i][0].Type = 2;
             initialized++;
         }
@@ -174,7 +174,7 @@ internal class PlayerStats
                 if (playerStats.GetInt32("type") == 1) // Bonus time
                 {
 #if DEBUG
-                    System.Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> BonusPB");
+                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> BonusPB");
 #endif
                     int bonusNum = playerStats.GetInt32("stage");
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
@@ -193,7 +193,7 @@ internal class PlayerStats
                 else if (playerStats.GetInt32("type") == 2) // Stage time
                 {
 #if DEBUG
-                    System.Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> StagePB");
+                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> StagePB");
 #endif
                     int stageNum = playerStats.GetInt32("stage");
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
@@ -215,7 +215,7 @@ internal class PlayerStats
                 else // Map time
                 {
 #if DEBUG
-                    System.Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> MapPB");
+                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> MapPB");
 #endif
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
                     PB[style].ID = playerStats.GetInt32("id");
@@ -240,13 +240,5 @@ internal class PlayerStats
 #endif
             }
         }
-
-        // // This would have to go inside the `Map Time` else statement in order to load checkpoints for each `style`
-        // if (PB[player.Timer.Style].ID != -1)
-        // {
-        //     // await LoadCheckpointsData(player);
-        //     await this.PB[player.Timer.Style].PB_LoadCheckpointsData();
-        // }
     }
-
 }

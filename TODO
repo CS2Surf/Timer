@@ -13,20 +13,10 @@
   + Checkpoints
   - Stages
     - Try and get the Start/End velocity values from the Checkpoint object in Map Run
-  - Bonuses
-  - Stage times are being saved with the wrong values for velocities
+  + Bonuses
 
 
 - Using `!spec` from any start zone and going back to CT starts your timer 
-+ Trim different type of replays based on situations
-  + Map Replays
-  + Stage Replays during Map runs
-  + Stage Replays in `IsStageMode`
-  - Bonus Replays
-
-
-
-- Replay bots are not being spawned on `Linear` maps
 
 # Done
 + Hibernation fucks up the creation of `CurrentMap`, if nobody has joined the first map it was on and you change to another map, server segfaults. I guess a query is being held?? :think:
@@ -65,3 +55,10 @@
       + Use seperate method
   + When loading new stage replays the cycling of them does not work
 + First ever map run does not save Checkpoints, check if we wait to retrieve the MapTime_ID before trying to insert Checkpoints
++ Trim different type of replays based on situations
+  + Map Replays
+  + Stage Replays during Map runs
+  + Stage Replays in `IsStageMode`
+  + Bonus Replays
++ Replay bots are not being spawned on `Linear` maps
+  + Needs the CS2Fixes NAV mesh patch to work with our implementation

@@ -214,9 +214,9 @@ internal class ReplayPlayer
         }
 
         if (this.Type == 1)
-            prefix = prefix + $" B{this.Stage}";
+            prefix = prefix + $"B {this.Stage}";
         else if (this.Type == 2)
-            prefix = prefix + $" S{this.Stage}";
+            prefix = prefix + $"CP {this.Stage}";
 
         SchemaString<CBasePlayerController> bot_name = new SchemaString<CBasePlayerController>(this.Controller!, "m_iszPlayerName");
 

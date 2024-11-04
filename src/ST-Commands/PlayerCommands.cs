@@ -41,21 +41,19 @@ public partial class SurfTimer
             return;
         }
 
-        // To-do: players[userid].Timer.Reset() -> teleport player
-        Player SurfPlayer = playerList[player.UserId ?? 0];
 
-        if (SurfPlayer.Timer.IsBonusMode)
+        if (oPlayer.Timer.IsBonusMode)
         {
-            if (SurfPlayer.Timer.Bonus != 0 && CurrentMap.BonusStartZone[SurfPlayer.Timer.Bonus] != new Vector(0, 0, 0))
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[SurfPlayer.Timer.Bonus], CurrentMap.BonusStartZoneAngles[SurfPlayer.Timer.Bonus], new Vector(0, 0, 0)));
+            if (oPlayer.Timer.Bonus != 0 && CurrentMap.BonusStartZone[oPlayer.Timer.Bonus] != new Vector(0, 0, 0))
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[oPlayer.Timer.Bonus], CurrentMap.BonusStartZoneAngles[oPlayer.Timer.Bonus], new Vector(0, 0, 0)));
             else // Reset back to map start
                 Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
         }
 
         else
         {
-            if (SurfPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[SurfPlayer.Timer.Stage] != new Vector(0, 0, 0))
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[SurfPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[SurfPlayer.Timer.Stage], new Vector(0, 0, 0)));
+            if (oPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[oPlayer.Timer.Stage] != new Vector(0, 0, 0))
+                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[oPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[oPlayer.Timer.Stage], new Vector(0, 0, 0)));
             else // Reset back to map start
                 Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
         }
@@ -235,10 +233,14 @@ public partial class SurfTimer
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.MapWR.RecordRunTime: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.RecordRunTime}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.MapWR.Frames.Count: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.Frames.Count}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.MapWR.IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.IsPlayable}");
-        player.PrintToChat($"{Config.PluginPrefix} .MapWR.MapSituations.Count: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.MapSituations.Count}");
+        player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.MapWR.MapSituations.Count: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.MapSituations.Count}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.StageWR.RecordRunTime: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR?.RecordRunTime}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.StageWR.Frames.Count: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR?.Frames.Count}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.StageWR.IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR?.IsPlayable}");
+        player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.RecordRunTime: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.RecordRunTime}");
+        player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.Frames.Count: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.Frames.Count}");
+        player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.IsPlayable}");
+        player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.IsPlaying: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.IsPlaying}");
 
         /*
                 for (int i = 1; i < SurfTimer.CurrentMap.Stages; i++)

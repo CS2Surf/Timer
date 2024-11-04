@@ -113,7 +113,7 @@ internal class Map
 
         // Initialize ReplayManager with placeholder values
         // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> InitializeAsync -> Initializing ReplayManager(-1, {this.Stages > 0}, false, null!)");
-        this.ReplayManager = new ReplayManager(-1, this.Stages > 0, false, null!); // Adjust values as needed
+        this.ReplayManager = new ReplayManager(-1, this.Stages > 0, this.Bonuses > 0, null!); // Adjust values as needed
 
         await Get_Map_Info();
 
@@ -517,6 +517,14 @@ internal class Map
                                 this.BonusWR[qStage][qStyle].Name = mapWrData.GetString("name");
                                 totalBonusRuns = mapWrData.GetInt32("total_count");
                                 this.BonusCompletions[qStage][qStyle] = totalBonusRuns;
+
+                                // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal async Task Get_Map_Record_Runs -> Got Bonus {qStage}");
+
+                                // Populate the ReplayManager for all bonuses found and set the first bonus to replay
+                                if (this.ReplayManager.BonusWR != null)
+                                {
+                                    Set_Replay_Data(qType, qStyle, qStage, replayFramesBase64);
+                                }
                                 break;
                             case 2: // Stage WR data and total completions
                                 this.StageWR[qStage][qStyle].ID = mapWrData.GetInt32("id");
@@ -645,10 +653,51 @@ internal class Map
                 }
                 break;
             case 1: // Bonus Replays
-                // Not loading any Bonus replays yet
+                // Skip if the same bonus run already exists
+                if (this.ReplayManager.AllBonusWR[stage][style].RecordRunTime == this.BonusWR[stage][style].Ticks)
+                    break;
+                Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] Adding run {this.BonusWR[stage][style].ID} {PlayerHUD.FormatTime(this.BonusWR[stage][style].Ticks)} (Ticks = {this.BonusWR[stage][style].Ticks}; Frames = {frames.Count}) to `ReplayManager.AllBonusWR`");
+                // Add all stages found to a dictionary with their data
+                this.ReplayManager.AllBonusWR[stage][style].MapID = this.ID;
+                this.ReplayManager.AllBonusWR[stage][style].Frames = frames;
+                this.ReplayManager.AllBonusWR[stage][style].RecordRunTime = this.BonusWR[stage][style].Ticks;
+                this.ReplayManager.AllBonusWR[stage][style].RecordPlayerName = this.BonusWR[stage][style].Name;
+                this.ReplayManager.AllBonusWR[stage][style].MapTimeID = this.BonusWR[stage][style].ID;
+                this.ReplayManager.AllBonusWR[stage][style].Stage = stage;
+                this.ReplayManager.AllBonusWR[stage][style].Type = 1;
+                this.ReplayManager.AllBonusWR[stage][style].RecordRank = 1;
+                this.ReplayManager.AllBonusWR[stage][style].IsPlayable = true; // We set this to `true` else we overwrite it and need to call SetController method again
+                for (int i = 0; i < frames.Count; i++)
+                {
+                    ReplayFrame f = frames[i];
+                    switch (f.Situation)
+                    {
+                        case ReplayFrameSituation.START_ZONE_ENTER:
+                            this.ReplayManager.AllBonusWR[stage][style].BonusSituations.Add(i);
+                            break;
+                        case ReplayFrameSituation.END_ZONE_EXIT:
+                            this.ReplayManager.AllBonusWR[stage][style].BonusSituations.Add(i);
+                            break;
+                    }
+                }
+                // Set the bonus to replay first
+                if (this.ReplayManager.BonusWR != null && this.ReplayManager.BonusWR.MapID == -1)
+                {
+                    Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] Setting first `ReplayManager.BonusWR` to bonus {stage}");
+                    if (this.ReplayManager.BonusWR.IsPlaying) // Maybe only stop the replay if we are overwriting the current bonus being played?
+                        this.ReplayManager.BonusWR.Stop();
+                    this.ReplayManager.BonusWR.MapID = this.ID;
+                    this.ReplayManager.BonusWR.Frames = frames;
+                    this.ReplayManager.BonusWR.RecordRunTime = this.BonusWR[stage][style].Ticks;
+                    this.ReplayManager.BonusWR.RecordPlayerName = this.BonusWR[stage][style].Name;
+                    this.ReplayManager.BonusWR.MapTimeID = this.BonusWR[stage][style].ID;
+                    this.ReplayManager.BonusWR.Stage = stage;
+                    this.ReplayManager.BonusWR.Type = 1;
+                    this.ReplayManager.BonusWR.RecordRank = 1;
+                }
                 break;
             case 2: // Stage Replays
-                // Skip if we the same stage run already exists
+                // Skip if the same stage run already exists
                 if (this.ReplayManager.AllStageWR[stage][style].RecordRunTime == this.StageWR[stage][style].Ticks)
                     break;
                 Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] Adding run {this.StageWR[stage][style].ID} {PlayerHUD.FormatTime(this.StageWR[stage][style].Ticks)} (Ticks = {this.StageWR[stage][style].Ticks}; Frames = {frames.Count}) to `ReplayManager.AllStageWR`");
@@ -699,6 +748,12 @@ internal class Map
             Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [MapWR] ResetReplay() and Start()");
             this.ReplayManager.MapWR.ResetReplay();
             this.ReplayManager.MapWR.Start();
+        }
+        else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
+        {
+            Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] ResetReplay() and Start() {stage}");
+            this.ReplayManager.BonusWR.ResetReplay();
+            this.ReplayManager.BonusWR.Start();
         }
         else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
         {
