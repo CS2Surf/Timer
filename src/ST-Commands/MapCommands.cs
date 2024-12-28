@@ -19,11 +19,23 @@ public partial class SurfTimer
         if (player == null)
             return;
 
+        string msg = $"{Config.PluginPrefix} {CurrentMap.Name} - Tier {ChatColors.Green}{CurrentMap.Tier}{ChatColors.Default} - Author {ChatColors.Yellow}{CurrentMap.Author}{ChatColors.Default} - Added {ChatColors.Yellow}{DateTimeOffset.FromUnixTimeSeconds(CurrentMap.DateAdded).DateTime.ToString("dd.MM.yyyy HH:mm")}{ChatColors.Default}";
+
         if (CurrentMap.Stages > 1)
-            player.PrintToChat($"{PluginPrefix} {CurrentMap.Name} - {ChatColors.Green}Tier {CurrentMap.Tier}{ChatColors.Default} - Staged {ChatColors.Yellow}{CurrentMap.Stages} Stages{ChatColors.Default}");
+        {
+            msg = string.Concat(msg, " - ", $"Stages {ChatColors.Yellow}{CurrentMap.Stages}{ChatColors.Default}");
+        }
         else
-            player.PrintToChat($"{PluginPrefix} {CurrentMap.Name} - {ChatColors.Green}Tier {CurrentMap.Tier}{ChatColors.Default} - Linear {ChatColors.Yellow}{CurrentMap.Checkpoints} Checkpoints{ChatColors.Default}");
-        return;
+        {
+            msg = string.Concat(msg, " - ", $"Linear {ChatColors.Yellow}{CurrentMap.TotalCheckpoints} Checkpoints{ChatColors.Default}");
+        }
+
+        if (CurrentMap.Bonuses > 0)
+        {
+            msg = string.Concat(msg, " - ", $"Bonuses {ChatColors.Yellow}{CurrentMap.Bonuses}");
+        }
+
+        player.PrintToChat(msg);
     }
 
     [ConsoleCommand("css_triggers", "List all valid zone triggers in the map.")]

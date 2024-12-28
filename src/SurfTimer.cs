@@ -25,13 +25,10 @@
 
 #define DEBUG
 
-using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
-using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
@@ -40,26 +37,34 @@ namespace SurfTimer;
 public partial class SurfTimer : BasePlugin
 {
     // Metadata
-    public override string ModuleName => "CS2 SurfTimer";
+    public override string ModuleName => $"CS2 {Config.PluginName}";
     public override string ModuleVersion => "DEV-1";
     public override string ModuleDescription => "Official Surf Timer by the CS2 Surf Initiative.";
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
-    public string PluginPrefix => $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]"; // To-do: make configurable
 
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
-    internal TimerDatabase? DB = new TimerDatabase();
-    public string PluginPath = Server.GameDirectory + "/csgo/addons/counterstrikesharp/plugins/SurfTimer/";
-    internal Map CurrentMap = null!;
+    internal static TimerDatabase DB = new TimerDatabase(Config.MySQL.GetConnectionString()); // Initiate it with the correct connection string
+    // internal Map CurrentMap = null!;
+    internal static Map CurrentMap = null!;
 
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        // To-do: It seems like players connect very quickly and sometimes `CurrentMap` is null when it shouldn't be, lowered the timer ot 1.0 seconds for now
-        if ((CurrentMap == null || CurrentMap.Name != mapName) && mapName.Contains("surf_"))
+        if ((CurrentMap == null || !CurrentMap.Name.Equals(mapName)) && mapName.Contains("surf_"))
         {
-            AddTimer(1.0f, () => CurrentMap = new Map(mapName, DB!)); // Was 3 seconds, now 1 second
+            Server.NextWorldUpdate(() => Console.WriteLine(String.Format("  ____________    ____         ___\n"
+                                    + " / ___/ __/_  |  / __/_ ______/ _/\n"
+                                    + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
+                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"
+                                    + $"[CS2 Surf] {Config.PluginName} {ModuleVersion} - loading map {mapName}.\n"
+                                    + $"[CS2 Surf] This software is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information.\n"
+                                    + $"[CS2 Surf] ---> Source Code: https://github.com/CS2Surf/Timer\n"
+                                    + $"[CS2 Surf] ---> License Agreement: https://github.com/CS2Surf/Timer/blob/main/LICENSE\n"
+            )));
+
+            Server.NextWorldUpdate(async () => CurrentMap = await Map.CreateAsync(mapName)); // NextWorldUpdate runs even during server hibernation
         }
     }
 
@@ -88,30 +93,22 @@ public partial class SurfTimer : BasePlugin
     /* ========== PLUGIN LOAD ========== */
     public override void Load(bool hotReload)
     {
-        // Load database config & spawn database object
-        try
+        // Check if we have connected to the Database
+        if (DB != null)
         {
-            JsonElement dbConfig = JsonDocument.Parse(File.ReadAllText(Server.GameDirectory + "/csgo/cfg/SurfTimer/database.json")).RootElement;
-            DB = new TimerDatabase(dbConfig.GetProperty("host").GetString()!,
-                                    dbConfig.GetProperty("database").GetString()!,
-                                    dbConfig.GetProperty("user").GetString()!,
-                                    dbConfig.GetProperty("password").GetString()!,
-                                    dbConfig.GetProperty("port").GetInt32(),
-                                    dbConfig.GetProperty("timeout").GetInt32());
             Console.WriteLine("[CS2 Surf] Database connection established.");
         }
-
-        catch (Exception e)
+        else
         {
-            Console.WriteLine($"[CS2 Surf] Error loading database config: {e.Message}");
+            Console.WriteLine($"[CS2 Surf] Error connecting to the database.");
             // To-do: Abort plugin loading
         }
 
         Console.WriteLine(String.Format("  ____________    ____         ___\n"
                                     + " / ___/ __/_  |  / __/_ ______/ _/\n"
                                     + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
-                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"  
-                                    + $"[CS2 Surf] SurfTimer plugin loaded. Version: {ModuleVersion}"
+                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"
+                                    + $"[CS2 Surf] {Config.PluginName} plugin loaded. Version: {ModuleVersion}\n"
                                     + $"[CS2 Surf] This plugin is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information. Source code: https://github.com/CS2Surf/Timer\n"
         ));
 
@@ -122,9 +119,8 @@ public partial class SurfTimer : BasePlugin
         // Tick listener
         RegisterListener<Listeners.OnTick>(OnTick);
 
-        // StartTouch Hook
-        VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(OnTriggerStartTouch, HookMode.Post);
-        // EndTouch Hook
-        VirtualFunctions.CBaseTrigger_EndTouchFunc.Hook(OnTriggerEndTouch, HookMode.Post);
+
+        HookEntityOutput("trigger_multiple", "OnStartTouch", OnTriggerStartTouch);
+        HookEntityOutput("trigger_multiple", "OnEndTouch", OnTriggerEndTouch);
     }
 }

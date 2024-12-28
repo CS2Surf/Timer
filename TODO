@@ -1,0 +1,65 @@
+- Re-add the MySQL queries in code and make it switch between API and DB functions
+- Map Time is NOT being saved with API
+- Make configs generate themselves inside the `./configs/plugins/...` folder
+- Fix loading MapTimes for each type (stage, bonus, maps) 
+  - API
+  - DB
+- Change `DB_QUERY_MAP_GET_RUNS` query with `DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT` in API and edit code in plugin
+- Change `DB_QUERY_PB_GET_RUNTIME` query in API
+
+- Double check the Start/End velocities for End Zone,Checkpoints, Stages, Bonuses
+  + Maps
+  + Checkpoints
+  - Stages
+    - Try and get the Start/End velocity values from the Checkpoint object in Map Run
+  + Bonuses
+
+- Using `!spec` from any start zone and going back to CT starts your timer 
+
+- Try and determine Left/Right side for Bonuses (surf_ace)
+- Try and determine Left/Right side for Maps
+- Try and determine Left/Right side for Stages
+# Done
++ Hibernation fucks up the creation of `CurrentMap`, if nobody has joined the first map it was on and you change to another map, server segfaults. I guess a query is being held?? :think:
+  + Solution is to use `Server.NextWorldUpdate` as hibernation stops all `Timer`s :peepoHappy:
++ Introduce `async` for queries and some methods
++ Make Database spawn a new connection for each query to avoid `Connection in use` error
+  + Add notes to apply `using` blocks for certain methods for proper operation
++ Move **PlayerProfile** queries to the respective class
++ Move **Map** queries to the respective class
++ Total Completions for a map are wrong in HUD
++ Add `Situation` to each `ReplayFrame` and load it properly
+  + Fix `STAGE_EXIT_ZONE` situations - not triggered (logic in `TriggerEndTouch` is most likely bad)
++ Fix Map Replays
+  + Reload after setting a new WR
+  + Load if no replay existed before a new run
+  + Use the `ReplayFrameSituation` for determining where to cut replays
+  + Do not cut replay as soon as we enter end zone (determined by the AddTimer amount for `SaveMapTime`)
++ Double check the Checkpoints comparison messages
+  + 1st run: [CS2 Surf] CP [1]: 02.468 (1083) [PB: N/A (N/A) | WR: N/A (N/A)]
+  + 2nd run: [CS2 Surf] CP [1]: 02.421 (1128) [PB: +02.390 (+46) | WR: +02.390 (+46)]
++ Fix Stage replays
+  + Track the times even during Map Run on staged maps
+  + Include the pre-strafe
+  + Load all of them instead of overwriting and cycle (maybe make StageWR a Dictionary)
+  + Reload them after setting a new Stage WR 
+  + Load if no replay existed before
+  + Use the `ReplayFrameSituation` for determining where to cut replays
+  + Save stage replays when `IsStageMode` is enabled
+    + Use seperate method
+  + Save the correct amount of `Ticks` for stage runs during map run
+    + Use seperate method
+  + Save the last stage time - triggered in `END_ZONE_ENTER`
+    + `IsStageMode`
+      + Use seperate method
+    + Map run
+      + Use seperate method
+  + When loading new stage replays the cycling of them does not work
++ First ever map run does not save Checkpoints, check if we wait to retrieve the MapTime_ID before trying to insert Checkpoints
++ Trim different type of replays based on situations
+  + Map Replays
+  + Stage Replays during Map runs
+  + Stage Replays in `IsStageMode`
+  + Bonus Replays
++ Replay bots are not being spawned on `Linear` maps
+  + Needs the CS2Fixes NAV mesh patch to work with our implementation

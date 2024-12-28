@@ -1,79 +1,123 @@
+using MySqlConnector;
+
 namespace SurfTimer;
 
-using System.Runtime.CompilerServices;
-using CounterStrikeSharp.API;
-using MySqlConnector; // https://dev.mysql.com/doc/connector-net/en/connector-net-connections-string.html
-
-// This will have functions for DB access and query sending
 internal class TimerDatabase
 {
-    private readonly MySqlConnection? _db;
-    private readonly string _connString = string.Empty;
+    private readonly string _connString;
 
-    public TimerDatabase()
+    public TimerDatabase(string connectionString)
     {
-        // Null'd
+        _connString = connectionString;
     }
 
-
-    public TimerDatabase(string host, string database, string user, string password, int port, int timeout)
+    public void Dispose()
     {
-        this._connString = $"server={host};user={user};password={password};database={database};port={port};connect timeout={timeout};";
-        this._db = new MySqlConnection(this._connString);
-        this._db.Open();
+        Close();
     }
 
     public void Close()
     {
-        if (this._db != null)
-            this._db!.Close();
+        // Not needed
     }
 
-    public async Task<MySqlDataReader> Query(string query)
+    /// <summary>
+    /// Spawns a new connection to the database.
+    /// </summary>
+    /// <returns cref="MySqlConnection">DB Connection</returns>
+    private MySqlConnection GetConnection()
     {
-        return await Task.Run(async () =>
+        var connection = new MySqlConnection(_connString);
+        try
         {
-            try
-            {
-                if (this._db == null)
-                {
-                    throw new InvalidOperationException("Database connection is not open.");
-                }
+            connection.Open();
+        }
+        catch (MySqlException mysqlEx)  // Specifically catch MySQL-related exceptions
+        {
+            Console.WriteLine($"[CS2 Surf] MySQL error when connecting: {mysqlEx.Message}");
+            throw new InvalidOperationException("Could not establish a connection to the database.", mysqlEx); // Wrap the original exception with additional context
+        }
+        catch (System.Exception ex)  // Catch all other exceptions
+        {
+            Console.WriteLine($"[CS2 Surf] General error when connecting to the database: {ex.Message}");
+            throw;  // Re-throw the exception without wrapping it
+        }
 
-                MySqlCommand cmd = new(query, this._db);
-                MySqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-                return reader;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error executing query: {ex.Message}");
-                throw;
-            }
-        });
+        return connection;
     }
 
-    public async Task<int> Write(string query)
+    /// <summary>
+    /// Always encapsulate the block with `using` when calling this method.
+    /// That way we ensure the proper disposal of the `MySqlDataReader` when we are finished with it.
+    /// </summary>
+    /// <param name="query">SELECT query to execute</param>
+    public async Task<MySqlDataReader> QueryAsync(string query)
     {
-        return await Task.Run(async () =>
+        try
         {
-            try
-            {
-                if (this._db == null)
-                {
-                    throw new InvalidOperationException("Database connection is not open.");
-                }
+            var connection = GetConnection();
+            var cmd = new MySqlCommand(query, connection);
+            return await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error executing query {query}: {ex.Message}");
+            throw;
+        }
+    }
 
-                MySqlCommand cmd = new(query, this._db);
-                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+    /// <summary>
+    /// Automatically disposes of the connection and command are disposed of after usage.
+    /// No need to encapsulate in `using` block.
+    /// </summary>
+    /// <param name="query">INSERT/UPDATE query to execute</param>
+    public async Task<int> WriteAsync(string query)
+    {
+        try
+        {
+            using var connection = GetConnection();
+            using var cmd = new MySqlCommand(query, connection);
+            return await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error executing write operation {query}: {ex.Message}");
+            throw;
+        }
+    }
 
-                return rowsAffected;
-            }
-            catch (Exception ex)
+    /// <summary>
+    /// Begins a transaction and executes it on the database.
+    /// Used for inputting `Checkpoints` data after a run has been finished.
+    /// No need to encapsulate in a `using` block, method disposes of connection and data itself.
+    /// </summary>
+    /// <param name="commands">INSERT/UPDATE queries to execute</param>
+    public async Task TransactionAsync(List<string> commands)
+    {
+        // Create a new connection and open it
+        using var connection = GetConnection();
+
+        // Begin a transaction on the connection
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            // Execute each command within the transaction
+            foreach (var commandText in commands)
             {
-                Console.WriteLine($"Error executing write operation: {ex.Message}");
-                throw;
+                using var cmd = new MySqlCommand(commandText, connection, transaction);
+                await cmd.ExecuteNonQueryAsync();
             }
-        });
+
+            // Commit the transaction
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            // Roll back the transaction if an error occurs
+            await transaction.RollbackAsync();
+            throw;
+        }
+        // The connection and transaction are disposed here
     }
 }
