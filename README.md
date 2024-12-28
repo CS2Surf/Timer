@@ -160,7 +160,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 </details>
 </br>
 
-# Main list with tasks (more details can be found [here](https://github.com/tslashd/Timer/blob/dev/TODO)):
+# Main list with tasks (more details can be found [here](https://github.com/CS2Surf/Timer/blob/dev/TODO)):
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve. Subject to change.*
 Bold & Italics = being worked on.
 - [ ] Database
