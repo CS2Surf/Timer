@@ -186,7 +186,7 @@ Bold & Italics = being worked on.
     - [X] Load zone information automatically from standardised triggers: https://github.com/CS2Surf/Timer/wiki/CS2-Surf-Mapping 
     - [X] Support for stages (`/rs`, teleporting with `/s`)
     - [X] Support for bonuses (`/rs`, teleporting with `/b #`)
-    - [X] _Start/End touch hooks implemented for all zones
+    - [X] Start/End touch hooks implemented for all zones
 - [ ] Surf configs
   - [X] Server settings configuration
   - [ ] Plugin configuration
