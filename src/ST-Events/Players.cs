@@ -13,33 +13,74 @@ public partial class SurfTimer
     public HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
     {
         var controller = @event.Userid;
-        if(!controller.IsValid || !controller.IsBot)
+        if (!controller.IsValid || !controller.IsBot || CurrentMap.ReplayManager.IsControllerConnectedToReplayPlayer(controller))
             return HookResult.Continue;
 
-        for (int i = 0; i < CurrentMap.ReplayBots.Count; i++)
+        // Set the controller for the MapWR bot
+        if (!CurrentMap.ReplayManager!.MapWR.IsPlayable)
         {
-            if(CurrentMap.ReplayBots[i].IsPlayable)
-                continue;
+            CurrentMap.ReplayManager.MapWR.SetController(controller, -1);
+            CurrentMap.ReplayManager.MapWR.LoadReplayData();
 
-            int repeats = -1;
-            if(CurrentMap.ReplayBots[i].Stat_Prefix == "PB")
-                repeats = 3;
-            
-            CurrentMap.ReplayBots[i].SetController(controller, repeats);
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Lime}Loading replay data...");
-            AddTimer(2f, () => {
-                if(!CurrentMap.ReplayBots[i].IsPlayable)
-                    return;
-
-                CurrentMap.ReplayBots[i].Controller!.RemoveWeapons();
-                
-                CurrentMap.ReplayBots[i].LoadReplayData(DB!);
-
-                CurrentMap.ReplayBots[i].Start();
+            AddTimer(1.5f, () =>
+            {
+                CurrentMap.ReplayManager.MapWR.Controller!.RemoveWeapons();
+                CurrentMap.ReplayManager.MapWR.Start();
+                CurrentMap.ReplayManager.MapWR.FormatBotName();
             });
-            
+
             return HookResult.Continue;
         }
+
+        // Set the controller for the StageWR bot
+        if (CurrentMap.ReplayManager.StageWR != null && !CurrentMap.ReplayManager.StageWR.IsPlayable)
+        {
+            CurrentMap.ReplayManager.StageWR.SetController(controller, 3);
+            CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
+
+            AddTimer(1.5f, () =>
+            {
+                CurrentMap.ReplayManager.StageWR.Controller!.RemoveWeapons();
+                CurrentMap.ReplayManager.StageWR.Start();
+                CurrentMap.ReplayManager.StageWR.FormatBotName();
+            });
+
+            return HookResult.Continue;
+        }
+
+        // Spawn the BonusWR bot
+        if (CurrentMap.ReplayManager.BonusWR != null && !CurrentMap.ReplayManager.BonusWR.IsPlayable)
+        {
+            CurrentMap.ReplayManager.BonusWR.SetController(controller, 3);
+            CurrentMap.ReplayManager.BonusWR.LoadReplayData();
+
+            AddTimer(1.5f, () =>
+            {
+                CurrentMap.ReplayManager.BonusWR.Controller!.RemoveWeapons();
+                CurrentMap.ReplayManager.BonusWR.Start();
+                CurrentMap.ReplayManager.BonusWR.FormatBotName();
+            });
+
+            return HookResult.Continue;
+        }
+
+        // // Spawn the CustomReplays bot (for PB replays?) - T
+        // CurrentMap.ReplayManager.CustomReplays.ForEach(replay =>
+        // {
+        //     if (!replay.IsPlayable)
+        //     {
+        //         replay.SetController(controller, 3);
+        //         replay.LoadReplayData();
+
+        //         AddTimer(1.5f, () => {
+        //             replay.Controller!.RemoveWeapons();
+        //             replay.Start();
+        //             replay.FormatBotName();
+        //         });
+
+        //         return;
+        //     }
+        // });
 
         return HookResult.Continue;
     }
@@ -48,118 +89,46 @@ public partial class SurfTimer
     public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / {player.SteamID}");
-        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> {player.PlayerName} / {player.UserId} / Bot Diff: {player.PawnBotDifficulty}");
-        #endif
 
-        if (player.IsBot || !player.IsValid)
+        string name = player.PlayerName;
+        string country = "XX";
+
+        // GeoIP
+        // Check if the IP is private before attempting GeoIP lookup
+        string ipAddress = player.IpAddress!.Split(":")[0];
+        if (!IsPrivateIP(ipAddress))
         {
-            return HookResult.Continue;
+            DatabaseReader geoipDB = new(Config.PluginPath + "data/GeoIP/GeoLite2-Country.mmdb");
+            country = geoipDB.Country(ipAddress).Country.IsoCode ?? "XX";
+            geoipDB.Dispose();
         }
         else
         {
-            int dbID, joinDate, lastSeen, connections;
-            string name, country; 
-            
-            // GeoIP
-            DatabaseReader geoipDB = new DatabaseReader(PluginPath + "data/GeoIP/GeoLite2-Country.mmdb");
-            if (geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode is not null)
-            {
-                country = geoipDB.Country(player.IpAddress!.Split(":")[0]).Country.IsoCode!;
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> GeoIP -> {player.PlayerName} -> {player.IpAddress!.Split(":")[0]} -> {country}");
-                #endif
-            }
-            else
-                country = "XX";
-            geoipDB.Dispose();
-
-            if (DB == null)
-                throw new Exception("CS2 Surf ERROR >> OnPlayerConnect -> DB object is null, this shouldnt happen.");
-
-            // Load player profile data from database (or create an entry if first time connecting)
-            Task<MySqlDataReader> dbTask = DB.Query($"SELECT * FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
-            MySqlDataReader playerData = dbTask.Result;
-            if (playerData.HasRows && playerData.Read())
-            {
-                // Player exists in database
-                dbID = playerData.GetInt32("id");
-                name = playerData.GetString("name");
-                if (country == "XX" && playerData.GetString("country") != "XX")
-                    country = playerData.GetString("country");
-                joinDate = playerData.GetInt32("join_date");
-                lastSeen = playerData.GetInt32("last_seen");
-                connections = playerData.GetInt32("connections");
-                playerData.Close();
-
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> Returning player {name} ({player.SteamID}) loaded from database with ID {dbID}");
-                #endif
-            }
-            else
-            {
-                playerData.Close();
-                // Player does not exist in database
-                name = player.PlayerName;
-                joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                lastSeen = joinDate;
-                connections = 1;
-
-                // Write new player to database
-                Task<int> newPlayerTask = DB.Write($@"
-                    INSERT INTO `Player` (`name`, `steam_id`, `country`, `join_date`, `last_seen`, `connections`) 
-                    VALUES ('{MySqlHelper.EscapeString(name)}', {player.SteamID}, '{country}', {joinDate}, {lastSeen}, {connections});
-                ");
-                int newPlayerTaskRows = newPlayerTask.Result;
-                if (newPlayerTaskRows != 1)
-                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to write new player to database, this shouldnt happen. Player: {name} ({player.SteamID})");
-                newPlayerTask.Dispose(); 
-
-                // Get new player's database ID
-                Task<MySqlDataReader> newPlayerDataTask = DB.Query($"SELECT `id` FROM `Player` WHERE `steam_id` = {player.SteamID} LIMIT 1;");
-                MySqlDataReader newPlayerData = newPlayerDataTask.Result;
-                if (newPlayerData.HasRows && newPlayerData.Read()) 
-                {
-                    #if DEBUG
-                    // Iterate through data: 
-                    for (int i = 0; i < newPlayerData.FieldCount; i++)
-                    {
-                        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> newPlayerData[{i}] = {newPlayerData.GetValue(i)}");
-                    }
-                    #endif
-                    dbID = newPlayerData.GetInt32("id");
-                }
-                else
-                    throw new Exception($"CS2 Surf ERROR >> OnPlayerConnect -> Failed to get new player's database ID after writing, this shouldnt happen. Player: {name} ({player.SteamID})");
-                newPlayerData.Close();
-
-                #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnect -> New player {name} ({player.SteamID}) added to database with ID {dbID}");
-                #endif
-            }
-            dbTask.Dispose();
-
-            // Create Player object and add to playerList
-            PlayerProfile Profile = new PlayerProfile(dbID, name, player.SteamID, country, joinDate, lastSeen, connections);
-            playerList[player.UserId ?? 0] = new Player(player, 
-                                                    new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
-                                                    Profile, CurrentMap);
-            
-            #if DEBUG
-            Console.WriteLine($"=================================== SELECT * FROM `MapTimes` WHERE `player_id` = {playerList[player.UserId ?? 0].Profile.ID} AND `map_id` = {CurrentMap.ID};");
-            #endif
-
-            // To-do: hardcoded Style value
-            // Load MapTimes for the player's PB and their Checkpoints
-            playerList[player.UserId ?? 0].Stats.LoadMapTimesData(playerList[player.UserId ?? 0], DB); // Will reload PB and Checkpoints for the player for all styles
-            playerList[player.UserId ?? 0].Stats.LoadCheckpointsData(DB); // To-do: This really should go inside `LoadMapTimesData` imo cuz here we hardcoding load for Style 0
-
-            // Print join messages
-            Server.PrintToChatAll($"{PluginPrefix} {ChatColors.Green}{player.PlayerName}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
-            Console.WriteLine($"[CS2 Surf] {player.PlayerName} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
-            return HookResult.Continue;
+            country = "LL";  // Handle local IP appropriately
         }
+#if DEBUG
+        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnectFull -> GeoIP -> {name} -> {player.IpAddress!.Split(":")[0]} -> {country}");
+#endif
+        if (DB == null)
+        {
+            Exception ex = new("CS2 Surf ERROR >> OnPlayerConnect -> DB object is null, this shouldn't happen.");
+            throw ex;
+        }
+
+        // Create Player object and add to playerList
+        PlayerProfile Profile = PlayerProfile.CreateAsync(player.SteamID, name, country).GetAwaiter().GetResult();
+        playerList[player.UserId ?? 0] = new Player(player,
+                                                new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
+                                                Profile, CurrentMap);
+
+        // Load MapTimes for the player's PB and their Checkpoints
+        playerList[player.UserId ?? 0].Stats.LoadPlayerMapTimesData(playerList[player.UserId ?? 0]).GetAwaiter().GetResult(); // Holds here until result is available
+
+        // Print join messages
+        Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Green}{name}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
+        Console.WriteLine($"[CS2 Surf] {name} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
+
+        return HookResult.Continue;
     }
 
     [GameEventHandler] // Player Disconnect Event
@@ -167,15 +136,30 @@ public partial class SurfTimer
     {
         var player = @event.Userid;
 
-        for (int i = 0; i < CurrentMap.ReplayBots.Count; i++)
-            if (CurrentMap.ReplayBots[i].IsPlayable && CurrentMap.ReplayBots[i].Controller!.Equals(player) && CurrentMap.ReplayBots[i].Stat_MapTimeID != -1)
-                CurrentMap.ReplayBots[i].Reset();
+        if (player == null)
+        {
+            Console.WriteLine($"CS2 Surf ERROR >> OnPlayerDisconnect -> Null ({player == null})");
+            return HookResult.Continue;
+        }
+
+        if (CurrentMap.ReplayManager.MapWR.Controller != null && CurrentMap.ReplayManager.MapWR.Controller.Equals(player) && CurrentMap.ReplayManager.MapWR.MapID != -1)
+            CurrentMap.ReplayManager.MapWR.Reset();
+
+        if (CurrentMap.ReplayManager.StageWR != null && CurrentMap.ReplayManager.StageWR.Controller != null && CurrentMap.ReplayManager.StageWR.Controller.Equals(player) && CurrentMap.ReplayManager.StageWR.MapID != -1)
+            CurrentMap.ReplayManager.StageWR.Reset();
+
+        if (CurrentMap.ReplayManager.BonusWR != null && CurrentMap.ReplayManager.BonusWR.Controller != null && CurrentMap.ReplayManager.BonusWR.Controller.Equals(player))
+            CurrentMap.ReplayManager.BonusWR!.Reset();
+
+        for (int i = 0; i < CurrentMap.ReplayManager.CustomReplays.Count; i++)
+            if (CurrentMap.ReplayManager.CustomReplays[i].Controller != null && CurrentMap.ReplayManager.CustomReplays[i].Controller!.Equals(player))
+                CurrentMap.ReplayManager.CustomReplays[i].Reset();
+
 
         if (player.IsBot || !player.IsValid)
         {
             return HookResult.Continue;
         }
-        
         else
         {
             if (DB == null)
@@ -188,20 +172,38 @@ public partial class SurfTimer
             else
             {
                 // Update data in Player DB table
-                Task<int> updatePlayerTask = DB.Write($@"
-                    UPDATE `Player` SET country = '{playerList[player.UserId ?? 0].Profile.Country}', 
-                    `last_seen` = {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, `connections` = `connections` + 1 
-                    WHERE `id` = {playerList[player.UserId ?? 0].Profile.ID} LIMIT 1;
-                ");
-                if (updatePlayerTask.Result != 1)
-                    throw new Exception($"CS2 Surf ERROR >> OnPlayerDisconnect -> Failed to update player data in database. Player: {player.PlayerName} ({player.SteamID})");
-                // Player disconnection to-do
-                updatePlayerTask.Dispose();
+                playerList[player.UserId ?? 0].Profile.Update_Player_Profile(player.PlayerName).GetAwaiter().GetResult(); // Hold the thread until player data is updated
 
                 // Remove player data from playerList
                 playerList.Remove(player.UserId ?? 0);
             }
             return HookResult.Continue;
         }
+    }
+
+    /// <summary>
+    /// Checks whether an IP is a local one. Allows testing the plugin in a local environment setup for GeoIP
+    /// </summary>
+    /// <param name="ip">IP to check</param>
+    /// <returns cref="bool">True for Private IP</returns>
+    static bool IsPrivateIP(string ip)
+    {
+        var ipParts = ip.Split('.');
+        int firstOctet = int.Parse(ipParts[0]);
+        int secondOctet = int.Parse(ipParts[1]);
+
+        // 10.x.x.x range
+        if (firstOctet == 10)
+            return true;
+
+        // 172.16.x.x to 172.31.x.x range
+        if (firstOctet == 172 && (secondOctet >= 16 && secondOctet <= 31))
+            return true;
+
+        // 192.168.x.x range
+        if (firstOctet == 192 && secondOctet == 168)
+            return true;
+
+        return false;
     }
 }
