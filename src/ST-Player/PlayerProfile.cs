@@ -1,5 +1,6 @@
-using CounterStrikeSharp.API.Core;
-using Microsoft.VisualBasic;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -12,9 +13,13 @@ internal class PlayerProfile
     public int JoinDate { get; set; } = 0;
     public int LastSeen { get; set; } = 0;
     public int Connections { get; set; } = 0;
+    private readonly ILogger<PlayerProfile> _logger;
 
     public PlayerProfile(ulong steamId, string name = "", string country = "")
     {
+        // Resolve the logger instance from the DI container
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerProfile>>();
+
         this.SteamID = steamId;
         this.Name = name;
         this.Country = country;
@@ -35,17 +40,19 @@ internal class PlayerProfile
         return profile;
     }
 
-    private async Task InitializeAsync()
+    private async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
         await Get_Player_Profile();
 
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerProfile -> InitializeAsync -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] We got ProfileID = {this.ID} ({this.Name})");
+        _logger.LogTrace("[{ClassName}] {MethodName} -> InitializeAsync -> [{ConnType}] We got ProfileID {ProfileID} ({PlayerName})",
+            nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.ID, this.Name
+        );
     }
 
     /// <summary>
     /// Retrieves all the data for the player from the database.
     /// </summary>
-    public async Task Get_Player_Profile()
+    public async Task Get_Player_Profile([CallerMemberName] string methodName = "")
     {
         bool newPlayer = false;
 
@@ -70,7 +77,9 @@ internal class PlayerProfile
         }
 
 #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerProfile -> InitializeAsync -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] Returning player {this.Name} ({this.SteamID}) loaded from database with ID {this.ID}");
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Get_Player_Profile -> [{ConnType}] Returning player {PlayerName} ({SteamID}) loaded with ID {ProfileID}.",
+            nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
+        );
 #endif
         if (newPlayer)
             await Insert_Player_Profile();
@@ -80,7 +89,7 @@ internal class PlayerProfile
     /// Insert new player information into the database.
     /// Retrieves the ID of the newly created player.
     /// </summary>
-    public async Task Insert_Player_Profile()
+    public async Task Insert_Player_Profile([CallerMemberName] string methodName = "")
     {
         // Player does not exist in database
         int joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -99,7 +108,9 @@ internal class PlayerProfile
 
         await Get_Player_Profile();
 #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerProfile -> Insert_Player_Profile -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] New player {this.Name} ({this.SteamID}) added to database with ID {this.ID}");
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Insert_Player_Profile -> [{ConnType}] New player {PlayerName} ({SteamID}) added with ID {ProfileID}.",
+            nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
+        );
 #endif
     }
 
@@ -108,13 +119,20 @@ internal class PlayerProfile
     /// </summary>
     /// <param name="name">Player Name</param>
     /// <exception cref="Exception"></exception>
-    public async Task Update_Player_Profile(string name)
+    public async Task Update_Player_Profile(string name, [CallerMemberName] string methodName = "")
     {
         int updatePlayerTask = await SurfTimer.DB.WriteAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PP_UPDATE_PROFILE, this.Country, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(), this.ID, name));
         if (updatePlayerTask != 1)
+        {
+            _logger.LogError("[{ClassName}] {MethodName} -> Update_Player_Profile -> [{ConnType}] Failed to update data in database. Player {PlayerName} ({SteamID})",
+                nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID
+            );
             throw new Exception($"CS2 Surf ERROR >> internal class PlayerProfile -> Update_Player_Profile -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] Failed to update player data in database. Player: {this.Name} ({this.SteamID})");
+        }
 #if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerProfile -> Update_Player_Profile -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] Updated player {name} ({this.SteamID}) in database. ID {this.ID}");
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Update_Player_Profile -> [{ConnType}] Updated player {PlayerName} ({SteamID}) in database with ID {ProfileID}.",
+            nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
+        );
 #endif
     }
 }

@@ -29,6 +29,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -36,6 +37,16 @@ namespace SurfTimer;
 [MinimumApiVersion(120)]
 public partial class SurfTimer : BasePlugin
 {
+    private readonly ILogger<SurfTimer> _logger;
+    public static IServiceProvider ServiceProvider { get; private set; } = null!;
+
+    // Inject ILogger and store IServiceProvider globally
+    public SurfTimer(ILogger<SurfTimer> logger, IServiceProvider serviceProvider)
+    {
+        _logger = logger;
+        ServiceProvider = serviceProvider;
+    }
+
     // Metadata
     public override string ModuleName => $"CS2 {Config.PluginName}";
     public override string ModuleVersion => "DEV-1";
@@ -58,10 +69,10 @@ public partial class SurfTimer : BasePlugin
                                     + " / ___/ __/_  |  / __/_ ______/ _/\n"
                                     + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
                                     + "\\___/___/____/ /___/\\_,_/_/ /_/\n"
-                                    + $"[CS2 Surf] {Config.PluginName} {ModuleVersion} - loading map {mapName}.\n"
-                                    + $"[CS2 Surf] This software is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information.\n"
-                                    + $"[CS2 Surf] ---> Source Code: https://github.com/CS2Surf/Timer\n"
-                                    + $"[CS2 Surf] ---> License Agreement: https://github.com/CS2Surf/Timer/blob/main/LICENSE\n"
+                                    + $"[{Config.PluginName}] v.{ModuleVersion} - loading map {mapName}.\n"
+                                    + $"[{Config.PluginName}] This software is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information.\n"
+                                    + $"[{Config.PluginName}] ---> Source Code: https://github.com/CS2Surf/Timer\n"
+                                    + $"[{Config.PluginName}] ---> License Agreement: https://github.com/CS2Surf/Timer/blob/main/LICENSE\n"
             )));
 
             Server.NextWorldUpdate(async () => CurrentMap = await Map.CreateAsync(mapName)); // NextWorldUpdate runs even during server hibernation
@@ -86,7 +97,9 @@ public partial class SurfTimer : BasePlugin
         ConVarHelper.RemoveCheatFlagFromConVar("bot_zombie");
 
         Server.ExecuteCommand("execifexists SurfTimer/server_settings.cfg");
-        Console.WriteLine("[CS2 Surf] Executed configuration: server_settings.cfg");
+        _logger.LogTrace("[{Prefix}] Executed configuration: server_settings.cfg",
+            Config.PluginName
+        );
         return HookResult.Continue;
     }
 
@@ -96,21 +109,29 @@ public partial class SurfTimer : BasePlugin
         // Check if we have connected to the Database
         if (DB != null)
         {
-            Console.WriteLine("[CS2 Surf] Database connection established.");
+            _logger.LogInformation("[{Prefix}] Database connection established.",
+                Config.PluginName
+            );
         }
         else
         {
-            Console.WriteLine($"[CS2 Surf] Error connecting to the database.");
+            _logger.LogCritical("[{Prefix}] Error connecting to the database.",
+                Config.PluginName
+            );
             // To-do: Abort plugin loading
         }
 
-        Console.WriteLine(String.Format("  ____________    ____         ___\n"
-                                    + " / ___/ __/_  |  / __/_ ______/ _/\n"
-                                    + "/ /___\\ \\/ __/  _\\ \\/ // / __/ _/ \n"
-                                    + "\\___/___/____/ /___/\\_,_/_/ /_/\n"
-                                    + $"[CS2 Surf] {Config.PluginName} plugin loaded. Version: {ModuleVersion}\n"
-                                    + $"[CS2 Surf] This plugin is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information. Source code: https://github.com/CS2Surf/Timer\n"
-        ));
+        _logger.LogInformation("""  
+        
+            ____________    ____         ___
+            / ___/ __/_  |  / __/_ ______/ _/
+            / /___\ \/ __/  _\ \/ // / __/ _/ 
+            \___/___/____/ /___/\_,_/_/ /_/   
+            [CS2 Surf] {PluginName} plugin loaded. Version: {ModuleVersion}
+            [CS2 Surf] This plugin is licensed under the GNU Affero General Public License v3.0. See LICENSE for more information. 
+            Source code: https://github.com/CS2Surf/Timer
+        """, Config.PluginName, ModuleVersion
+        );
 
         // Map Start Hook
         RegisterListener<Listeners.OnMapStart>(OnMapStart);

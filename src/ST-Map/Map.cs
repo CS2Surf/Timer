@@ -1,9 +1,13 @@
 using System.Data;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
 
 namespace SurfTimer;
@@ -71,9 +75,14 @@ internal class Map
 
     public ReplayManager ReplayManager { get; set; } = null!;
 
+    private readonly ILogger<Map> _logger;
+
     // Constructor
     internal Map(string name)
     {
+        // Resolve the logger instance from the DI container
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<Map>>();
+
         // Set map name
         this.Name = name;
 
@@ -105,19 +114,26 @@ internal class Map
         return map;
     }
 
-    private async Task InitializeAsync()
+    private async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
         // Load zones
         Map_Load_Zones();
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> InitializeAsync -> Zones have been loaded.");
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Zones have been loaded. | Bonuses: {Bonuses} | Stages: {Stages} | Checkpoints: {Checkpoints}",
+            nameof(Map), methodName, this.Bonuses, this.Stages, this.TotalCheckpoints
+        );
 
         // Initialize ReplayManager with placeholder values
         // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> InitializeAsync -> Initializing ReplayManager(-1, {this.Stages > 0}, false, null!)");
         this.ReplayManager = new ReplayManager(-1, this.Stages > 0, this.Bonuses > 0, null!); // Adjust values as needed
 
+        // Start timing
+        var stopwatch = Stopwatch.StartNew();
         await Get_Map_Info();
+        stopwatch.Stop();
 
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> InitializeAsync -> We got MapID = {ID} ({Name})");
+        _logger.LogInformation("[{ClassName}] {MethodName} -> We got MapID = {ID} ({Name}) in {ElapsedMilliseconds}ms | API = {API}",
+            nameof(Map), methodName, ID, Name, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+        );
     }
 
     /// <summary>
@@ -126,7 +142,7 @@ internal class Map
     // To-do: This loops through all the triggers. While that's great and comprehensive, some maps have two triggers with the exact same name, because there are two
     //        for each side of the course (left and right, for example). We should probably work on automatically catching this. 
     //        Maybe even introduce a new naming convention?
-    internal void Map_Load_Zones()
+    internal void Map_Load_Zones([CallerMemberName] string methodName = "")
     {
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
@@ -239,14 +255,19 @@ internal class Map
 
         if (this.Stages > 0) // Account for stage 1, not counted above
             this.Stages += 1;
-        Console.WriteLine($"[CS2 Surf] Identifying start zone: {this.StartZone.X},{this.StartZone.Y},{this.StartZone.Z}\nIdentifying end zone: {this.EndZone.X},{this.EndZone.Y},{this.EndZone.Z}");
+
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Start zone: {StartZoneX},{StartZoneY},{StartZoneZ} | End zone: {EndZoneX},{EndZoneY},{EndZoneZ}",
+            nameof(Map), methodName, this.StartZone.X, this.StartZone.Y, this.StartZone.Z, this.EndZone.X, this.EndZone.Y, this.EndZone.Z
+        );
+
+        KillServerCommandEnts();
     }
 
     /// <summary>
     /// Inserts a new map entry in the database.
     /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
-    internal async Task Insert_Map_Info()
+    internal async Task Insert_Map_Info([CallerMemberName] string methodName = "")
     {
         if (Config.API.GetApiOnly()) // API Calls
         {
@@ -266,7 +287,9 @@ internal class Map
             // Check if the response is not null and get the last_id
             if (postResponse != null)
             {
-                Console.WriteLine($"======= CS2 Surf DEBUG API >> public async Task Insert_Map_Info -> New map '{Name}' inserted, got ID {postResponse.last_id}");
+                _logger.LogInformation("[{ClassName}] {MethodName} -> Insert_Map_Info -> New map '{Name}' inserted, got ID {MapID}",
+                    nameof(Map), methodName, Name, postResponse.last_id
+                );
                 this.ID = postResponse.last_id;
             }
 
@@ -278,6 +301,9 @@ internal class Map
                 string.Format(Config.MySQL.Queries.DB_QUERY_MAP_INSERT_INFO, MySqlHelper.EscapeString(Name), "Unknown", this.Stages, this.Bonuses, 0, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             if (writerRows != 1)
             {
+                _logger.LogCritical("[{ClassName}] {MethodName} -> Insert_Map_Info -> Failed to write new map to database, this shouldn't happen. Map: {Name}",
+                    nameof(Map), methodName, Name
+                );
                 Exception exception = new($"CS2 Surf ERROR >> internal class Map -> internal async Task Insert_Map_Info -> Failed to write new map to database, this shouldn't happen. Map: {Name}");
                 throw exception;
             }
@@ -290,7 +316,7 @@ internal class Map
     /// Updates last played, stages, bonuses for the map in the database.
     /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
-    internal async Task Update_Map_Info()
+    internal async Task Update_Map_Info([CallerMemberName] string methodName = "")
     {
         if (Config.API.GetApiOnly()) // API Calls
         {
@@ -315,12 +341,17 @@ internal class Map
                 (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(), this.Stages, this.Bonuses, this.ID);
 
 #if DEBUG
-            Console.WriteLine($"CS2 Surf >> internal class Map -> internal async Task Update_Map_Info -> Update MapData: {updateQuery}");
+            _logger.LogDebug("[{ClassName}] {MethodName} -> Update MapData: {Query}",
+                nameof(Map), methodName, updateQuery
+            );
 #endif
 
             int lastPlayedUpdateRows = await SurfTimer.DB.WriteAsync(updateQuery);
             if (lastPlayedUpdateRows != 1)
             {
+                _logger.LogCritical("[{ClassName}] {MethodName} -> Update_Map_Info -> Failed to update map in database, this shouldn't happen. Map: {Name}",
+                    nameof(Map), methodName, Name
+                );
                 Exception exception = new($"CS2 Surf ERROR >> internal class Map -> internal async Task Update_Map_Info -> Failed to update map in database, this shouldn't happen. Map: {Name}");
                 throw exception;
             }
@@ -333,7 +364,7 @@ internal class Map
     /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
     /// <param name="updateData" cref="bool">Should we run UPDATE query for the map</param>
-    internal async Task Get_Map_Info(bool updateData = true)
+    internal async Task Get_Map_Info(bool updateData = true, [CallerMemberName] string methodName = "")
     {
         bool newMap = false;
 
@@ -390,7 +421,14 @@ internal class Map
         if (updateData)
             await Update_Map_Info();
 
+        var stopwatch = Stopwatch.StartNew();
         await Get_Map_Record_Runs();
+        stopwatch.Stop();
+#if DEBUG
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Finished Get_Map_Record_Runs in {ElapsedMilliseconds}ms | API = {API}",
+            nameof(Map), methodName, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+        );
+#endif
     }
 
     /// <summary>
@@ -400,7 +438,7 @@ internal class Map
     /// Automatically detects whether to use API Calls or MySQL query.
     /// TODO: Re-do the API with the new query and fix the API assign of values
     /// </summary>
-    internal async Task Get_Map_Record_Runs()
+    internal async Task Get_Map_Record_Runs([CallerMemberName] string methodName = "")
     {
         int totalMapRuns = 0;
         int totalStageRuns = 0;
@@ -566,9 +604,18 @@ internal class Map
             ) // This should also reload Checkpoints if a new MapWR is set
             {
 #if DEBUG
-                Console.WriteLine($"======= CS2 Surf DEBUG >> internal async Task Get_Map_Record_Runs : Map -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] Loaded {this.MapCompletions[style]} runs (MapID {this.ID} | Style {style}). WR by {this.WR[style].Name} - {PlayerHUD.FormatTime(this.WR[style].Ticks)}");
+                _logger.LogDebug("[{ClassName}] {MethodName} -> Get_Map_Record_Runs : Map -> [{DBorAPI}] Loaded {MapCompletions} runs (MapID {MapID} | Style {Style}). WR by {PlayerName} - {Time}",
+                    nameof(Map), methodName, (Config.API.GetApiOnly() ? "API" : "DB"), this.MapCompletions[style], this.ID, style, this.WR[style].Name, PlayerHUD.FormatTime(this.WR[style].Ticks)
+                );
 #endif
+
+                var stopwatch = Stopwatch.StartNew();
                 await Get_Record_Run_Checkpoints(style);
+                stopwatch.Stop();
+
+                _logger.LogInformation("[{ClassName}] {MethodName} -> Finished Get_Record_Run_Checkpoints({Style}) in {ElapsedMilliseconds}ms | API = {API}",
+                    nameof(Map), methodName, style, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+                );
             }
         }
     }
@@ -591,7 +638,7 @@ internal class Map
     /// <param name="style">Style to add</param>
     /// <param name="stage">Stage to add</param>
     /// <param name="replayFramesBase64">Base64 encoded string for the replay_frames</param>
-    internal void Set_Replay_Data(int type, int style, int stage, string replayFramesBase64)
+    internal void Set_Replay_Data(int type, int style, int stage, string replayFramesBase64, [CallerMemberName] string methodName = "")
     {
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() } };
 
@@ -621,33 +668,33 @@ internal class Map
                     {
                         case ReplayFrameSituation.START_ZONE_ENTER:
                             this.ReplayManager.MapWR.MapSituations.Add(i);
-                            Console.WriteLine($"START_ZONE_ENTER: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"START_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.START_ZONE_EXIT:
                             this.ReplayManager.MapWR.MapSituations.Add(i);
-                            Console.WriteLine($"START_ZONE_EXIT: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"START_ZONE_EXIT: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.STAGE_ZONE_ENTER:
                             this.ReplayManager.MapWR.StageEnterSituations.Add(i);
-                            Console.WriteLine($"STAGE_ZONE_ENTER: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"STAGE_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.STAGE_ZONE_EXIT:
                             this.ReplayManager.MapWR.StageExitSituations.Add(i);
-                            Console.WriteLine($"STAGE_ZONE_EXIT: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"STAGE_ZONE_EXIT: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER:
                             this.ReplayManager.MapWR.CheckpointEnterSituations.Add(i);
-                            Console.WriteLine($"CHECKPOINT_ZONE_ENTER: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"CHECKPOINT_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
                             this.ReplayManager.MapWR.CheckpointExitSituations.Add(i);
-                            Console.WriteLine($"CHECKPOINT_ZONE_EXIT: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"CHECKPOINT_ZONE_EXIT: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.END_ZONE_ENTER:
-                            Console.WriteLine($"END_ZONE_ENTER: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"END_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
                         case ReplayFrameSituation.END_ZONE_EXIT:
-                            Console.WriteLine($"END_ZONE_EXIT: {i} | Situation {f.Situation}");
+                            // Console.WriteLine($"END_ZONE_EXIT: {i} | Situation {f.Situation}");
                             break;
                     }
                 }
@@ -656,7 +703,12 @@ internal class Map
                 // Skip if the same bonus run already exists
                 if (this.ReplayManager.AllBonusWR[stage][style].RecordRunTime == this.BonusWR[stage][style].Ticks)
                     break;
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] Adding run {this.BonusWR[stage][style].ID} {PlayerHUD.FormatTime(this.BonusWR[stage][style].Ticks)} (Ticks = {this.BonusWR[stage][style].Ticks}; Frames = {frames.Count}) to `ReplayManager.AllBonusWR`");
+#if DEBUG
+                _logger.LogDebug("[{ClassName}] {MethodName} -> Set_Replay_Data -> [BonusWR] Adding run {ID} {Time} (Ticks = {Ticks}; Frames = {Frames}) to `ReplayManager.AllBonusWR`",
+                    nameof(Map), methodName, this.BonusWR[stage][style].ID, PlayerHUD.FormatTime(this.BonusWR[stage][style].Ticks), this.BonusWR[stage][style].Ticks, frames.Count
+                );
+#endif
+
                 // Add all stages found to a dictionary with their data
                 this.ReplayManager.AllBonusWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllBonusWR[stage][style].Frames = frames;
@@ -683,7 +735,11 @@ internal class Map
                 // Set the bonus to replay first
                 if (this.ReplayManager.BonusWR != null && this.ReplayManager.BonusWR.MapID == -1)
                 {
-                    Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] Setting first `ReplayManager.BonusWR` to bonus {stage}");
+#if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> [BonusWR] Setting first `ReplayManager.BonusWR` to bonus {stage}",
+                        nameof(Map), methodName, stage
+                    );
+#endif
                     if (this.ReplayManager.BonusWR.IsPlaying) // Maybe only stop the replay if we are overwriting the current bonus being played?
                         this.ReplayManager.BonusWR.Stop();
                     this.ReplayManager.BonusWR.MapID = this.ID;
@@ -700,7 +756,12 @@ internal class Map
                 // Skip if the same stage run already exists
                 if (this.ReplayManager.AllStageWR[stage][style].RecordRunTime == this.StageWR[stage][style].Ticks)
                     break;
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] Adding run {this.StageWR[stage][style].ID} {PlayerHUD.FormatTime(this.StageWR[stage][style].Ticks)} (Ticks = {this.StageWR[stage][style].Ticks}; Frames = {frames.Count}) to `ReplayManager.AllStageWR`");
+#if DEBUG
+                _logger.LogDebug("[{ClassName}] {MethodName} -> Set_Replay_Data -> [StageWR] Adding run {ID} {Time} (Ticks = {Ticks}; Frames = {Frames}) to `ReplayManager.AllStageWR`",
+                    nameof(Map), methodName, this.StageWR[stage][style].ID, PlayerHUD.FormatTime(this.StageWR[stage][style].Ticks), this.StageWR[stage][style].Ticks, frames.Count
+                );
+#endif
+
                 // Add all stages found to a dictionary with their data
                 this.ReplayManager.AllStageWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllStageWR[stage][style].Frames = frames;
@@ -727,7 +788,12 @@ internal class Map
                 // Set the stage to replay first
                 if (this.ReplayManager.StageWR != null && this.ReplayManager.StageWR.MapID == -1)
                 {
-                    Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] Setting first `ReplayManager.StageWR` to stage {stage}");
+#if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> [StageWR] Setting first `ReplayManager.StageWR` to stage {stage}",
+                        nameof(Map), methodName, stage
+                    );
+#endif
+
                     if (this.ReplayManager.StageWR.IsPlaying) // Maybe only stop the replay if we are overwriting the current stage being played?
                         this.ReplayManager.StageWR.Stop();
                     this.ReplayManager.StageWR.MapID = this.ID;
@@ -745,19 +811,19 @@ internal class Map
         // Start the new map replay if none existed until now
         if (type == 0 && this.ReplayManager.MapWR != null && !this.ReplayManager.MapWR.IsPlaying)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [MapWR] ResetReplay() and Start()");
+            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [MapWR] ResetReplay() and Start()");
             this.ReplayManager.MapWR.ResetReplay();
             this.ReplayManager.MapWR.Start();
         }
         else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] ResetReplay() and Start() {stage}");
+            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] ResetReplay() and Start() {stage}");
             this.ReplayManager.BonusWR.ResetReplay();
             this.ReplayManager.BonusWR.Start();
         }
         else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] ResetReplay() and Start() {stage}");
+            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] ResetReplay() and Start() {stage}");
             this.ReplayManager.StageWR.ResetReplay();
             this.ReplayManager.StageWR.Start();
         }
@@ -784,5 +850,17 @@ internal class Map
             return true;
         else
             return false;
+    }
+
+    private void KillServerCommandEnts([CallerMemberName] string methodName = "")
+    {
+        var pointServerCommands = Utilities.FindAllEntitiesByDesignerName<CPointServerCommand>("point_servercommand");
+
+        foreach (var servercmd in pointServerCommands)
+        {
+            if (servercmd == null) continue;
+            _logger.LogTrace("[{ClassName}] {MethodName} -> Killed point_servercommand ent: {ServerCMD}", nameof(Map), methodName, servercmd.Handle);
+            servercmd.Remove();
+        }
     }
 }

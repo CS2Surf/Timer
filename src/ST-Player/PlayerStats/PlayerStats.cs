@@ -1,4 +1,6 @@
-using MySqlConnector;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -37,11 +39,15 @@ internal class PlayerStats
     /// This object tracks data for the Player's current run.
     /// </summary>
     public CurrentRun ThisRun { get; set; } = new CurrentRun();
+    private readonly ILogger<PlayerStats> _logger;
 
     // Initialize PersonalBest for each `style` (e.g., 0 for normal)
     // Here we can loop through all available styles at some point and initialize them
-    public PlayerStats()
+    public PlayerStats([CallerMemberName] string methodName = "")
     {
+        // Resolve the logger instance from the DI container
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerStats>>();
+
         // Initialize MapPB for each style
         foreach (int style in Config.Styles)
         {
@@ -61,16 +67,20 @@ internal class PlayerStats
             this.StagePB[i][0].Type = 2;
             initialized++;
         }
-        Console.WriteLine($"====== INITIALIZED {initialized} STAGES AND BONUSES FOR PLAYERSTATS");
+        _logger.LogTrace("[{ClassName}] {MethodName} -> PlayerStats -> Initialized {initialized} Stages and Bonuses",
+            nameof(PlayerStats), methodName, initialized
+        );
     }
 
     // API
-    public async void LoadMapTime(Player player, int style = 0)
+    public async void LoadMapTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=0");
         if (player_maptime == null)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTime -> No MapTime data found for Player.");
+            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadMapTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+            );
             return;
         }
 
@@ -88,7 +98,9 @@ internal class PlayerStats
 
         if (player_maptime.checkpoints == null)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadMapTime -> No Checkpoints data found for Player.");
+            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadMapTime -> No Checkpoints data found for Player {PlayerName} (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+            );
             return;
         }
 
@@ -99,12 +111,14 @@ internal class PlayerStats
     }
 
     // API
-    public async void LoadStageTime(Player player, int style = 0)
+    public async void LoadStageTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=2");
         if (player_maptime == null)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadStageTime -> No MapTime data found for Player.");
+            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadStageTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+            );
             return;
         }
 
@@ -125,12 +139,14 @@ internal class PlayerStats
     }
 
     // API
-    public async void LoadBonusTime(Player player, int style = 0)
+    public async void LoadBonusTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=1");
         if (player_maptime == null)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> LoadBonusTime -> No MapTime data found for Player.");
+            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadBonusTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+            );
             return;
         }
 
@@ -156,7 +172,7 @@ internal class PlayerStats
     /// `Checkpoints` are loaded separately from another method in the `PresonalBest` class as it uses the unique `ID` for the run.
     /// This populates all the `style` and `type` stats the player has for the map
     /// </summary>
-    public async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0)
+    public async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0, [CallerMemberName] string methodName = "")
     {
         using (var playerStats = await SurfTimer.DB.QueryAsync(
             string.Format(Config.MySQL.Queries.DB_QUERY_PS_GET_ALL_RUNTIMES, player.Profile.ID, SurfTimer.CurrentMap.ID)))
@@ -165,7 +181,9 @@ internal class PlayerStats
             int style;
             if (!playerStats.HasRows)
             {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> public async Task LoadPlayerMapTimesData -> No MapTimes data found for Player ({player.Profile.ID}).");
+                _logger.LogTrace("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> No MapTimes data found for Player {PlayerName} (ID {PlayerID}).",
+                    nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+                );
                 return;
             }
             while (playerStats.Read())
@@ -174,7 +192,9 @@ internal class PlayerStats
                 if (playerStats.GetInt32("type") == 1) // Bonus time
                 {
 #if DEBUG
-                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> BonusPB");
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB",
+                        nameof(PlayerStats), methodName
+                    );
 #endif
                     int bonusNum = playerStats.GetInt32("stage");
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
@@ -193,7 +213,9 @@ internal class PlayerStats
                 else if (playerStats.GetInt32("type") == 2) // Stage time
                 {
 #if DEBUG
-                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> StagePB");
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB",
+                        nameof(PlayerStats), methodName
+                    );
 #endif
                     int stageNum = playerStats.GetInt32("stage");
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
@@ -208,14 +230,17 @@ internal class PlayerStats
                     StagePB[stageNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
                     StagePB[stageNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
                     StagePB[stageNum][style].RunDate = playerStats.GetInt32("run_date");
-                    Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> StagePB Loaded:
-                    StagePB[{stageNum}][{style}] =
-                    Stage: {stageNum} | ID: {StagePB[stageNum][style].ID} | Ticks: {StagePB[stageNum][style].Ticks} | Rank: {StagePB[stageNum][style].Rank} | Type: {StagePB[stageNum][style].Type}");
+                    // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> StagePB Loaded:
+                    //     StagePB[{stageNum}][{style}] =
+                    //     Stage: {stageNum} | ID: {StagePB[stageNum][style].ID} | Ticks: {StagePB[stageNum][style].Ticks} | Rank: {StagePB[stageNum][style].Rank} | Type: {StagePB[stageNum][style].Type}"
+                    // );
                 }
                 else // Map time
                 {
 #if DEBUG
-                    Console.WriteLine("DEBUG >> (func) LoadPlayerMapTimesData >> MapPB");
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB",
+                        nameof(PlayerStats), methodName
+                    );
 #endif
                     style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
                     PB[style].ID = playerStats.GetInt32("id");
@@ -229,14 +254,17 @@ internal class PlayerStats
                     PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
                     PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
                     PB[style].RunDate = playerStats.GetInt32("run_date");
-                    Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> PB Loaded:
-                    PB[{style}] =
-                    ID: {PB[style].ID} | Ticks: {PB[style].Ticks} | Rank: {PB[style].Rank} | Type: {PB[style].Type}");
+                    // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> PB Loaded:
+                    //     PB[{style}] =
+                    //     ID: {PB[style].ID} | Ticks: {PB[style].Ticks} | Rank: {PB[style].Rank} | Type: {PB[style].Type}"
+                    // );
                     await this.PB[style].PB_LoadCheckpointsData();
                 }
                 // Console.WriteLine($"============== CS2 Surf DEBUG >> internal class PlayerStats -> public async Task LoadPlayerMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
 #if DEBUG
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class PlayerStats -> public async Task LoadPlayerMapTimesData -> PlayerStats.PB (ID {PB[style].ID}) loaded from DB.");
+                _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> Loaded PB[{Style}] run {RunID} (Rank {Rank}) for '{PlayerName}' (ID {PlayerID}).",
+                    nameof(PlayerStats), methodName, style, PB[style].ID, PB[style].Rank, player.Profile.Name, player.Profile.ID
+                );
 #endif
             }
         }

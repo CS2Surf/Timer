@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 namespace SurfTimer;
 
 /// <summary>
@@ -19,11 +23,15 @@ internal class PersonalBest
     public float EndVelZ { get; set; }
     public int RunDate { get; set; }
     public string Name { get; set; } = ""; // This is used only for WRs
+    private readonly ILogger<PersonalBest> _logger;
     // Add other properties as needed
 
     // Constructor
     public PersonalBest()
     {
+        // Resolve the logger instance from the DI container
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PersonalBest>>();
+
         Ticks = -1;
         Checkpoints = new Dictionary<int, Checkpoint>();
         Type = -1;
@@ -41,19 +49,23 @@ internal class PersonalBest
     /// Automatically detects whether to use API Calls or MySQL query.
     /// Bonus and Stage runs should NOT have any checkpoints.
     /// </summary>
-    public async Task PB_LoadCheckpointsData()
+    public async Task PB_LoadCheckpointsData([CallerMemberName] string methodName = "")
     {
         if (this == null)
         {
 #if DEBUG
-            Console.WriteLine("CS2 Surf ERROR >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> PersonalBest object is null.");
+            _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> PersonalBest object is null.",
+                nameof(PersonalBest), methodName
+            );
 #endif
             return;
         }
         if (this.Checkpoints == null)
         {
 #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> PB Checkpoints list is not initialized.");
+            _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> PB Checkpoints list is not initialized.",
+                nameof(PersonalBest), methodName
+            );
 #endif
             this.Checkpoints = new Dictionary<int, Checkpoint>(); // Initialize if null
         }
@@ -89,32 +101,28 @@ internal class PersonalBest
             using (var results = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_CPS, this.ID)))
             {
 #if DEBUG
-                Console.WriteLine($"this.Checkpoint.Count {this.Checkpoints.Count} ");
-                Console.WriteLine($"this.ID {this.ID} ");
-                Console.WriteLine($"this.Ticks {this.Ticks} ");
-                Console.WriteLine($"this.RunDate {this.RunDate} ");
+                _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> Loading from DB: this.Checkpoint.Count {RunCheckpointsCount} | this.ID {RunID} | this.Ticks {RunTicks} | this.RunDate {RunDate}",
+                    nameof(PersonalBest), methodName, this.Checkpoints.Count, this.ID, this.Ticks, this.RunDate
+                );
 #endif
 
                 if (!results.HasRows)
                 {
 #if DEBUG
-                    Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> No checkpoints found for this mapTimeId {this.ID}.");
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> No checkpoints found for this mapTimeId {RunID}.",
+                        nameof(PersonalBest), methodName, this.ID
+                    );
 #endif
 
                     return;
                 }
 
-#if DEBUG
-                Console.WriteLine($"======== CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> Checkpoints found for this mapTimeId");
-#endif
-
                 while (results.Read())
                 {
 #if DEBUG
-                    Console.WriteLine($"cp {results.GetInt32("cp")} ");
-                    Console.WriteLine($"run_time {results.GetInt32("run_time")} ");
-                    Console.WriteLine($"sVelX {results.GetFloat("start_vel_x")} ");
-                    Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> Loading Checkpoint: Checkpoint {Checkpoint} | RunTicks {RunTicks} | StartVelX {StartVelX} | StartVelY {StartVelY}",
+                        nameof(PersonalBest), methodName, results.GetInt32("cp"), results.GetInt32("run_time"), results.GetFloat("start_vel_x"), results.GetFloat("start_vel_y")
+                    );
 #endif
 
                     Checkpoint cp = new(results.GetInt32("cp"),
@@ -131,16 +139,14 @@ internal class PersonalBest
                     // To-do: cp.ID = calculate Rank # from DB
 
                     this.Checkpoints[cp.CP] = cp;
-
-#if DEBUG
-                    Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> Loaded CP {cp.CP} with RunTime {cp.Ticks}.");
-#endif
                 }
             }
         }
 
         // #if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadCheckpointsData -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] {this.Checkpoints.Count} Checkpoints loaded from DB for run ID {this.ID}.");
+        _logger.LogInformation("[{ClassName}] {MethodName} -> PB_LoadCheckpointsData -> Loading Checkpoint: [{Type}] {TotalCheckpoints} Checkpoints loaded for run ID {RunID}.",
+            nameof(PersonalBest), methodName, (Config.API.GetApiOnly() ? "API" : "DB"), this.Checkpoints.Count, this.ID
+        );
         // #endif
     }
 
@@ -149,14 +155,16 @@ internal class PersonalBest
     /// Should be used to reload data from a specific `PersonalBest` object
     /// </summary>
     /// <param name="player">Player object</param>
-    public async Task PB_LoadPlayerSpecificMapTimeData(Player player)
+    public async Task PB_LoadPlayerSpecificMapTimeData(Player player, [CallerMemberName] string methodName = "")
     {
         // Console.WriteLine($"CS2 Surf ERROR >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> QUERY:\n{string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_RUNTIME, player.Profile.ID, player.CurrMap.ID, 0, player.Timer.Style)}");
         // using (var results = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_RUNTIME, player.Profile.ID, player.CurrMap.ID, 0, player.Timer.Style)))
         if (this == null)
         {
 #if DEBUG
-            Console.WriteLine("CS2 Surf ERROR >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> PersonalBest object is null.");
+            _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> PersonalBest object is null.",
+                nameof(PersonalBest), methodName
+            );
 #endif
 
             return;
@@ -180,23 +188,20 @@ internal class PersonalBest
         if (results == null || !results.HasRows)
         {
             // #if DEBUG
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> No MapTime data found for '{player.Profile.Name}' ({player.Profile.ID}). (Null? {results == null})");
+            _logger.LogTrace("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> No MapTime data found for '{playerName}' ({playerID}). (Results Null? {IsNull})",
+                nameof(PersonalBest), methodName, player.Profile.Name, player.Profile.ID, results == null
+            );
             // #endif
 
             return;
         }
 
-#if DEBUG
-        Console.WriteLine($"======== CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> Found a run for '{player.Profile.Name}' ({player.Profile.ID}).");
-#endif
-
         while (results.Read())
         {
 #if DEBUG
-            Console.WriteLine($"cp {results.GetInt32("cp")} ");
-            Console.WriteLine($"run_time {results.GetInt32("run_time")} ");
-            Console.WriteLine($"sVelX {results.GetFloat("start_vel_x")} ");
-            Console.WriteLine($"sVelY {results.GetFloat("start_vel_y")} ");
+            _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> Loading MapTime Run: RunID {RunID} | RunTicks {RunTicks} | StartVelX {StartVelX} | StartVelY {StartVelY}.",
+                nameof(PersonalBest), methodName, results.GetInt32("id"), results.GetInt32("run_time"), results.GetFloat("start_vel_x"), results.GetFloat("start_vel_y")
+            );
 #endif
 
             this.ID = results.GetInt32("id");
@@ -209,14 +214,12 @@ internal class PersonalBest
             this.EndVelY = (float)results.GetDouble("end_vel_y");
             this.EndVelZ = (float)results.GetDouble("end_vel_z");
             this.RunDate = results.GetInt32("run_date");
-
-#if DEBUG
-            Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> Loaded run (MapId = {this.ID}) by {player.Profile.Name} - {PlayerHUD.FormatTime(this.Ticks)}");
-#endif
         }
 
         // #if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> MapTime (Type: {this.Type}) loaded from DB. ID: {this.ID} for {player.Profile.Name}");
+        _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> MapTime ID {ID} (Type: {Type}) loaded for '{PlayerName}' with time {RunTime}",
+            nameof(PersonalBest), methodName, this.ID, this.Type, player.Profile.Name, PlayerHUD.FormatTime(this.Ticks)
+        );
         // #endif
     }
 }

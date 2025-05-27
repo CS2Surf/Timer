@@ -2,8 +2,8 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Utils;
-using MySqlConnector;
 using MaxMind.GeoIP2;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -106,11 +106,12 @@ public partial class SurfTimer
         {
             country = "LL";  // Handle local IP appropriately
         }
-#if DEBUG
-        Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnectFull -> GeoIP -> {name} -> {player.IpAddress!.Split(":")[0]} -> {country}");
-#endif
+        // #if DEBUG
+        //         Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnectFull -> GeoIP -> {name} -> {player.IpAddress!.Split(":")[0]} -> {country}");
+        // #endif
         if (DB == null)
         {
+            _logger.LogCritical("OnPlayerConnect -> DB object is null, this shouldn't happen.");
             Exception ex = new("CS2 Surf ERROR >> OnPlayerConnect -> DB object is null, this shouldn't happen.");
             throw ex;
         }
@@ -126,8 +127,9 @@ public partial class SurfTimer
 
         // Print join messages
         Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Green}{name}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
-        Console.WriteLine($"[CS2 Surf] {name} has connected from {playerList[player.UserId ?? 0].Profile.Country}.");
-
+        _logger.LogTrace("[{Prefix}] {PlayerName} has connected from {Country}.",
+            Config.PluginName, name, playerList[player.UserId ?? 0].Profile.Country
+        );
         return HookResult.Continue;
     }
 
@@ -138,7 +140,9 @@ public partial class SurfTimer
 
         if (player == null)
         {
-            Console.WriteLine($"CS2 Surf ERROR >> OnPlayerDisconnect -> Null ({player == null})");
+            _logger.LogError("OnPlayerDisconnect -> 'player' is NULL ({IsNull})",
+                player == null
+            );
             return HookResult.Continue;
         }
 
@@ -163,11 +167,16 @@ public partial class SurfTimer
         else
         {
             if (DB == null)
+            {
+                _logger.LogCritical("OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
                 throw new Exception("CS2 Surf ERROR >> OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
+            }
 
             if (!playerList.ContainsKey(player.UserId ?? 0))
             {
-                Console.WriteLine($"CS2 Surf ERROR >> OnPlayerDisconnect -> Player playerList does NOT contain player.UserId, this shouldn't happen. Player: {player.PlayerName} ({player.UserId})");
+                _logger.LogError("OnPlayerDisconnect -> playerList does NOT contain player.UserId, this shouldn't happen. Player: {PlayerName} ({UserId})",
+                    player.PlayerName, player.UserId
+                );
             }
             else
             {

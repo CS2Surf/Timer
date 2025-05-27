@@ -1,6 +1,9 @@
+using System.Runtime.CompilerServices;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -51,6 +54,15 @@ internal class ReplayPlayer
 
     public CCSPlayerController? Controller { get; set; }
 
+    private readonly ILogger<ReplayPlayer> _logger;
+
+    // Constructor
+    internal ReplayPlayer()
+    {
+        // Resolve the logger instance from the DI container
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ReplayPlayer>>();
+    }
+
     public void ResetReplay()
     {
         this.CurrentFrameTick = 0;
@@ -76,42 +88,54 @@ internal class ReplayPlayer
         this.Controller = null;
     }
 
-    public void SetController(CCSPlayerController c, int repeat_count = -1)
+    public void SetController(CCSPlayerController c, int repeat_count = -1, [CallerMemberName] string methodName = "")
     {
         this.Controller = c;
         if (repeat_count != -1)
             this.RepeatCount = repeat_count;
         this.IsPlayable = true;
 
-        // Console.WriteLine($"===== public void SetController -> Set controller for {c.PlayerName}");
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Set controller for {PlayerName}",
+            nameof(ReplayPlayer), methodName, c.PlayerName
+        );
     }
 
-    public void Start()
+    public void Start([CallerMemberName] string methodName = "")
     {
         if (!this.IsPlayable || !this.IsEnabled)
             return;
 
+        this.FormatBotName();
         this.IsPlaying = true;
-
-        // Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> public void Start() -> Starting replay for run {this.MapTimeID} (Map ID {this.MapID}) - {this.RecordPlayerName} (Stage {this.Stage})");
+#if DEBUG
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Starting replay for run {MapTimeID} (Map ID {MapID}) - {RecordPlayerName} (Stage {Stage})",
+            nameof(ReplayPlayer), methodName, this.MapTimeID, this.MapID, this.RecordPlayerName, this.Stage
+        );
+#endif
     }
 
-    public void Stop()
+    public void Stop([CallerMemberName] string methodName = "")
     {
         this.IsPlaying = false;
-
-        // Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> public void Stop() -> Stopping replay for run {this.MapTimeID} (Map ID {this.MapID}) - {this.RecordPlayerName} (Stage {this.Stage})");
+#if DEBUG
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Stopping replay for run {MapTimeID} (Map ID {MapID}) - {RecordPlayerName} (Stage {Stage})",
+            nameof(ReplayPlayer), methodName, this.MapTimeID, this.MapID, this.RecordPlayerName, this.Stage
+        );
+#endif
     }
 
-    public void Pause()
+    public void Pause([CallerMemberName] string methodName = "")
     {
         if (!this.IsPlaying || !this.IsEnabled)
             return;
 
         this.IsPaused = !this.IsPaused;
         this.IsReplayOutsideZone = !this.IsReplayOutsideZone;
-
-        // Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> public void Pause() -> Pausing replay for run {this.MapTimeID} (Map ID {this.MapID}) - {this.RecordPlayerName} (Stage {this.Stage})");
+#if DEBUG
+        _logger.LogDebug("[{ClassName}] {MethodName} -> Pausing replay for run {MapTimeID} (Map ID {MapID}) - {RecordPlayerName} (Stage {Stage})",
+            nameof(ReplayPlayer), methodName, this.MapTimeID, this.MapID, this.RecordPlayerName, this.Stage
+        );
+#endif
     }
 
     public void Tick()
@@ -120,6 +144,8 @@ internal class ReplayPlayer
             return;
 
         ReplayFrame current_frame = this.Frames[this.CurrentFrameTick];
+
+        this.FormatBotName();
 
         // SOME BLASHPEMY FOR YOU
         if (this.FrameTickIncrement >= 0)
@@ -180,7 +206,7 @@ internal class ReplayPlayer
         //     Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> Tick -> ====================> {this.RepeatCount} <====================");
     }
 
-    public void LoadReplayData(int repeat_count = -1)
+    public void LoadReplayData(int repeat_count = -1, [CallerMemberName] string methodName = "")
     {
         if (!this.IsPlayable || !this.IsEnabled)
             return;
@@ -189,7 +215,9 @@ internal class ReplayPlayer
 
         if (this.MapID == -1)
         {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> public void LoadReplayData -> [{(this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : "Map Replay")}] No replay data found for Player.");
+            _logger.LogTrace("[{ClassName}] {MethodName} ->  [{Type}] No replay data found for Player.",
+                nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : "Map Replay")
+            );
             return;
         }
 
@@ -214,9 +242,9 @@ internal class ReplayPlayer
         }
 
         if (this.Type == 1)
-            prefix = prefix + $"B {this.Stage}";
+            prefix += $"B {this.Stage}";
         else if (this.Type == 2)
-            prefix = prefix + $"CP {this.Stage}";
+            prefix += $"CP {this.Stage}";
 
         SchemaString<CBasePlayerController> bot_name = new SchemaString<CBasePlayerController>(this.Controller!, "m_iszPlayerName");
 
