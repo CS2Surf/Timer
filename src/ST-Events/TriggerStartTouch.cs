@@ -76,27 +76,37 @@ public partial class SurfTimer
                     {
                         saveMapTime = true;
                         int timeImprove = CurrentMap.WR[pStyle].Ticks - player.Timer.Ticks;
-                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Map{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.WR[pStyle].Ticks)}{ChatColors.Default})");
+                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mapwr_improved",
+                            player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.WR[pStyle].Ticks)]}"
+                        );
                     }
                     else if (CurrentMap.WR[pStyle].ID == -1) // No record was set on the map
                     {
                         saveMapTime = true;
-                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} set the first {ChatColors.Yellow}Map{ChatColors.Default} record at {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mapwr_set",
+                            player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                        );
                     }
                     else if (player.Stats.PB[pStyle].Ticks <= 0) // Player first ever PersonalBest for the map
                     {
                         saveMapTime = true;
-                        player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished the {ChatColors.Yellow}Map{ChatColors.Default} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, setting your new Personal Best!");
+                        player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mappb_set",
+                            PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                        );
                     }
                     else if (player.Timer.Ticks < player.Stats.PB[pStyle].Ticks) // Player beating their existing PersonalBest for the map
                     {
                         saveMapTime = true;
                         int timeImprove = player.Stats.PB[pStyle].Ticks - player.Timer.Ticks;
-                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Map{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)}{ChatColors.Default})");
+                        Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mappb_improved",
+                            player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)]}"
+                        );
                     }
                     else // Player did not beat their existing PersonalBest for the map nor the map record
                     {
-                        player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished the map in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                        player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mappb_missed",
+                            PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                        );
                     }
 
                     if (saveMapTime)
@@ -278,7 +288,8 @@ public partial class SurfTimer
                     player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_ENTER;
 
                     player.ReplayRecorder.MapSituations.Add(player.ReplayRecorder.Frames.Count);
-                    Console.WriteLine($"START_ZONE_ENTER: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
+                    // player.Controller.PrintToChat($"{ChatColors.Green}START_ZONE_ENTER: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
+                    // Console.WriteLine($"START_ZONE_ENTER: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
                     player.Timer.Reset();
                     player.Stats.ThisRun.Checkpoints.Clear();
                     player.Controller.PrintToCenter($"Map Start ({trigger.Entity.Name})");
@@ -289,7 +300,7 @@ public partial class SurfTimer
                 }
                 else
                 {
-                    player.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Yellow}Please try restarting again, replay is still being saved.");
+                    player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["reset_delay"]}");
                 }
             }
 
@@ -435,7 +446,7 @@ public partial class SurfTimer
 
             // Bonus start zones -- hook into (b)onus#_start
             else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success)
-            {            
+            {
                 int bonus = Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value);
                 player.Timer.Bonus = bonus;
 
@@ -481,27 +492,37 @@ public partial class SurfTimer
                 {
                     saveBonusTime = true;
                     int timeImprove = CurrentMap.BonusWR[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
-                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.BonusWR[bonus_idx][pStyle].Ticks)}{ChatColors.Default})");
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuswr_improved",
+                        player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.BonusWR[bonus_idx][pStyle].Ticks)]}"
+                    );
                 }
                 else if (CurrentMap.BonusWR[bonus_idx][pStyle].ID == -1) // No Bonus record was set on the map
                 {
                     saveBonusTime = true;
-                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} set the first {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} record at {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuswr_set",
+                        player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                    );
                 }
                 else if (player.Stats.BonusPB[bonus_idx][pStyle].Ticks <= 0) // Player first ever PersonalBest for the bonus
                 {
                     saveBonusTime = true;
-                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished the {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} in {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, setting your new Personal Best!");
+                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuspb_set",
+                        bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                    );
                 }
                 else if (player.Timer.Ticks < player.Stats.BonusPB[bonus_idx][pStyle].Ticks) // Player beating their existing PersonalBest for the bonus
                 {
                     saveBonusTime = true;
                     int timeImprove = player.Stats.BonusPB[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
-                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)}{ChatColors.Default})");
+                    Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuspb_improved",
+                        player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)]}"
+                    );
                 }
                 else // Player did not beat their existing personal best for the bonus
                 {
-                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}You finished {ChatColors.Yellow}Bonus {bonus_idx}{ChatColors.Default} in {ChatColors.Yellow}{PlayerHUD.FormatTime(player.Timer.Ticks)}{ChatColors.Default}!");
+                    player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuspb_missed",
+                        bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
+                    );
                 }
 
                 // To-do: save to DB
@@ -566,20 +587,28 @@ public partial class SurfTimer
             if (stage_run_time < CurrentMap.StageWR[stage][pStyle].Ticks) // Player beat the Stage WR
             {
                 int timeImprove = CurrentMap.StageWR[stage][pStyle].Ticks - stage_run_time;
-                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} has set a new {ChatColors.Yellow}Stage {stage}{ChatColors.Default} record with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, beating the old record by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(CurrentMap.StageWR[stage][pStyle].Ticks)}{ChatColors.Default})");
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_improved",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.StageWR[stage][pStyle].Ticks)]}"
+                );
             }
             else if (CurrentMap.StageWR[stage][pStyle].ID == -1) // No Stage record was set on the map
             {
-                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} set the first {ChatColors.Yellow}Stage {stage}{ChatColors.Default} record at {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}!");
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_set",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time)]}"
+                );
             }
             else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1) // Player first Stage personal best
             {
-                player.Controller.PrintToChat($"{Config.PluginPrefix} You finished {ChatColors.Yellow}Stage {stage}{ChatColors.Default} in {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, setting your new Personal Best!");
+                player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_set",
+                    stage, PlayerHUD.FormatTime(stage_run_time)]}"
+                );
             }
             else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].Ticks > stage_run_time) // Player beating their existing Stage personal best
             {
                 int timeImprove = player.Stats.StagePB[stage][pStyle].Ticks - stage_run_time;
-                Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Lime}{player.Controller.PlayerName}{ChatColors.Default} beat their {ChatColors.Yellow}Stage {stage}{ChatColors.Default} Personal Best with a time of {ChatColors.Gold}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, improving by {ChatColors.Green}-{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default}! (Previous: {ChatColors.BlueGrey}{PlayerHUD.FormatTime(player.Stats.StagePB[stage][pStyle].Ticks)}{ChatColors.Default})");
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_improved",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.StagePB[stage][pStyle].Ticks)]}"
+                );
             }
 
             player.ReplayRecorder.IsSaving = true;
@@ -593,7 +622,9 @@ public partial class SurfTimer
         else if (stage_run_time > CurrentMap.StageWR[stage][pStyle].Ticks && player.Timer.IsStageMode) // Player is behind the Stage WR for the map
         {
             int timeImprove = stage_run_time - CurrentMap.StageWR[stage][pStyle].Ticks;
-            player.Controller.PrintToChat($"{Config.PluginPrefix} You are behind the {ChatColors.Yellow}Stage {stage}{ChatColors.Default} record with a time of {ChatColors.Grey}{PlayerHUD.FormatTime(stage_run_time)}{ChatColors.Default}, missing the record by {ChatColors.Red}+{PlayerHUD.FormatTime(timeImprove)}{ChatColors.Default} ({ChatColors.Gold}{PlayerHUD.FormatTime(CurrentMap.StageWR[stage][pStyle].Ticks)}{ChatColors.Default})!");
+            player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_missed",
+                stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.StageWR[stage][pStyle].Ticks)]}"
+            );
         }
     }
 }

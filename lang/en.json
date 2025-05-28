@@ -1,3 +1,39 @@
 {
-    
+    "prefix": "[{white}asd{green}asd{red}asd{default}]",
+
+    "player_connected": "{green}{0}{default} has connected from {lime}{1}{default}.",
+
+    /* PlayerCommands */
+    "reset_delay": "Please wait for your run to be saved before resetting.",
+    "invalid_usage": "{red}Invalid arguments. {default}Usage: {green}{0}",
+    "invalid_stage_value": "{red}Invalid stage provided. {default}this map has {green}{0}{default} stages.",
+    "not_staged": "{red}This map has no stages.",
+    "invalid_bonus_value": "{red}Invalid bonus provided. {default}this map has {green}{0}{default} bonuses.",
+    "not_bonused": "{red}This map has no bonuses.",
+    "rank":"Your current rank for {gold}{0}{default} is {green}{1}{default} out of {yellow}{2}",
+    "saveloc_not_in_run": "{red}Cannot save location while not in run.",
+    "saveloc_saved": "{green}Saved location! {default}Use {green}!tele {0}{default} to teleport to this location.",
+    "saveloc_no_locations": "{red}No saved locations.",
+    "saveloc_practice": "{red}Timer now in Practice.",
+    "saveloc_teleported": "Teleported to #{green}{0}",
+    "saveloc_first": "{red}Already at first location",
+    "saveloc_last": "{red}Already at last location",
+
+    /* TriggerStartTouch */
+    "stagewr_set": "{lime}{0}{default} set the first {yellow}Stage {1}{default} record at {gold}{2}{default}!",
+    "stagewr_improved": "{lime}{0}{default} has set a new {yellow}Stage {1}{default} record with a time of {gold}{2}{default}, beating the old record by {green}-{3}{default}! (Previous: {bluegrey}{4})",
+    "stagewr_missed": "You are behind the {yellow}Stage {0}{default} record with a time of {grey}{1}{default}, missing the record by {red}+{2}{default} ({gold}{3}{default})!",
+    "stagepb_set": "You finished {yellow}Stage {0}{default} in {gold}{1}{ChatColors.Default}, setting your new Personal Best!",
+    "stagepb_improved": "{lime}{0}{default} beat their {yellow}Stage {1}{default} Personal Best with a time of {gold}{2}{default}, improving by {green}-{3}{default}! (Previous: {bluegrey}{4})",
+    "mapwr_set": "{lime}{0}{default} set the first {yellow}Map{default} record at {gold}{1}{default}!",
+    "mapwr_improved": "{lime}{0}{default} has set a new {yellow}Map{default} record with a time of {gold}{1}{default}, beating the old record by {green}-{2}{default}! (Previous: {bluegrey}{3}{default})",
+    "mappb_set": "You finished the {yellow}Map{default} in {gold}{0}{default}, setting your new Personal Best!",
+    "mappb_improved": "{lime}{0}{default} beat their {yellow}Map{default} Personal Best with a time of {gold}{1}{default}, improving by {green}-{2}{default}! (Previous: {bluegrey}{3}{default})",
+    "mappb_missed": "You finished the map in {yellow}{0}{default}!",
+    "bonuswr_set": "{lime}{0}{default} set the first {yellow}Bonus {1}{default} record at {gold}{2}{default}!",
+    "bonuswr_improved": "{lime}{0}{default} has set a new {yellow}Bonus {1}{default} record with a time of {gold}{2}{default}, beating the old record by {green}-{3}{default}! (Previous: {bluegrey}{4})",
+    "bonuspb_set": "You finished {yellow}Bonus {0}{default} in {gold}{1}{ChatColors.Default}, setting your new Personal Best!",
+    "bonuspb_improved": "{lime}{0}{default} beat their {yellow}Bonus {1}{default} Personal Best with a time of {gold}{2}{default}, improving by {green}-{3}{default}! (Previous: {bluegrey}{4})",
+    "bonuspb_missed": "You are behind the {yellow}Bonus {0}{default} record with a time of {grey}{1}{default}, missing the record by {red}+{2}{default} ({gold}{3}{default})!",
+    "checkpoint_message": "CP [{yellow}{0}{default}]: {yellow}{1}{default} {yellow}({2}){default} [PB: {3} | WR: {4}]",
 }

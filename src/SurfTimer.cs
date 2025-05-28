@@ -34,7 +34,7 @@ using Microsoft.Extensions.Logging;
 namespace SurfTimer;
 
 // Gameplan: https://github.com/CS2Surf/Timer/tree/dev/README.md
-[MinimumApiVersion(120)]
+[MinimumApiVersion(318)]
 public partial class SurfTimer : BasePlugin
 {
     private readonly ILogger<SurfTimer> _logger;
@@ -106,6 +106,8 @@ public partial class SurfTimer : BasePlugin
     /* ========== PLUGIN LOAD ========== */
     public override void Load(bool hotReload)
     {
+        LocalizationService.Init(Localizer);
+
         // Check if we have connected to the Database
         if (DB != null)
         {

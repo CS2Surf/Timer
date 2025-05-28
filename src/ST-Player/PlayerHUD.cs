@@ -282,12 +282,9 @@ internal class PlayerHUD
         }
 
         // Print checkpoint message
-        _player.Controller.PrintToChat(
-            $"{Config.PluginPrefix} CP [{ChatColors.Yellow}{playerCheckpoint}{ChatColors.Default}]: " +
-            $"{ChatColors.Yellow}{FormatTime(_player.Timer.Ticks)}{ChatColors.Default} " +
-            $"{ChatColors.Yellow}({currentSpeed.ToString("0")}){ChatColors.Default} " +
-            $"[PB: {strPbDifference} | " +
-            $"WR: {strWrDifference}]");
+        _player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["checkpoint_message",
+            playerCheckpoint, FormatTime(_player.Timer.Ticks), currentSpeed.ToString("0"), strPbDifference, strWrDifference]}"
+        );
 
 #if DEBUG
         Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  PB: {pbTime} - CURR: {currentTime} = pbTime: {pbTime - currentTime}");

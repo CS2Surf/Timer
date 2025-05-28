@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
 using CounterStrikeSharp.API.Core;
 using Serilog;
 using Serilog.Events;
@@ -46,6 +47,18 @@ public class Injection : IPluginServiceCollection<SurfTimer>
         services.AddScoped<PlayerStats>(); // Multiple instances for different players
         services.AddScoped<PlayerProfile>(); // Multiple instances for different players
         services.AddSingleton<Map>(); // Single instance for 1 Map object
+    }
+}
+
+public class LocalizationService
+{
+    // Localizer as a Singleton
+    public static IStringLocalizer? Localizer { get; private set; }
+    public static IStringLocalizer LocalizerNonNull
+        => Localizer!;
+    public static void Init(IStringLocalizer localizer)
+    {
+        Localizer = localizer;
     }
 }
 

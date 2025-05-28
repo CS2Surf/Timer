@@ -18,9 +18,11 @@ public partial class SurfTimer
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
         {
-            player.PrintToChat($"{Config.PluginPrefix} Please wait for your run to be saved before resetting.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["reset_delay"]}");
             return;
         }
+
+        // oPlayer.ReplayRecorder.Reset();
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
         if (CurrentMap.StartZone != new Vector(0, 0, 0))
@@ -37,7 +39,7 @@ public partial class SurfTimer
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
         {
-            player.PrintToChat($"{Config.PluginPrefix} Please wait for your run to be saved before resetting.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["reset_delay"]}");
             return;
         }
 
@@ -74,7 +76,9 @@ public partial class SurfTimer
         }
         catch (System.Exception)
         {
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!s <stage>"]}"
+            );
             return;
         }
 
@@ -85,19 +89,23 @@ public partial class SurfTimer
             player.PrintToChat($"CS2 Surf DEBUG >> css_stage >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
 #endif
 
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!s <stage>");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!s <stage>"]}"
+            );
             return;
         }
 
         else if (CurrentMap.Stages <= 0)
         {
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}This map has no stages.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["not_staged"]}");
             return;
         }
 
         else if (stage > CurrentMap.Stages)
         {
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid stage provided, this map has {ChatColors.Green}{CurrentMap.Stages} stages.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_stage_value",
+                CurrentMap.Stages]}"
+            );
             return;
         }
 
@@ -121,7 +129,9 @@ public partial class SurfTimer
         }
 
         else
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid stage provided. Usage: {ChatColors.Green}!s <stage>");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!s <stage>"]}"
+            );
     }
 
     [ConsoleCommand("css_b", "Teleport to a bonus")]
@@ -141,7 +151,9 @@ public partial class SurfTimer
                 bonus = 1;
             else
             {
-                player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid arguments. Usage: {ChatColors.Green}!bonus <bonus>");
+                player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                    "!b <bonus>"]}"
+                );
                 return;
             }
         }
@@ -151,13 +163,15 @@ public partial class SurfTimer
 
         if (CurrentMap.Bonuses <= 0)
         {
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}This map has no bonuses.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["not_bonused"]}");
             return;
         }
 
         else if (bonus > CurrentMap.Bonuses)
         {
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid bonus provided, this map has {ChatColors.Green}{CurrentMap.Bonuses} bonuses.");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_bonus_value",
+                CurrentMap.Bonuses]}"
+            );
             return;
         }
 
@@ -170,7 +184,9 @@ public partial class SurfTimer
         }
 
         else
-            player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Invalid bonus provided. Usage: {ChatColors.Green}!bonus <bonus>");
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!b <bonus>"]}"
+            );
     }
 
     [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]
@@ -189,7 +205,24 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        player.PrintToChat($"{Config.PluginPrefix} Your current rank for {ChatColors.Gold}{CurrentMap.Name}{ChatColors.Default} is {ChatColors.Green}{playerList[player.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].Rank}{ChatColors.Default} out of {ChatColors.Yellow}{playerList[player.UserId ?? 0].CurrMap.MapCompletions[playerList[player.UserId ?? 0].Timer.Style]}");
+        int pRank = playerList[player.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].Rank;
+        int tRank = playerList[player.UserId ?? 0].CurrMap.MapCompletions[playerList[player.UserId ?? 0].Timer.Style];
+        player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["rank",
+            CurrentMap.Name, pRank, tRank]}"
+        );
+    }
+
+    [ConsoleCommand("css_rx", "x")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void TestSituationCmd(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        Player oPlayer = playerList[player.UserId ?? 0];
+        int style = oPlayer.Timer.Style;
+
+        oPlayer.Stats.ThisRun.PrintSituations(oPlayer);
     }
 
     [ConsoleCommand("css_testx", "x")]
@@ -440,7 +473,7 @@ public partial class SurfTimer
         Player p = playerList[player.UserId ?? 0];
         if (!p.Timer.IsRunning)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Cannot save location while not in run");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_not_in_run"]}");
             return;
         }
 
@@ -457,7 +490,9 @@ public partial class SurfTimer
         });
         p.CurrentSavedLocation = p.SavedLocations.Count - 1;
 
-        p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Green}Saved location! {ChatColors.Default} use !tele {p.SavedLocations.Count - 1} to teleport to this location");
+        p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_saved",
+            p.SavedLocations.Count - 1]}"
+        );
     }
 
     [ConsoleCommand("css_tele", "Teleport player to current saved location")]
@@ -470,7 +505,7 @@ public partial class SurfTimer
 
         if (p.SavedLocations.Count == 0)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}No saved locations");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_no_locations"]}");
             return;
         }
 
@@ -479,7 +514,7 @@ public partial class SurfTimer
 
         if (!p.Timer.IsPracticeMode)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Timer now on practice");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_practice"]}");
             p.Timer.IsPracticeMode = true;
         }
 
@@ -502,7 +537,9 @@ public partial class SurfTimer
             p.Timer.Ticks = location.Tick;
         });
 
-        p.Controller.PrintToChat($"{Config.PluginPrefix} Teleported #{p.CurrentSavedLocation}");
+        p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_teleported",
+            p.CurrentSavedLocation]}"
+        );
     }
 
     [ConsoleCommand("css_teleprev", "Teleport player to previous saved location")]
@@ -515,13 +552,13 @@ public partial class SurfTimer
 
         if (p.SavedLocations.Count == 0)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}No saved locations");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_no_locations"]}");
             return;
         }
 
         if (p.CurrentSavedLocation == 0)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Already at first location");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_first"]}");
         }
         else
         {
@@ -530,7 +567,9 @@ public partial class SurfTimer
 
         TeleportPlayerLocation(player, command);
 
-        p.Controller.PrintToChat($"{Config.PluginPrefix} Teleported #{p.CurrentSavedLocation}");
+        p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_teleported",
+            p.CurrentSavedLocation]}"
+        );
     }
 
     [ConsoleCommand("css_telenext", "Teleport player to next saved location")]
@@ -543,13 +582,13 @@ public partial class SurfTimer
 
         if (p.SavedLocations.Count == 0)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}No saved locations");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_no_locations"]}");
             return;
         }
 
         if (p.CurrentSavedLocation == p.SavedLocations.Count - 1)
         {
-            p.Controller.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Already at last location");
+            p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_last"]}");
         }
         else
         {
@@ -558,6 +597,8 @@ public partial class SurfTimer
 
         TeleportPlayerLocation(player, command);
 
-        p.Controller.PrintToChat($"{Config.PluginPrefix} Teleported #{p.CurrentSavedLocation}");
+        p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_teleported",
+            p.CurrentSavedLocation]}"
+        );
     }
 }

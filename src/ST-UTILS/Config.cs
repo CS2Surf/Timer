@@ -8,7 +8,7 @@ namespace SurfTimer;
 public static class Config
 {
     public static string PluginName => Assembly.GetExecutingAssembly().GetName().Name ?? "";
-    public static string PluginPrefix = $"[{ChatColors.DarkBlue}CS2 Surf{ChatColors.Default}]"; // To-do: make configurable
+    public static string PluginPrefix = LocalizationService.LocalizerNonNull["prefix"];
     public static string PluginPath => $"{Server.GameDirectory}/csgo/addons/counterstrikesharp/plugins/{PluginName}/";
     public static string PluginSurfConfig = $"{Server.GameDirectory}/csgo/cfg/{PluginName}/{PluginName}.json";
     public static string ApiUrl => API.GetApiUrl();
@@ -21,6 +21,7 @@ public static class Config
 
     public static bool ReplaysEnabled => true;
     public static int ReplaysPre => 64;
+
     // Helper class/methods for configuration loading
     private static class ConfigLoader
     {
@@ -37,10 +38,23 @@ public static class Config
         }
     }
 
+    /// <summary>
+    /// Values from `timer_settings.json`
+    /// </summary>
+    private static class TimerSettings
+    {
+        private const string TIMER_CONFIG_PATH = "/csgo/cfg/SurfTimer/timer_settings.json";
+        private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(TIMER_CONFIG_PATH);
+
+        public static string GetPrefix()
+        {
+            return ConfigDocument.RootElement.GetProperty("prefix").GetString()!;
+        }
+    }
+
     public static class API
     {
         private const string API_CONFIG_PATH = "/csgo/cfg/SurfTimer/api_config.json";
-
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(API_CONFIG_PATH);
 
         /// <summary>
@@ -82,7 +96,6 @@ public static class Config
     public static class MySQL
     {
         private const string DB_CONFIG_PATH = "/csgo/cfg/SurfTimer/database.json";
-
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(DB_CONFIG_PATH);
 
         /// <summary>
@@ -204,3 +217,46 @@ public static class Config
         }
     }
 }
+
+
+
+/*
+    /// <summary>
+    /// Replaces color codes from strings to CS# ChatColors.
+    /// {white} -> {ChatColors.White}
+    /// </summary>
+    /// <param name="message">String to replace colors</param>
+    /// <returns><see cref="string"/> with 'ChatColors'</returns>
+    private static string ReplaceColors(string message)
+    {
+        var replacements = new Dictionary<string, string>
+            {
+                { "{default}",      $"{ChatColors.Default}" },
+                { "{red}",          $"{ChatColors.Red}" },
+                { "{white}",        $"{ChatColors.White}" },
+                { "{darkred}",      $"{ChatColors.DarkRed}" },
+                { "{green}",        $"{ChatColors.Green}" },
+                { "{lightyellow}",  $"{ChatColors.LightYellow}" },
+                { "{lightblue}",    $"{ChatColors.LightBlue}" },
+                { "{olive}",        $"{ChatColors.Olive}" },
+                { "{lime}",         $"{ChatColors.Lime}" },
+                { "{lightpurple}",  $"{ChatColors.LightPurple}" },
+                { "{purple}",       $"{ChatColors.Purple}" },
+                { "{grey}",         $"{ChatColors.Grey}" },
+                { "{yellow}",       $"{ChatColors.Yellow}" },
+                { "{gold}",         $"{ChatColors.Gold}" },
+                { "{silver}",       $"{ChatColors.Silver}" },
+                { "{blue}",         $"{ChatColors.Blue}" },
+                { "{darkblue}",     $"{ChatColors.DarkBlue}" },
+                { "{bluegrey}",     $"{ChatColors.BlueGrey}" },
+                { "{magenta}",      $"{ChatColors.Magenta}" },
+                { "{lightred}",     $"{ChatColors.LightRed}" },
+                { "{orange}",       $"{ChatColors.Orange}" }
+            };
+
+        foreach (var replacement in replacements)
+            message = message.Replace(replacement.Key, replacement.Value);
+
+        return message;
+    }
+*/

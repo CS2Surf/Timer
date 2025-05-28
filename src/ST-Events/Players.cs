@@ -126,7 +126,9 @@ public partial class SurfTimer
         playerList[player.UserId ?? 0].Stats.LoadPlayerMapTimesData(playerList[player.UserId ?? 0]).GetAwaiter().GetResult(); // Holds here until result is available
 
         // Print join messages
-        Server.PrintToChatAll($"{Config.PluginPrefix} {ChatColors.Green}{name}{ChatColors.Default} has connected from {ChatColors.Lime}{playerList[player.UserId ?? 0].Profile.Country}{ChatColors.Default}.");
+        Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["player_connected",
+            name, country]}"
+        );
         _logger.LogTrace("[{Prefix}] {PlayerName} has connected from {Country}.",
             Config.PluginName, name, playerList[player.UserId ?? 0].Profile.Country
         );
