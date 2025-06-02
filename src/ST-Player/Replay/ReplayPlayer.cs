@@ -105,13 +105,17 @@ internal class ReplayPlayer
         if (!this.IsPlayable || !this.IsEnabled)
             return;
 
+        Server.NextFrame(() =>
+    {
         this.FormatBotName();
         this.IsPlaying = true;
+
 #if DEBUG
         _logger.LogDebug("[{ClassName}] {MethodName} -> Starting replay for run {MapTimeID} (Map ID {MapID}) - {RecordPlayerName} (Stage {Stage})",
             nameof(ReplayPlayer), methodName, this.MapTimeID, this.MapID, this.RecordPlayerName, this.Stage
         );
 #endif
+    });
     }
 
     public void Stop([CallerMemberName] string methodName = "")

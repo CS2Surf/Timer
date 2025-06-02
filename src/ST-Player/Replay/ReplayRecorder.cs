@@ -170,23 +170,20 @@ internal class ReplayRecorder
         if (this.Frames.Count == 0)
         {
             _logger.LogError("[{ClassName}] {MethodName} -> There are no Frames available for trimming for player {Name}",
-                nameof(ReplayRecorder), methodName, player.Profile.Name
-            );
+                 nameof(ReplayRecorder), methodName, player.Profile.Name
+             );
             throw new Exception("There are no Frames available for trimming");
         }
         switch (type)
         {
-            case 0: // Trim Map replays
-                    // Map/Bonus runs
-                var start_enter_index = MapSituations[0];
-                var start_exit_index = MapSituations[1];
-                var end_enter_index = MapSituations[2];
-                // var start_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER); // This comes out as `-1` somehow, need to edit the IF statement below to use the `start_exit_index` in that case and not care about this variable
-                // var start_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
-                // var end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
+        case 0: // Map Run
+            {
+                var start_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
+                var start_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
+                var end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
+
                 _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Map Run replay. Last start enter {start_enter_index} | last start exit {start_exit_index} | end enter {end_enter_index}",
-                    nameof(ReplayRecorder), methodName, start_enter_index, start_exit_index, end_enter_index
-                );
+                nameof(ReplayRecorder), methodName, start_enter_index, start_exit_index, end_enter_index);
 
                 if (start_enter_index == -1)
                 {
@@ -199,32 +196,12 @@ internal class ReplayRecorder
 
                 if (start_enter_index != -1 && start_exit_index != -1 && end_enter_index != -1)
                 {
-                    // Try different buffer sizes for start index
-                    int startIndex;
-                    if (start_exit_index - (Config.ReplaysPre * 2) >= start_enter_index)
-                        startIndex = start_exit_index - (Config.ReplaysPre * 2);
-                    else if (start_exit_index - Config.ReplaysPre >= start_enter_index)
-                        startIndex = start_exit_index - Config.ReplaysPre;
-                    else if (start_exit_index - (Config.ReplaysPre / 2) >= start_enter_index)
-                        startIndex = start_exit_index - (Config.ReplaysPre / 2);
-                    else
-                        startIndex = start_enter_index;  // fallback to minimum allowed
-                    // Try different buffer sizes for end index
-                    int endIndex;
-                    if (end_enter_index + (Config.ReplaysPre * 2) < Frames.Count)
-                        endIndex = end_enter_index + (Config.ReplaysPre * 2);
-                    else if (end_enter_index + Config.ReplaysPre < Frames.Count)
-                        endIndex = end_enter_index + Config.ReplaysPre;
-                    else if (end_enter_index + (Config.ReplaysPre / 2) < Frames.Count)
-                        endIndex = end_enter_index + (Config.ReplaysPre / 2);
-                    else
-                        // endIndex = Frames.Count - 1;  // fallback to maximum allowed
-                        endIndex = end_enter_index;  // fallback to maximum allowed
-                    // Get the range of frames
-                    new_frames = Frames.GetRange(startIndex, endIndex - startIndex + 1);
+                    int startIndex = CalculateStartIndex(start_enter_index, start_exit_index, Config.ReplaysPre);
+                    int endIndex = CalculateEndIndex(end_enter_index, Frames.Count, Config.ReplaysPre);
+                    new_frames = GetTrimmedFrames(startIndex, endIndex);
+
                     _logger.LogInformation("<<< [{ClassName}] {MethodName} -> Trimmed from {StartIndex} to {EndIndex} (new_frames = {NewFramesCount}) - from total {TotalFrames}",
-                        nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count
-                    );
+                    nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count);
                 }
                 else
                 {
@@ -233,11 +210,12 @@ internal class ReplayRecorder
                     );
                 }
                 break;
-            case 1: // Trim Bonus replays
-                // Bonus runs
-                int bonus_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
-                int bonus_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
-                int bonus_end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
+            }
+        case 1: // Bonus Run
+            {
+                var bonus_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
+                var bonus_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
+                var bonus_end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
                 _logger.LogInformation("[{ClassName}] {MethodName} -> Looking for Bonus Run replay trim indexes. Last start enter {bonus_enter_index}, last start exit {bonus_exit_index}, end enter {bonus_end_enter_index}",
                     nameof(ReplayRecorder), methodName, bonus_enter_index, bonus_exit_index, bonus_end_enter_index
                 );
@@ -252,29 +230,10 @@ internal class ReplayRecorder
 
                 if (bonus_enter_index != -1 && bonus_exit_index != -1 && bonus_end_enter_index != -1)
                 {
-                    // Try different buffer sizes for start index
-                    int startIndex;
-                    if (bonus_exit_index - (Config.ReplaysPre * 2) >= bonus_enter_index)
-                        startIndex = bonus_exit_index - (Config.ReplaysPre * 2);
-                    else if (bonus_exit_index - Config.ReplaysPre >= bonus_enter_index)
-                        startIndex = bonus_exit_index - Config.ReplaysPre;
-                    else if (bonus_exit_index - (Config.ReplaysPre / 2) >= bonus_enter_index)
-                        startIndex = bonus_exit_index - (Config.ReplaysPre / 2);
-                    else
-                        startIndex = bonus_enter_index;  // fallback to minimum allowed
-                    // Try different buffer sizes for end index
-                    int endIndex;
-                    if (bonus_end_enter_index + (Config.ReplaysPre * 2) < Frames.Count)
-                        endIndex = bonus_end_enter_index + (Config.ReplaysPre * 2);
-                    else if (bonus_end_enter_index + Config.ReplaysPre < Frames.Count)
-                        endIndex = bonus_end_enter_index + Config.ReplaysPre;
-                    else if (bonus_end_enter_index + (Config.ReplaysPre / 2) < Frames.Count)
-                        endIndex = bonus_end_enter_index + (Config.ReplaysPre / 2);
-                    else
-                        // endIndex = Frames.Count - 1;  // fallback to maximum allowed
-                        endIndex = bonus_end_enter_index;  // fallback to maximum allowed
-                    // Get the range of frames
-                    new_frames = Frames.GetRange(startIndex, endIndex - startIndex + 1);
+                    int startIndex = CalculateStartIndex(bonus_enter_index, bonus_exit_index, Config.ReplaysPre);
+                    int endIndex = CalculateEndIndex(bonus_end_enter_index, Frames.Count, Config.ReplaysPre);
+                    new_frames = GetTrimmedFrames(startIndex, endIndex);
+
                     _logger.LogInformation("<<< [{ClassName}] {MethodName} -> Trimmed Bonus replay from {startIndex} to {endIndex} ({new_frames}) - from total {OldFrames}",
                         nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count
                     );
@@ -286,44 +245,47 @@ internal class ReplayRecorder
                     );
                 }
                 break;
-            case 2: // Trim Stage replays
+            }
+        case 2: // Stage Run
+            {
                 int stage_end_index;
                 int stage_exit_index;
                 int stage_enter_index;
+
                 _logger.LogInformation("[{ClassName}] {MethodName} -> Looking for Stage Run replay trim indexes. Stage {Stage}, available frames {TotalFrames}",
                     nameof(ReplayRecorder), methodName, player.Timer.Stage - 1, Frames.Count
                 );
-                // Stage runs
-                if (lastStage) // Last stage
+
+                if (lastStage)
                 {
                     _logger.LogTrace("Stage replay trimming will use `STAGE_ZONE_X` + `END_ZONE_ENTER`");
-                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER); // Last stage enter (finishing the stage)
+                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
                     _logger.LogTrace("stage_end_index = {stage_end_index}",
-                        stage_end_index
+                    stage_end_index
                     );
-                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT); // Exiting the previous stage zone (what we are looking for start of the stage run)    
+                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
                     _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                        stage_exit_index
+                    stage_exit_index
                     );
-                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER); // Entering the previous stage zone (what we are looking for pre-speed trim)
+                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
                     _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                        stage_enter_index
+                    stage_enter_index
                     );
                 }
-                else if (player.Timer.Stage - 1 > 1) // Not first stage
+                else if (player.Timer.Stage - 1 > 1)
                 {
                     _logger.LogTrace("Stage replay trimming will use `STAGE_ZONE_X`");
-                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER); // Last stage enter (finishing the stage)
+                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
                     _logger.LogTrace("stage_end_index = {stage_end_index}",
-                        stage_end_index
+                    stage_end_index
                     );
-                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT); // Exiting the previous stage zone (what we are looking for start of the stage run)    
+                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
                     _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                        stage_exit_index
+                    stage_exit_index
                     );
-                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER); // Entering the previous stage zone (what we are looking for pre-speed trim)
+                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
                     _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                        stage_enter_index
+                    stage_enter_index
                     );
                 }
                 else if (player.Timer.Stage - 1 == -1) // Don't crash...?
@@ -338,26 +300,26 @@ internal class ReplayRecorder
                     stage_end_index = -1;
                     stage_exit_index = -1;
                 }
-                else // First stage is always the start of the map so we are looking for START_ZONE_X
+                else
                 {
                     _logger.LogInformation("Stage replay trimming will use `START_ZONE_X`");
-                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER); // Last stage enter (finishing the stage)
+                    stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
                     _logger.LogTrace("stage_end_index = {stage_end_index}",
-                        stage_end_index
+                    stage_end_index
                     );
-                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT); // Exiting the previous stage zone (what we are looking for start of the stage run)    
+                    stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
                     _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                        stage_exit_index
+                    stage_exit_index
                     );
-                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER); // Entering the previous stage zone (what we are looking for pre-speed trim)
+                    stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
                     _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                        stage_enter_index
+                    stage_enter_index
                     );
                 }
-                _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Stage Run replay. Stage {Stage}, enter {stage_enter_index}, stage exit {stage_exit_index}, stage end {stage_end_index}",
-                    nameof(ReplayRecorder), methodName, player.Timer.Stage - 1, stage_enter_index, stage_exit_index, stage_end_index
+                    _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Stage Run replay. Stage {Stage}, enter {stage_enter_index}, stage exit {stage_exit_index}, stage end {stage_end_index}",
+                        nameof(ReplayRecorder), methodName, player.Timer.Stage - 1, stage_enter_index, stage_exit_index, stage_end_index
                 );
-
+                
                 if (stage_enter_index == -1)
                 {
                     _logger.LogError("[{ClassName}] {MethodName} -> Player '{Name}' got '-1' for stage_enter_index during Stage ({StageNumber}) replay trimming. Setting 'stage_enter_index' to '0'",
@@ -368,29 +330,10 @@ internal class ReplayRecorder
 
                 if (stage_enter_index != -1 && stage_exit_index != -1 && stage_end_index != -1)
                 {
-                    // Try different buffer sizes for start index
-                    int startIndex;
-                    if (stage_exit_index - (Config.ReplaysPre * 2) >= stage_enter_index)
-                        startIndex = stage_exit_index - (Config.ReplaysPre * 2);
-                    else if (stage_exit_index - Config.ReplaysPre >= stage_enter_index)
-                        startIndex = stage_exit_index - Config.ReplaysPre;
-                    else if (stage_exit_index - (Config.ReplaysPre / 2) >= stage_enter_index)
-                        startIndex = stage_exit_index - (Config.ReplaysPre / 2);
-                    else
-                        startIndex = stage_enter_index;  // fallback to minimum allowed
-                    // Try different buffer sizes for end index
-                    int endIndex;
-                    if (stage_end_index + (Config.ReplaysPre * 2) < Frames.Count)
-                        endIndex = stage_end_index + (Config.ReplaysPre * 2);
-                    else if (stage_end_index + Config.ReplaysPre < Frames.Count)
-                        endIndex = stage_end_index + Config.ReplaysPre;
-                    else if (stage_end_index + (Config.ReplaysPre / 2) < Frames.Count)
-                        endIndex = stage_end_index + (Config.ReplaysPre / 2);
-                    else
-                        // endIndex = Frames.Count - 1;  // fallback to maximum allowed
-                        endIndex = stage_end_index;  // fallback to maximum allowed
-                    // Get the range of frames
-                    new_frames = Frames.GetRange(startIndex, endIndex - startIndex + 1);
+                    int startIndex = CalculateStartIndex(stage_enter_index, stage_exit_index, Config.ReplaysPre);
+                    int endIndex = CalculateEndIndex(stage_end_index, Frames.Count, Config.ReplaysPre);
+                    new_frames = GetTrimmedFrames(startIndex, endIndex);
+
                     _logger.LogInformation("<<< [{ClassName}] {MethodName} -> Trimmed Stage replay from {startIndex} to {endIndex} ({new_frames}) - from total {OldFrames}",
                         nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count
                     );
@@ -402,7 +345,8 @@ internal class ReplayRecorder
                     );
                 }
                 break;
-        }
+            }
+        }   
 
         this.IsSaving = false;
         string trimmed = JsonSerializer.Serialize(new_frames);
@@ -441,5 +385,33 @@ internal class ReplayRecorder
                 return i;
         }
         return 0;
+    }
+    private int CalculateStartIndex(int start_enter, int start_exit, int buffer)
+    {
+        if (start_exit - (buffer * 2) >= start_enter)
+            return start_exit - (buffer * 2);
+        else if (start_exit - buffer >= start_enter)
+            return start_exit - buffer;
+        else if (start_exit - (buffer / 2) >= start_enter)
+            return start_exit - (buffer / 2);
+        else
+            return start_enter;
+    }
+
+    private int CalculateEndIndex(int end_enter, int totalFrames, int buffer)
+    {
+        if (end_enter + (buffer * 2) < totalFrames)
+            return end_enter + (buffer * 2);
+        else if (end_enter + buffer < totalFrames)
+            return end_enter + buffer;
+        else if (end_enter + (buffer / 2) < totalFrames)
+            return end_enter + (buffer / 2);
+        else
+            return end_enter;
+    }
+
+    private List<ReplayFrame> GetTrimmedFrames(int startIndex, int endIndex)
+    {
+    return Frames.GetRange(startIndex, endIndex - startIndex + 1);
     }
 }
