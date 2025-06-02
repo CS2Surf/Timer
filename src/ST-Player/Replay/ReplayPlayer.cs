@@ -174,13 +174,13 @@ internal class ReplayPlayer
         }
         // END OF BLASPHEMY
 
-        var current_pos = this.Controller!.PlayerPawn.Value!.AbsOrigin!;
+        var current_pos = Controller!.PlayerPawn.Value!.AbsOrigin!.ToVector_t();
         var current_frame_pos = current_frame.GetPos();
         var current_frame_ang = current_frame.GetAng();
 
         bool is_on_ground = (current_frame.Flags & (uint)PlayerFlags.FL_ONGROUND) != 0;
 
-        Vector velocity = (current_frame_pos - current_pos) * 64;
+        Vector_t velocity = (current_frame_pos - current_pos) * 64;
 
         if (is_on_ground)
             this.Controller.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_WALK;
@@ -188,9 +188,9 @@ internal class ReplayPlayer
             this.Controller.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_NOCLIP;
 
         if ((current_pos - current_frame_pos).Length() > 200)
-            this.Controller.PlayerPawn.Value.Teleport(current_frame_pos, current_frame_ang, new Vector(nint.Zero));
+            Extensions.Teleport(Controller.PlayerPawn.Value, current_frame_pos, current_frame_ang, null);
         else
-            this.Controller.PlayerPawn.Value.Teleport(new Vector(nint.Zero), current_frame_ang, velocity);
+            Extensions.Teleport(Controller.PlayerPawn.Value, null , current_frame_ang, velocity);
 
 
         if (!this.IsPaused)

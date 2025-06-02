@@ -59,7 +59,7 @@ public partial class SurfTimer
         player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZone} -> Angles {CurrentMap.StartZoneAngles}");
         player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZone}");
         int i = 1;
-        foreach (Vector stage in CurrentMap.StageStartZone)
+        foreach (Vector_t stage in CurrentMap.StageStartZone)
         {
             if (stage.X == 0 && stage.Y == 0 && stage.Z == 0)
                 continue;
@@ -71,7 +71,7 @@ public partial class SurfTimer
         }
 
         i = 1;
-        foreach (Vector bonus in CurrentMap.BonusStartZone)
+        foreach (Vector_t bonus in CurrentMap.BonusStartZone)
         {
             if (bonus.X == 0 && bonus.Y == 0 && bonus.Z == 0)
                 continue;

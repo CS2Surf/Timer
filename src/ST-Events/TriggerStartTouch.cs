@@ -44,9 +44,7 @@ public partial class SurfTimer
         {
             // Get velocities for DB queries
             // Get the velocity of the player - we will be using this values to compare and write to DB
-            float velocity_x = player.Controller.PlayerPawn.Value!.AbsVelocity.X;
-            float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
-            float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
+            Vector_t velocity = player.Controller.PlayerPawn.Value!.AbsVelocity.ToVector_t();
             int pStyle = player.Timer.Style;
 
             // Map end zones -- hook into map_end
@@ -58,9 +56,9 @@ public partial class SurfTimer
                 player.ReplayRecorder.MapSituations.Add(player.Timer.Ticks);
 
                 player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the Map run
-                player.Stats.ThisRun.EndVelX = velocity_x; // End speed for the Map run
-                player.Stats.ThisRun.EndVelY = velocity_y; // End speed for the Map run
-                player.Stats.ThisRun.EndVelZ = velocity_z; // End speed for the Map run
+                player.Stats.ThisRun.EndVelX = velocity.X; // End speed for the Map run
+                player.Stats.ThisRun.EndVelY = velocity.Y; // End speed for the Map run
+                player.Stats.ThisRun.EndVelZ = velocity.Z; // End speed for the Map run
 
 
                 // MAP END ZONE - Map RUN
@@ -123,7 +121,7 @@ public partial class SurfTimer
                             ============== INSERT INTO `MapTimes` 
                             (`player_id`, `map_id`, `style`, `type`, `stage`, `run_time`, `start_vel_x`, `start_vel_y`, `start_vel_z`, `end_vel_x`, `end_vel_y`, `end_vel_z`, `run_date`) 
                             VALUES ({player.Profile.ID}, {CurrentMap.ID}, {pStyle}, 0, 0, {player.Stats.ThisRun.Ticks}, 
-                            {player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity_x}, {velocity_y}, {velocity_z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})
+                            {player.Stats.ThisRun.StartVelX}, {player.Stats.ThisRun.StartVelY}, {player.Stats.ThisRun.StartVelZ}, {velocity.X}, {velocity.Y}, {velocity.Z}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})
                             ON DUPLICATE KEY UPDATE run_time=VALUES(run_time), start_vel_x=VALUES(start_vel_x), start_vel_y=VALUES(start_vel_y), 
                             start_vel_z=VALUES(start_vel_z), end_vel_x=VALUES(end_vel_x), end_vel_y=VALUES(end_vel_y), end_vel_z=VALUES(end_vel_z), run_date=VALUES(run_date);
                         ");
@@ -374,9 +372,9 @@ public partial class SurfTimer
                     {
                         Checkpoint cp2 = new Checkpoint(player.Timer.Checkpoint,
                                                         player.Timer.Ticks,
-                                                        velocity_x,
-                                                        velocity_y,
-                                                        velocity_z,
+                                                        velocity.X,
+                                                        velocity.Y,
+                                                        velocity.Z,
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
@@ -423,9 +421,9 @@ public partial class SurfTimer
                         // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
                         Checkpoint cp2 = new Checkpoint(checkpoint,
                                                         player.Timer.Ticks,
-                                                        velocity_x,
-                                                        velocity_y,
-                                                        velocity_z,
+                                                        velocity.X,
+                                                        velocity.Y,
+                                                        velocity.Z,
                                                         -1.0f,
                                                         -1.0f,
                                                         -1.0f,
@@ -479,9 +477,9 @@ public partial class SurfTimer
                 player.ReplayRecorder.BonusSituations.Add(player.Timer.Ticks);
 
                 player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
-                player.Stats.ThisRun.EndVelX = velocity_x; // End pre speed for the run
-                player.Stats.ThisRun.EndVelY = velocity_y; // End pre speed for the run
-                player.Stats.ThisRun.EndVelZ = velocity_z; // End pre speed for the run
+                player.Stats.ThisRun.EndVelX = velocity.X; // End pre speed for the run
+                player.Stats.ThisRun.EndVelY = velocity.Z; // End pre speed for the run
+                player.Stats.ThisRun.EndVelZ = velocity.Y; // End pre speed for the run
 
                 bool saveBonusTime = false;
                 string PracticeString = "";
