@@ -12,8 +12,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerReset(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
@@ -33,8 +38,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerResetStage(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+       if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
@@ -66,8 +76,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToStage(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         int stage;
         try
@@ -139,8 +154,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToBonus(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         int bonus;
 
@@ -467,8 +487,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_saveloc", "Save current player location to be practiced")]
     public void SavePlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
         if (!p.Timer.IsRunning)
@@ -498,8 +523,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_tele", "Teleport player to current saved location")]
     public void TeleportPlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 
@@ -545,8 +575,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_teleprev", "Teleport player to previous saved location")]
     public void TeleportPlayerLocationPrev(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 
@@ -575,8 +610,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_telenext", "Teleport player to next saved location")]
     public void TeleportPlayerLocationNext(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 
