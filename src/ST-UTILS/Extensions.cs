@@ -1,5 +1,6 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -43,4 +44,14 @@ unsafe static class Extensions
 
     public static Vector_t ToVector_t(this Vector vec) => new(vec.Handle);
     public static QAngle_t ToQAngle_t(this QAngle vec) => new(vec.Handle);
+
+    public static void SetCollisionGroup(this CCSPlayerController controller, CollisionGroup collisionGroup)
+    {
+        if (!controller.IsValid || controller.Collision==null) return;
+        controller.Collision.CollisionAttribute.CollisionGroup = (byte)collisionGroup;
+        controller.Collision.CollisionGroup = (byte)collisionGroup;
+
+        Utilities.SetStateChanged(controller, "CColisionProperity", "m_collisionGroup");
+        Utilities.SetStateChanged(controller, "CCollisionProperty", "m_collisionAttribute");
+    }
 }
