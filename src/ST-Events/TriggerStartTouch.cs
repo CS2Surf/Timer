@@ -478,8 +478,8 @@ public partial class SurfTimer
 
                 player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
                 player.Stats.ThisRun.EndVelX = velocity.X; // End pre speed for the run
-                player.Stats.ThisRun.EndVelY = velocity.Z; // End pre speed for the run
-                player.Stats.ThisRun.EndVelZ = velocity.Y; // End pre speed for the run
+                player.Stats.ThisRun.EndVelY = velocity.Y; // End pre speed for the run
+                player.Stats.ThisRun.EndVelZ = velocity.Z; // End pre speed for the run
 
                 bool saveBonusTime = false;
                 string PracticeString = "";
