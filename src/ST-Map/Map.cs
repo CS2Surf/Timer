@@ -60,18 +60,18 @@ internal class Map
 
     // Zone Origin Information
     /* Map Start/End zones */
-    public Vector StartZone { get; set; } = new Vector(0, 0, 0);
-    public QAngle StartZoneAngles { get; set; } = new QAngle(0, 0, 0);
-    public Vector EndZone { get; set; } = new Vector(0, 0, 0);
+    public Vector_t StartZone { get; set; } = new Vector_t(0, 0, 0);
+    public QAngle_t StartZoneAngles { get; set; } = new QAngle_t(0, 0, 0);
+    public Vector_t EndZone { get; set; } = new Vector_t(0, 0, 0);
     /* Map Stage zones */
-    public Vector[] StageStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector(0, 0, 0)).ToArray();
-    public QAngle[] StageStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle(0, 0, 0)).ToArray();
+    public Vector_t[] StageStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray();
+    public QAngle_t[] StageStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle_t(0, 0, 0)).ToArray();
     /* Map Bonus zones */
-    public Vector[] BonusStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector(0, 0, 0)).ToArray(); // To-do: Implement bonuses
-    public QAngle[] BonusStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle(0, 0, 0)).ToArray(); // To-do: Implement bonuses
-    public Vector[] BonusEndZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public Vector_t[] BonusStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public QAngle_t[] BonusStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public Vector_t[] BonusEndZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
     /* Map Checkpoint zones */
-    public Vector[] CheckpointStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector(0, 0, 0)).ToArray();
+    public Vector_t[] CheckpointStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray();
 
     public ReplayManager ReplayManager { get; set; } = null!;
 
@@ -166,8 +166,8 @@ internal class Map
                             teleport.Entity!.Name.Contains("spawn_stage1_start") ||
                             teleport.Entity!.Name.Contains("spawn_s1_start")))
                         {
-                            this.StartZone = new Vector(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.StartZoneAngles = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.StartZone = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.StartZoneAngles = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             foundPlayerSpawn = true;
                             break;
                         }
@@ -175,14 +175,14 @@ internal class Map
 
                     if (!foundPlayerSpawn)
                     {
-                        this.StartZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.StartZone = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                     }
                 }
 
                 // Map end zone
                 else if (trigger.Entity!.Name.Contains("map_end"))
                 {
-                    this.EndZone = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.EndZone = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 }
 
                 // Stage start zones
@@ -197,8 +197,8 @@ internal class Map
                         if (teleport.Entity!.Name != null &&
                             (IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!) || (Regex.Match(teleport.Entity.Name, "^spawn_s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success && Int32.Parse(Regex.Match(teleport.Entity.Name, "[0-9][0-9]?").Value) == stage)))
                         {
-                            this.StageStartZone[stage] = new Vector(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.StageStartZoneAngles[stage] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.StageStartZone[stage] = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.StageStartZoneAngles[stage] = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             this.Stages++; // Count stage zones for the map to populate DB
                             foundPlayerSpawn = true;
                             break;
@@ -207,7 +207,7 @@ internal class Map
 
                     if (!foundPlayerSpawn)
                     {
-                        this.StageStartZone[stage] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.StageStartZone[stage] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                         this.Stages++;
                     }
                 }
@@ -215,7 +215,7 @@ internal class Map
                 // Checkpoint start zones (linear maps)
                 else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success)
                 {
-                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                     this.TotalCheckpoints++; // Might be useful to have this in DB entry
                 }
 
@@ -231,8 +231,8 @@ internal class Map
                         if (teleport.Entity!.Name != null &&
                             (IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!) || (Regex.Match(teleport.Entity.Name, "^spawn_b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success && Int32.Parse(Regex.Match(teleport.Entity.Name, "[0-9][0-9]?").Value) == bonus)))
                         {
-                            this.BonusStartZone[bonus] = new Vector(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.BonusStartZoneAngles[bonus] = new QAngle(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.BonusStartZone[bonus] = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.BonusStartZoneAngles[bonus] = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             this.Bonuses++; // Count bonus zones for the map to populate DB
                             foundPlayerSpawn = true;
                             break;
@@ -241,14 +241,14 @@ internal class Map
 
                     if (!foundPlayerSpawn)
                     {
-                        this.BonusStartZone[bonus] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.BonusStartZone[bonus] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                         this.Bonuses++;
                     }
                 }
 
                 else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_end$").Success)
                 {
-                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 }
             }
         }
@@ -450,7 +450,7 @@ internal class Map
         int qStyle;
 
         // Replay Stuff
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() } };
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new Vector_tConverter(), new QAngle_tConverter() } };
 
         if (Config.API.GetApiOnly()) // Need to update the query in API and re-do the assigning of data
         {
@@ -640,7 +640,7 @@ internal class Map
     /// <param name="replayFramesBase64">Base64 encoded string for the replay_frames</param>
     internal void Set_Replay_Data(int type, int style, int stage, string replayFramesBase64, [CallerMemberName] string methodName = "")
     {
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() } };
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new Vector_tConverter(), new QAngle_tConverter() } };
 
         // Decompress the Base64 string
         string json = Compressor.Decompress(replayFramesBase64);
@@ -809,24 +809,24 @@ internal class Map
         }
 
         // Start the new map replay if none existed until now
-        if (type == 0 && this.ReplayManager.MapWR != null && !this.ReplayManager.MapWR.IsPlaying)
+        Server.NextFrame(() =>
         {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [MapWR] ResetReplay() and Start()");
-            this.ReplayManager.MapWR.ResetReplay();
-            this.ReplayManager.MapWR.Start();
-        }
-        else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
-        {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [BonusWR] ResetReplay() and Start() {stage}");
-            this.ReplayManager.BonusWR.ResetReplay();
-            this.ReplayManager.BonusWR.Start();
-        }
-        else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
-        {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void Set_Replay_Data -> [StageWR] ResetReplay() and Start() {stage}");
-            this.ReplayManager.StageWR.ResetReplay();
-            this.ReplayManager.StageWR.Start();
-        }
+            if (type == 0 && this.ReplayManager.MapWR != null && !this.ReplayManager.MapWR.IsPlaying)
+            {
+                this.ReplayManager.MapWR.ResetReplay();
+                this.ReplayManager.MapWR.Start();
+            }
+            else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
+            {
+                this.ReplayManager.BonusWR.ResetReplay();
+                this.ReplayManager.BonusWR.Start();
+            }
+            else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
+            {
+                this.ReplayManager.StageWR.ResetReplay();
+                this.ReplayManager.StageWR.Start();
+            }
+        });
     }
 
     public void KickReplayBot(int index)

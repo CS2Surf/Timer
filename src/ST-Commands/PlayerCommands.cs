@@ -12,8 +12,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerReset(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
@@ -25,16 +30,21 @@ public partial class SurfTimer
         // oPlayer.ReplayRecorder.Reset();
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
-        if (CurrentMap.StartZone != new Vector(0, 0, 0))
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+        if (!CurrentMap.StartZone.IsZero())
+            Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
     }
 
     [ConsoleCommand("css_rs", "Reset back to the start of the stage or bonus you're in.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerResetStage(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+       if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player oPlayer = playerList[player.UserId ?? 0];
         if (oPlayer.ReplayRecorder.IsSaving)
@@ -46,18 +56,18 @@ public partial class SurfTimer
 
         if (oPlayer.Timer.IsBonusMode)
         {
-            if (oPlayer.Timer.Bonus != 0 && CurrentMap.BonusStartZone[oPlayer.Timer.Bonus] != new Vector(0, 0, 0))
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[oPlayer.Timer.Bonus], CurrentMap.BonusStartZoneAngles[oPlayer.Timer.Bonus], new Vector(0, 0, 0)));
+            if (oPlayer.Timer.Bonus != 0 && !CurrentMap.BonusStartZone[oPlayer.Timer.Bonus].IsZero())
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value! , CurrentMap.BonusStartZone[oPlayer.Timer.Bonus]));
             else // Reset back to map start
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
         }
 
         else
         {
-            if (oPlayer.Timer.Stage != 0 && CurrentMap.StageStartZone[oPlayer.Timer.Stage] != new Vector(0, 0, 0))
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[oPlayer.Timer.Stage], CurrentMap.StageStartZoneAngles[oPlayer.Timer.Stage], new Vector(0, 0, 0)));
+            if (oPlayer.Timer.Stage != 0 && !CurrentMap.StageStartZone[oPlayer.Timer.Stage].IsZero())
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StageStartZone[oPlayer.Timer.Stage]));
             else // Reset back to map start
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, new QAngle(0, 0, 0), new Vector(0, 0, 0)));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
         }
     }
 
@@ -66,8 +76,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToStage(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         int stage;
         try
@@ -109,18 +124,18 @@ public partial class SurfTimer
             return;
         }
 
-        if (CurrentMap.StageStartZone[stage] != new Vector(0, 0, 0))
+        if (!CurrentMap.StageStartZone[stage].IsZero())
         {
             playerList[player.UserId ?? 0].Timer.Reset();
 
             if (stage == 1)
             {
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StartZone, CurrentMap.StartZoneAngles, new Vector(0, 0, 0)));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
             }
             else
             {
                 playerList[player.UserId ?? 0].Timer.Stage = stage;
-                Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.StageStartZone[stage], CurrentMap.StageStartZoneAngles[stage], new Vector(0, 0, 0)));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StageStartZone[stage]));
                 playerList[player.UserId ?? 0].Timer.IsStageMode = true;
             }
 
@@ -139,8 +154,13 @@ public partial class SurfTimer
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToBonus(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         int bonus;
 
@@ -175,12 +195,12 @@ public partial class SurfTimer
             return;
         }
 
-        if (CurrentMap.BonusStartZone[bonus] != new Vector(0, 0, 0))
+        if (!CurrentMap.BonusStartZone[bonus].IsZero())
         {
             playerList[player.UserId ?? 0].Timer.Reset();
             playerList[player.UserId ?? 0].Timer.IsBonusMode = true;
 
-            Server.NextFrame(() => player.PlayerPawn.Value!.Teleport(CurrentMap.BonusStartZone[bonus], CurrentMap.BonusStartZoneAngles[bonus], new Vector(0, 0, 0)));
+            Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.BonusStartZone[bonus]));
         }
 
         else
@@ -467,8 +487,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_saveloc", "Save current player location to be practiced")]
     public void SavePlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
         if (!p.Timer.IsRunning)
@@ -483,9 +508,9 @@ public partial class SurfTimer
 
         p.SavedLocations.Add(new SavelocFrame
         {
-            Pos = new Vector(player_pos.X, player_pos.Y, player_pos.Z),
-            Ang = new QAngle(player_angle.X, player_angle.Y, player_angle.Z),
-            Vel = new Vector(player_velocity.X, player_velocity.Y, player_velocity.Z),
+            Pos = new Vector_t(player_pos.X, player_pos.Y, player_pos.Z),
+            Ang = new QAngle_t(player_angle.X, player_angle.Y, player_angle.Z),
+            Vel = new Vector_t(player_velocity.X, player_velocity.Y, player_velocity.Z),
             Tick = p.Timer.Ticks
         });
         p.CurrentSavedLocation = p.SavedLocations.Count - 1;
@@ -498,8 +523,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_tele", "Teleport player to current saved location")]
     public void TeleportPlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 
@@ -533,7 +563,7 @@ public partial class SurfTimer
         SavelocFrame location = p.SavedLocations[p.CurrentSavedLocation];
         Server.NextFrame(() =>
         {
-            p.Controller.PlayerPawn.Value!.Teleport(location.Pos, location.Ang, location.Vel);
+            Extensions.Teleport(p.Controller.PlayerPawn.Value!, location.Pos, location.Ang, location.Vel);
             p.Timer.Ticks = location.Tick;
         });
 
@@ -545,8 +575,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_teleprev", "Teleport player to previous saved location")]
     public void TeleportPlayerLocationPrev(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 
@@ -575,8 +610,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_telenext", "Teleport player to next saved location")]
     public void TeleportPlayerLocationNext(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || !player.PawnIsAlive || !playerList.ContainsKey(player.UserId ?? 0))
+        if (player == null)
             return;
+        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+        {
+            player.ChangeTeam(CsTeam.CounterTerrorist);
+            player.Respawn();
+        }
 
         Player p = playerList[player.UserId ?? 0];
 

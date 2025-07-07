@@ -1,4 +1,5 @@
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 
 namespace SurfTimer;
 
@@ -11,6 +12,9 @@ public partial class SurfTimer
             player.Timer.Tick();
             player.ReplayRecorder.Tick(player);
             player.HUD.Display();
+            if (player.Controller.Collision == null) continue;
+            if ((CollisionGroup)player.Controller.Collision.CollisionGroup == CollisionGroup.COLLISION_GROUP_DEBRIS) continue;
+            player.Controller.SetCollisionGroup(CollisionGroup.COLLISION_GROUP_DEBRIS);
         }
 
         if (CurrentMap == null)
