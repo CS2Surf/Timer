@@ -194,7 +194,7 @@ internal class ReplayPlayer
         if ((current_pos - current_frame_pos).Length() > 200)
             Extensions.Teleport(Controller.PlayerPawn.Value, current_frame_pos, current_frame_ang, null);
         else
-            Extensions.Teleport(Controller.PlayerPawn.Value, null , current_frame_ang, velocity);
+            Extensions.Teleport(Controller.PlayerPawn.Value, null, current_frame_ang, velocity);
 
 
         if (!this.IsPaused)
@@ -258,7 +258,9 @@ internal class ReplayPlayer
             replay_name = $"[{prefix}] {this.RecordPlayerName}";
 
         bot_name.Set(replay_name);
-        Utilities.SetStateChanged(this.Controller!, "CBasePlayerController", "m_iszPlayerName");
+        Server.NextFrame(() =>
+            Utilities.SetStateChanged(this.Controller!, "CBasePlayerController", "m_iszPlayerName")
+        );
 
         // _logger.LogTrace("[{ClassName}] {MethodName} -> Changed replay bot name from '{OldName}' to '{NewName}'",
         //     nameof(ReplayPlayer), methodName, bot_name, replay_name

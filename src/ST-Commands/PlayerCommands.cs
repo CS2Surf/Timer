@@ -14,10 +14,15 @@ public partial class SurfTimer
     {
         if (player == null)
             return;
+
         if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
         {
-            player.ChangeTeam(CsTeam.CounterTerrorist);
-            player.Respawn();
+            Server.NextWorldUpdate(() => // Does NOT trigger a Joined X team message 
+                {
+                    player.ChangeTeam(CsTeam.CounterTerrorist);
+                    player.Respawn();
+                }
+            );
         }
 
         Player oPlayer = playerList[player.UserId ?? 0];
@@ -31,15 +36,16 @@ public partial class SurfTimer
         // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
         if (!CurrentMap.StartZone.IsZero())
-            Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
+            Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
     }
 
-    [ConsoleCommand("css_rs", "Reset back to the start of the stage or bonus you're in.")]
+    [ConsoleCommand("css_rs", "Reset back to the start of the stage or bonus you were in.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerResetStage(CCSPlayerController? player, CommandInfo command)
     {
-       if (player == null)
+        if (player == null)
             return;
+
         if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
         {
             player.ChangeTeam(CsTeam.CounterTerrorist);
@@ -57,9 +63,9 @@ public partial class SurfTimer
         if (oPlayer.Timer.IsBonusMode)
         {
             if (oPlayer.Timer.Bonus != 0 && !CurrentMap.BonusStartZone[oPlayer.Timer.Bonus].IsZero())
-                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value! , CurrentMap.BonusStartZone[oPlayer.Timer.Bonus]));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.BonusStartZone[oPlayer.Timer.Bonus]));
             else // Reset back to map start
-                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
         }
 
         else
@@ -67,7 +73,7 @@ public partial class SurfTimer
             if (oPlayer.Timer.Stage != 0 && !CurrentMap.StageStartZone[oPlayer.Timer.Stage].IsZero())
                 Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StageStartZone[oPlayer.Timer.Stage]));
             else // Reset back to map start
-                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!,CurrentMap.StartZone));
+                Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
         }
     }
 
@@ -78,11 +84,6 @@ public partial class SurfTimer
     {
         if (player == null)
             return;
-        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
-        {
-            player.ChangeTeam(CsTeam.CounterTerrorist);
-            player.Respawn();
-        }
 
         int stage;
         try
@@ -128,6 +129,12 @@ public partial class SurfTimer
         {
             playerList[player.UserId ?? 0].Timer.Reset();
 
+            if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+            {
+                player.ChangeTeam(CsTeam.CounterTerrorist);
+                player.Respawn();
+            }
+
             if (stage == 1)
             {
                 Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
@@ -156,11 +163,6 @@ public partial class SurfTimer
     {
         if (player == null)
             return;
-        if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
-        {
-            player.ChangeTeam(CsTeam.CounterTerrorist);
-            player.Respawn();
-        }
 
         int bonus;
 
@@ -200,6 +202,12 @@ public partial class SurfTimer
             playerList[player.UserId ?? 0].Timer.Reset();
             playerList[player.UserId ?? 0].Timer.IsBonusMode = true;
 
+            if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
+            {
+                player.ChangeTeam(CsTeam.CounterTerrorist);
+                player.Respawn();
+            }
+
             Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.BonusStartZone[bonus]));
         }
 
@@ -212,10 +220,13 @@ public partial class SurfTimer
     [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]
     public void MovePlayerToSpectator(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null || player.Team == CsTeam.Spectator)
+        // if (player == null || player.Team == CsTeam.Spectator)
+        if (player == null)
             return;
 
-        player.ChangeTeam(CsTeam.Spectator);
+        Server.NextFrame(() =>
+            player.ChangeTeam(CsTeam.Spectator)
+        );
     }
 
     [ConsoleCommand("css_rank", "Show the current rank of the player for the style they are in")]

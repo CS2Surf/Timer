@@ -1,11 +1,11 @@
 - Replay Bot Scoreboard names NOT changing when setting new recs
 
 + Re-add the MySQL queries in code and make it switch between API and DB functions
-- Map Time is NOT being saved with API
++ Map Time is NOT being saved with API
 - Make configs generate themselves inside the `./configs/plugins/...` folder
-- Fix loading MapTimes for each type (stage, bonus, maps) 
-  - API
-  - DB
++ Fix loading MapTimes for each type (stage, bonus, maps) 
+  + API
+  + DB
 + Change `DB_QUERY_MAP_GET_RUNS` query with `DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT` in API and edit code in plugin
 + Change `DB_QUERY_PB_GET_RUNTIME` query in API
 

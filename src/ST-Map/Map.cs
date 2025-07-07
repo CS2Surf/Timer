@@ -395,10 +395,6 @@ internal class Map
         // int totalBonusRuns = 0;
         this.ConnectedMapTimes.Clear();
 
-        int qType;
-        int qStage;
-        int qStyle;
-
         // Replay Stuff
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new Vector_tConverter(), new QAngle_tConverter() } };
 
@@ -675,22 +671,26 @@ internal class Map
         // Start the new map replay if none existed until now
         Server.NextFrame(() =>
         {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [MapWR] ResetReplay() and Start()");
-            this.ReplayManager.MapWR.ResetReplay();
-            this.ReplayManager.MapWR.Start();
+            if (type == 0 && this.ReplayManager.MapWR != null && !this.ReplayManager.MapWR.IsPlaying)
+            {
+                // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [MapWR] ResetReplay() and Start()");
+                this.ReplayManager.MapWR.ResetReplay();
+                this.ReplayManager.MapWR.Start();
+            }
+            else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
+            {
+                // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [BonusWR] ResetReplay() and Start() {stage}");
+                this.ReplayManager.BonusWR.ResetReplay();
+                this.ReplayManager.BonusWR.Start();
+            }
+            else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
+            {
+                // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [StageWR] ResetReplay() and Start() {stage}");
+                this.ReplayManager.StageWR.ResetReplay();
+                this.ReplayManager.StageWR.Start();
+            }
         }
-        else if (type == 1 && this.ReplayManager.BonusWR != null && !this.ReplayManager.BonusWR.IsPlaying)
-        {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [BonusWR] ResetReplay() and Start() {stage}");
-            this.ReplayManager.BonusWR.ResetReplay();
-            this.ReplayManager.BonusWR.Start();
-        }
-        else if (type == 2 && this.ReplayManager.StageWR != null && !this.ReplayManager.StageWR.IsPlaying)
-        {
-            // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [StageWR] ResetReplay() and Start() {stage}");
-            this.ReplayManager.StageWR.ResetReplay();
-            this.ReplayManager.StageWR.Start();
-        }
+        );
     }
 
     public void KickReplayBot(int index)
