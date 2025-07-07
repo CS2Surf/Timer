@@ -71,13 +71,16 @@ internal class TimerDatabase
     /// No need to encapsulate in `using` block.
     /// </summary>
     /// <param name="query">INSERT/UPDATE query to execute</param>
-    public async Task<int> WriteAsync(string query)
+    /// <returns>rowsInserted, lastInsertedId</returns>
+    public async Task<(int rowsInserted, long lastInsertedId)> WriteAsync(string query)
     {
         try
         {
             using var connection = GetConnection();
             using var cmd = new MySqlCommand(query, connection);
-            return await cmd.ExecuteNonQueryAsync();
+            var rows = await cmd.ExecuteNonQueryAsync();
+            long lastId = cmd.LastInsertedId; // Retrieve the last ID inserted
+            return (rows, lastId);
         }
         catch (Exception ex)
         {

@@ -85,11 +85,28 @@ public static class Config
             public const string ENDPOINT_MAP_INSERT_INFO = "/surftimer/insertmap";
             public const string ENDPOINT_MAP_UPDATE_INFO = "/surftimer/updateMap";
             // public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maptotals?map_id={0}&style={1}";
-            public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maprunsdata?map_id={0}&style={1}&type={2}";
+            // public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maprunsdata?map_id={0}&style={1}&type={2}";
+            public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maprunsdata?id={0}";
             public const string ENDPOINT_MAP_GET_RUN_CPS = "/surftimer/mapcheckpointsdata?maptime_id={0}";
 
             // CurrentRun.cs
+            public const string ENDPOINT_CR_SAVE_MAP_TIME = "/surftimer/savemaptime";
             public const string ENDPOINT_CR_SAVE_STAGE_TIME = "/surftimer/savestagetime";
+
+
+            // PersonalBest.cs
+            public const string ENDPOINT_MAP_GET_PB_BY_PLAYER = "/surftimer/runbyplayer?player_id={0}&map_id={1}&type={2}&style={3}";
+            public const string ENDPOINT_MAP_GET_PB_BY_ID = "/surftimer/runbyid?run_id={0}";
+
+
+            // PlayerProfile.cs
+            public const string ENDPOINT_PP_GET_PROFILE = "/surftimer/playersurfprofile/{0}";
+            public const string ENDPOINT_PP_INSERT_PROFILE = "/surftimer/insertplayer";
+            public const string ENDPOINT_PP_UPDATE_PROFILE = "/surftimer/updateplayerprofile";
+
+            // PlayerStats.cs
+            public const string ENDPOINT_PS_GET_PLAYER_MAP_DATA = "/surftimer/playermapdata?player_id={0}&map_id={1}";
+
         }
     }
 
@@ -124,15 +141,8 @@ public static class Config
         public static class Queries
         {
             // Map.cs related queries
-            public const string DB_QUERY_MAP_GET_RUNS = @"
-                SELECT MapTimes.*, Player.name
-                FROM MapTimes
-                JOIN Player ON MapTimes.player_id = Player.id
-                WHERE MapTimes.map_id = {0} AND MapTimes.style = {1} AND MapTimes.type = {2}
-                ORDER BY MapTimes.run_time ASC;
-            "; // Deprecated
             public const string DB_QUERY_MAP_GET_INFO = "SELECT * FROM Maps WHERE name='{0}';";
-            public const string DB_QUERY_MAP_INSERT_INFO = "INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {5})"; // "INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})"
+            public const string DB_QUERY_MAP_INSERT_INFO = "INSERT INTO Maps (name, author, tier, stages, bonuses, ranked, date_added, last_played) VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6}, {6})"; // "INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})"
             public const string DB_QUERY_MAP_UPDATE_INFO_FULL = "UPDATE Maps SET last_played={0}, stages={1}, bonuses={2} WHERE id={3};";
             public const string DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT = @"
             SELECT 

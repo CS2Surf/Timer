@@ -1,4 +1,7 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
@@ -9,9 +12,10 @@ internal class ApiMethod
     private static readonly HttpClient _client = new();
     private static readonly string base_addr = Config.ApiUrl;
 
-    public static async Task<T?> GET<T>(string url)
+    public static async Task<T?> GET<T>(string url, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
+        var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
 #if DEBUG
         Console.WriteLine($"======= CS2 Surf DEBUG >> public static async Task<T?> GET -> BASE ADDR: {base_addr} | ENDPOINT: {url} | FULL: {uri.ToString()}");
@@ -21,25 +25,37 @@ internal class ApiMethod
 
         try
         {
-            System.Console.WriteLine($"[API] GET {url} => {response.StatusCode}");
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            _logger.LogInformation("[{ClassName}] {MethodName} -> GET {URL} => {StatusCode}",
+                nameof(ApiMethod), methodName, url, response.StatusCode
+            );
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
-                Exception exception = new Exception("[API] GET - No data found");
+                _logger.LogWarning("[{ClassName}] {MethodName} -> No data found {StatusCode}",
+                    nameof(ApiMethod), methodName, response.StatusCode
+                );
+
+                return default;
+            }
+            else if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                Exception exception = new Exception($"[{nameof(ApiMethod)}] {methodName} -> Unexpected status code {response.StatusCode}");
                 throw exception;
             }
 
             return await response.Content.ReadFromJsonAsync<T>();
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine("HTTP Response was invalid or could not be deserialised.");
+            _logger.LogError(ex, "[{ClassName}] {MethodName} -> HTTP Response was invalid or could not be deserialised.", nameof(ApiMethod), methodName);
             return default;
         }
     }
 
-    public static async Task<API_PostResponseData?> POST<T>(string url, T body)
+    public static async Task<API_PostResponseData?> POST<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
+        var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
 #if DEBUG
         Console.WriteLine($"======= CS2 Surf DEBUG >> public static async Task<API_PostResponseData?> POST -> BASE ADDR: {base_addr} | ENDPOINT: {url} | FULL: {uri.ToString()}");
@@ -49,20 +65,26 @@ internal class ApiMethod
 
         try
         {
-            System.Console.WriteLine($"[API] POST {url} => {response.StatusCode}");
+            _logger.LogInformation("[{ClassName}] {MethodName} -> POST {URL} => {StatusCode}",
+                nameof(ApiMethod), methodName, url, response.StatusCode
+            );
+
             response.EnsureSuccessStatusCode(); // BAD BAD BAD
             return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine("HTTP Response was invalid or could not be deserialised.");
+            _logger.LogError(ex, "[{ClassName}] {MethodName} -> HTTP Response was invalid or could not be deserialised.",
+                nameof(ApiMethod), methodName
+            );
             return default;
         }
     }
 
-    public static async Task<API_PostResponseData?> PUT<T>(string url, T body)
+    public static async Task<API_PostResponseData?> PUT<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
+        var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
 #if DEBUG
         Console.WriteLine($"======= CS2 Surf DEBUG >> public static async Task<API_PostResponseData?> PUT -> BASE ADDR: {base_addr} | ENDPOINT: {url} | FULL: {uri.ToString()}");
@@ -72,13 +94,19 @@ internal class ApiMethod
 
         try
         {
-            System.Console.WriteLine($"[API] PUT {url} => {response.StatusCode}");
+            _logger.LogInformation("[{ClassName}] {MethodName} -> PUT {URL} => {StatusCode}",
+                nameof(ApiMethod), methodName, url, response.StatusCode
+            );
+
             response.EnsureSuccessStatusCode(); // BAD BAD BAD
             return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine("HTTP Response was invalid or could not be deserialised.");
+            _logger.LogError(ex, "[{ClassName}] {MethodName} -> HTTP Response was invalid or could not be deserialised.",
+                nameof(ApiMethod), methodName
+            );
+
             return default;
         }
     }

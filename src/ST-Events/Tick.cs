@@ -33,12 +33,17 @@ public partial class SurfTimer
                 bot_quota.SetValue(replaybot_count);
             }
 
-            // Console.WriteLine($"======== public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}");
+            // _logger.LogInformation("public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}", cbq, replaybot_count);
         }
 
         CurrentMap.ReplayManager.MapWR.Tick();
         CurrentMap.ReplayManager.StageWR?.Tick();
         CurrentMap.ReplayManager.BonusWR?.Tick();
+
+        if (CurrentMap.ReplayManager.MapWR.MapTimeID != -1)
+        {
+            CurrentMap.ReplayManager.MapWR.FormatBotName();
+        }
 
         // Here we will load the NEXT stage replay from AllStageWR
         if (CurrentMap.ReplayManager.StageWR?.RepeatCount == 0)
@@ -51,7 +56,7 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllStageWR[next_stage][0].Controller = CurrentMap.ReplayManager.StageWR.Controller;
 
-            // Console.WriteLine($"======== public void OnTick() -> Finished replay cycle for stage {CurrentMap.ReplayManager.StageWR.Stage}, changing to stage {next_stage}");
+            // _logger.LogInformation("public void OnTick() -> Finished replay cycle for stage {Stage}, changing to stage {next_stage}", CurrentMap.ReplayManager.StageWR.Stage, next_stage);
             CurrentMap.ReplayManager.StageWR = CurrentMap.ReplayManager.AllStageWR[next_stage][0];
             CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.StageWR.FormatBotName();
@@ -68,7 +73,7 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllBonusWR[next_bonus][0].Controller = CurrentMap.ReplayManager.BonusWR.Controller;
 
-            // Console.WriteLine($"======== public void OnTick() -> Finished replay cycle for bonus {CurrentMap.ReplayManager.BonusWR.Stage}, changing to bonus {next_bonus}");
+            // _logger.LogInformation("public void OnTick() -> Finished replay cycle for bonus {Bonus}, changing to bonus {next_bonus}", CurrentMap.ReplayManager.BonusWR.Stage, next_bonus);
             CurrentMap.ReplayManager.BonusWR = CurrentMap.ReplayManager.AllBonusWR[next_bonus][0];
             CurrentMap.ReplayManager.BonusWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.BonusWR.FormatBotName();

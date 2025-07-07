@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Core;
 using Serilog;
 using Serilog.Events;
 using CounterStrikeSharp.API;
+using SurfTimer.Data;
 
 namespace SurfTimer;
 
@@ -46,7 +47,14 @@ public class Injection : IPluginServiceCollection<SurfTimer>
         services.AddScoped<PersonalBest>(); // Multiple instances for different players
         services.AddScoped<PlayerStats>(); // Multiple instances for different players
         services.AddScoped<PlayerProfile>(); // Multiple instances for different players
+        services.AddScoped<ApiMethod>(); // Multiple instances for different players
         services.AddSingleton<Map>(); // Single instance for 1 Map object
+
+        services.AddScoped<IDataAccessService>(provider =>
+            Config.API.GetApiOnly()
+                ? new ApiDataAccessService()
+                : new MySqlDataAccessService()
+        );
     }
 }
 

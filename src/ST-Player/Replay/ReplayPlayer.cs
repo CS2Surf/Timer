@@ -211,24 +211,25 @@ internal class ReplayPlayer
         if (!this.IsPlayable || !this.IsEnabled)
             return;
 
-        // Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> [{(this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : "Map Replay")}] public void LoadReplayData -> We got MapID = {this.MapID}");
-
         if (this.MapID == -1)
         {
-            _logger.LogTrace("[{ClassName}] {MethodName} ->  [{Type}] No replay data found for Player.",
-                nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : "Map Replay")
+            _logger.LogWarning("[{ClassName}] {MethodName} -> [{Type}] No replay data found for Player. MapID {MapID} | MapTimeID {MapTimeID} | RecordPlayerName {RecordPlayerName}",
+                nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : this.Type == 0 ? "Map Replay" : "Unknown Type"), this.MapID, this.MapTimeID, RecordPlayerName
             );
             return;
         }
 
-        // Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> public void LoadReplayData -> [{(this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : "Map Replay")}] Loaded replay data for Player '{this.RecordPlayerName}'. MapTime ID: {this.MapTimeID} | Repeat {repeat_count} | Frames {this.Frames.Count} | Ticks {this.RecordRunTime}");
+        _logger.LogTrace("[{ClassName}] {MethodName} -> [{Type}] Loaded replay data for Player '{RecordPlayerName}' | MapTime ID: {MapTimeID} | Repeat {Repeat} | Frames {TotalFrames} | Ticks {RecordTicks}",
+            nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : this.Type == 0 ? "Map Replay" : "Unknown Type"), this.RecordPlayerName, this.MapTimeID, repeat_count, this.Frames.Count, this.RecordRunTime
+        );
+
         this.ResetReplay();
         this.RepeatCount = repeat_count;
     }
 
-    public void FormatBotName()
+    public void FormatBotName([CallerMemberName] string methodName = "")
     {
-        if (!this.IsPlayable || !this.IsEnabled)
+        if (!this.IsPlayable || !this.IsEnabled || this.MapID == -1)
             return;
 
         string prefix;
@@ -254,5 +255,9 @@ internal class ReplayPlayer
 
         bot_name.Set(replay_name);
         Utilities.SetStateChanged(this.Controller!, "CBasePlayerController", "m_iszPlayerName");
+
+        // _logger.LogTrace("[{ClassName}] {MethodName} -> Changed replay bot name from '{OldName}' to '{NewName}'",
+        //     nameof(ReplayPlayer), methodName, bot_name, replay_name
+        // );
     }
 }
