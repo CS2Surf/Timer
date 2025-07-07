@@ -6,7 +6,7 @@ internal class API_PostResponseData
     public int inserted { get; set; }
     public float xtime { get; set; }
     public int last_id { get; set; }
-    public int? trx { get; set; }
+    public List<int>? trx { get; set; }
 }
 
 internal class API_Checkpoint

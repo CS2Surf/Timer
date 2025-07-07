@@ -57,26 +57,40 @@ internal class ApiMethod
         var uri = new Uri(base_addr + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
-#if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> public static async Task<API_PostResponseData?> POST -> BASE ADDR: {base_addr} | ENDPOINT: {url} | FULL: {uri.ToString()}");
-#endif
-
-        using var response = await _client.PostAsJsonAsync(uri, body);
-
         try
         {
-            _logger.LogInformation("[{ClassName}] {MethodName} -> POST {URL} => {StatusCode}",
+            using var response = await _client.PostAsJsonAsync(uri, body);
+
+            _logger.LogInformation(
+                "[{ClassName}] {MethodName} -> POST {URL} => {StatusCode}",
                 nameof(ApiMethod), methodName, url, response.StatusCode
             );
 
-            response.EnsureSuccessStatusCode(); // BAD BAD BAD
-            return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+            }
+            else
+            {
+                // Read response body to log what went wrong
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogWarning(
+                    "[{ClassName}] {MethodName} -> POST {URL} failed with status {StatusCode}. Response body: {ResponseBody}",
+                    nameof(ApiMethod), methodName, url, response.StatusCode, errorContent
+                );
+
+                return default;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ClassName}] {MethodName} -> HTTP Response was invalid or could not be deserialised.",
-                nameof(ApiMethod), methodName
+            _logger.LogError(
+                ex,
+                "[{ClassName}] {MethodName} -> Exception during POST {URL}",
+                nameof(ApiMethod), methodName, url
             );
+
             return default;
         }
     }
@@ -86,28 +100,41 @@ internal class ApiMethod
         var uri = new Uri(base_addr + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
-#if DEBUG
-        Console.WriteLine($"======= CS2 Surf DEBUG >> public static async Task<API_PostResponseData?> PUT -> BASE ADDR: {base_addr} | ENDPOINT: {url} | FULL: {uri.ToString()}");
-#endif
-
-        using var response = await _client.PutAsJsonAsync(uri, body);
-
         try
         {
-            _logger.LogInformation("[{ClassName}] {MethodName} -> PUT {URL} => {StatusCode}",
+            using var response = await _client.PutAsJsonAsync(uri, body);
+
+            _logger.LogInformation(
+                "[{ClassName}] {MethodName} -> PUT {URL} => {StatusCode}",
                 nameof(ApiMethod), methodName, url, response.StatusCode
             );
 
-            response.EnsureSuccessStatusCode(); // BAD BAD BAD
-            return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogWarning(
+                    "[{ClassName}] {MethodName} -> PUT {URL} failed with status {StatusCode}. Response body: {ResponseBody}",
+                    nameof(ApiMethod), methodName, url, response.StatusCode, errorContent
+                );
+
+                return default;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ClassName}] {MethodName} -> HTTP Response was invalid or could not be deserialised.",
-                nameof(ApiMethod), methodName
+            _logger.LogError(
+                ex,
+                "[{ClassName}] {MethodName} -> Exception during PUT {URL}",
+                nameof(ApiMethod), methodName, url
             );
 
             return default;
         }
     }
+
 }

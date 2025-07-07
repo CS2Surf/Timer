@@ -67,49 +67,32 @@ internal class CurrentRun : RunStats
             Checkpoints = this.Checkpoints // Test out 
         };
 
-        /* Test Time Saving */
-        if (methodName == "TestSetPb")
-        {
-            // 1. Dummy Checkpoint
-            var dummyCheckpoint = new Checkpoint
-            {
-                CP = 1,
-                Ticks = 1234,
-                EndTouch = 1,
-                StartVelX = 111.1f,
-                StartVelY = 222.2f,
-                StartVelZ = 333.3f,
-                EndVelX = 444.4f,
-                EndVelY = 555.5f,
-                EndVelZ = 666.6f,
-                Attempts = 2
-            };
-
-            // 2. Dummy Dictionary за mapTime.Checkpoints
-            var dummyCheckpointsDict = new Dictionary<int, Checkpoint>
-            {
-                { dummyCheckpoint.CP, dummyCheckpoint }
-            };
-
-            mapTime = new MapTimeDataModel
-            {
-                PlayerId = player.Profile.ID,
-                MapId = player.CurrMap.ID,
-                Style = player.Timer.Style,
-                Type = 0,
-                Stage = stage != 0 ? stage : bonus,
-                Ticks = 666,
-                StartVelX = this.StartVelX,
-                StartVelY = this.StartVelY,
-                StartVelZ = this.StartVelZ,
-                EndVelX = this.EndVelX,
-                EndVelY = this.EndVelY,
-                EndVelZ = this.EndVelZ,
-                ReplayFramesBase64 = replay_frames,
-                Checkpoints = dummyCheckpointsDict
-            };
-        }
-        /* END Test Time Saving */
+        /*
+        _logger.LogDebug(
+            "[{ClassName}] {MethodName} -> Sending data:\n" +
+            " PlayerId: {PlayerId}\n" +
+            " MapId: {MapId}\n" +
+            " Style: {Style}\n" +
+            " Type: {Type}\n" +
+            " Stage: {Stage}\n" +
+            " Ticks: {Ticks}\n" +
+            " StartVel: ({StartVelX}, {StartVelY}, {StartVelZ})\n" +
+            " EndVel: ({EndVelX}, {EndVelY}, {EndVelZ})\n" +
+            " ReplayFramesBase64: {ReplayFrames}\n" +
+            " Checkpoints: {CheckpointsCount}",
+            nameof(CurrentRun), methodName,
+            mapTime.PlayerId,
+            mapTime.MapId,
+            mapTime.Style,
+            mapTime.Type,
+            mapTime.Stage,
+            mapTime.Ticks,
+            mapTime.StartVelX, mapTime.StartVelY, mapTime.StartVelZ,
+            mapTime.EndVelX, mapTime.EndVelY, mapTime.EndVelZ,
+            mapTime.ReplayFramesBase64?.Length ?? 0, // log length to avoid dumping huge string
+            mapTime.Checkpoints?.Count ?? 0
+        );
+        */
 
         await _dataService.InsertMapTimeAsync(mapTime);
 
@@ -117,6 +100,7 @@ internal class CurrentRun : RunStats
             await SaveCurrentRunCheckpoints(player, true);
 
         await player.CurrMap.LoadMapRecordRuns();
+        await player.Stats.LoadPlayerMapTimesData(player);
 
         stopwatch.Stop();
         _logger.LogInformation("[{Class}] {Method} -> Finished SaveMapTime for '{Name}' in {Elapsed}ms | API = {API}",

@@ -366,8 +366,37 @@ namespace SurfTimer.Data
                 stage = mapTime.Stage,
                 replay_frames = mapTime.ReplayFramesBase64,
                 run_date = mapTime.RunDate,
-                checkpoints = runCheckpoints.ToList()
+                checkpoints = runCheckpoints
             };
+
+            /*
+            _logger.LogDebug(
+                "[{ClassName}] {MethodName} -> Converted and sending API_SaveMapTime:\n" +
+                " player_id: {PlayerId}\n" +
+                " map_id: {MapId}\n" +
+                " run_time: {RunTime}\n" +
+                " style: {Style}\n" +
+                " type: {Type}\n" +
+                " stage: {Stage}\n" +
+                " start_vel: ({StartVelX}, {StartVelY}, {StartVelZ})\n" +
+                " end_vel: ({EndVelX}, {EndVelY}, {EndVelZ})\n" +
+                " replay_frames: {ReplayFramesLength}\n" +
+                " checkpoints: {CheckpointsCount}\n" +
+                " run_date: {RunDate}",
+                nameof(CurrentRun), methodName,
+                apiSaveMapTime.player_id,
+                apiSaveMapTime.map_id,
+                apiSaveMapTime.run_time,
+                apiSaveMapTime.style,
+                apiSaveMapTime.type,
+                apiSaveMapTime.stage,
+                apiSaveMapTime.start_vel_x, apiSaveMapTime.start_vel_y, apiSaveMapTime.start_vel_z,
+                apiSaveMapTime.end_vel_x, apiSaveMapTime.end_vel_y, apiSaveMapTime.end_vel_z,
+                apiSaveMapTime.replay_frames?.Length ?? 0,
+                apiSaveMapTime.checkpoints?.Count ?? 0,
+                apiSaveMapTime.run_date ?? 0
+            );
+            */
 
             var postResponse = await ApiMethod.POST(
                 Config.API.Endpoints.ENDPOINT_CR_SAVE_MAP_TIME,

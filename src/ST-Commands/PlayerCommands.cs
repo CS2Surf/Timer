@@ -477,14 +477,6 @@ public partial class SurfTimer
         oPlayer.Stats.ThisRun.PrintSituations(oPlayer);
     }
 
-
-    // [ConsoleCommand("css_setpb", "xxxxxx")]
-    // [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    // public void TestSetPb(CCSPlayerController? player, CommandInfo command)
-    // {
-    //     var _ = await TestSetPbAsync(player, command);
-    // }
-
     [ConsoleCommand("css_setpb", "xxxxx")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public async void TestSetPb(CCSPlayerController? player, CommandInfo command)
@@ -497,6 +489,51 @@ public partial class SurfTimer
 
         await oPlayer.Stats.ThisRun.SaveMapTime(oPlayer, 0, 0, 6666, "TestSetPb");
         // oPlayer.Stats.ThisRun.PrintSituations(oPlayer);
+
+        /* Test Time Saving *//*
+        if (methodName == "TestSetPb")
+        {
+            // 1. Dummy Checkpoint
+            var dummyCheckpoint = new Checkpoint
+            {
+                CP = 1,
+                Ticks = 1234,
+                EndTouch = 1,
+                StartVelX = 111.1f,
+                StartVelY = 222.2f,
+                StartVelZ = 333.3f,
+                EndVelX = 444.4f,
+                EndVelY = 555.5f,
+                EndVelZ = 666.6f,
+                Attempts = 2
+            };
+
+            // 2. Dummy Dictionary за mapTime.Checkpoints
+            var dummyCheckpointsDict = new Dictionary<int, Checkpoint>
+            {
+                { dummyCheckpoint.CP, dummyCheckpoint }
+            };
+
+            mapTime = new MapTimeDataModel
+            {
+                PlayerId = player.Profile.ID,
+                MapId = player.CurrMap.ID,
+                Style = player.Timer.Style,
+                Type = 0,
+                Stage = stage != 0 ? stage : bonus,
+                Ticks = 666,
+                StartVelX = this.StartVelX,
+                StartVelY = this.StartVelY,
+                StartVelZ = this.StartVelZ,
+                EndVelX = this.EndVelX,
+                EndVelY = this.EndVelY,
+                EndVelZ = this.EndVelZ,
+                ReplayFramesBase64 = replay_frames,
+                Checkpoints = dummyCheckpointsDict
+            };
+        }
+        /* END Test Time Saving */
+
     }
 
     [ConsoleCommand("css_testx", "x")]
