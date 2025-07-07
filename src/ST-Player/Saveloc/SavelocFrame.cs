@@ -4,8 +4,8 @@ namespace SurfTimer;
 
 internal class SavelocFrame
 {
-        public Vector Pos { get; set; } = new Vector(0, 0, 0);
-        public QAngle Ang { get; set; } = new QAngle(0, 0, 0);
-        public Vector Vel { get; set; } = new Vector(0, 0, 0);
+        public Vector_t Pos { get; set; } = new Vector_t(0, 0, 0);
+        public QAngle_t Ang { get; set; } = new QAngle_t(0, 0, 0);
+        public Vector_t Vel { get; set; } = new Vector_t(0, 0, 0);
         public int Tick { get; set; } = 0;
 }

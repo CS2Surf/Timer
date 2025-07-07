@@ -43,10 +43,7 @@ public partial class SurfTimer
             {
                 // Get velocities for DB queries
                 // Get the velocity of the player - we will be using this values to compare and write to DB
-                float velocity_x = player.Controller.PlayerPawn.Value!.AbsVelocity.X;
-                float velocity_y = player.Controller.PlayerPawn.Value!.AbsVelocity.Y;
-                float velocity_z = player.Controller.PlayerPawn.Value!.AbsVelocity.Z;
-                float velocity = (float)Math.Sqrt(velocity_x * velocity_x + velocity_y * velocity_y + velocity_z + velocity_z);
+                Vector_t velocity = player.Controller.PlayerPawn.Value!.AbsVelocity.ToVector_t();
 
                 // Map start zones -- hook into map_start, (s)tage1_start
                 if (trigger.Entity.Name.Contains("map_start") ||
@@ -65,10 +62,10 @@ public partial class SurfTimer
                     }
 
                     // Prespeed display
-                    player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
-                    player.Stats.ThisRun.StartVelX = velocity_x; // Start pre speed for the Map run
-                    player.Stats.ThisRun.StartVelY = velocity_y; // Start pre speed for the Map run
-                    player.Stats.ThisRun.StartVelZ = velocity_z; // Start pre speed for the Map run
+                    player.Controller.PrintToCenter($"Prespeed: {velocity.velMag():0} u/s");
+                    player.Stats.ThisRun.StartVelX = velocity.X; // Start pre speed for the Map run
+                    player.Stats.ThisRun.StartVelY = velocity.Y; // Start pre speed for the Map run
+                    player.Stats.ThisRun.StartVelZ = velocity.Z; // Start pre speed for the Map run
 
 #if DEBUG
                     player.Controller.PrintToChat($"CS2 Surf DEBUG >> CBaseTrigger_{ChatColors.LightRed}EndTouchFunc{ChatColors.Default} -> {ChatColors.Green}Map Start Zone");
@@ -104,25 +101,25 @@ public partial class SurfTimer
                         // player.Controller.PrintToChat($"{ChatColors.Green}Started{ChatColors.Default} Stage timer for stage {ChatColors.Green}{stage}{ChatColors.Default}");
 
                         // Show Prespeed for Stages - will be enabled/disabled by the user?
-                        player.Controller.PrintToCenter($"Stage {stage} - Prespeed: {velocity.ToString("0")} u/s");
+                        player.Controller.PrintToCenter($"Stage {stage} - Prespeed: {velocity.velMag().ToString("0")} u/s");
                     }
                     else if (player.Timer.IsRunning)
                     {
 #if DEBUG
-                        Console.WriteLine($"currentCheckpoint.EndVelX {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX} - velocity_x {velocity_x}");
-                        Console.WriteLine($"currentCheckpoint.EndVelY {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY} - velocity_y {velocity_y}");
-                        Console.WriteLine($"currentCheckpoint.EndVelZ {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ} - velocity_z {velocity_z}");
+                        Console.WriteLine($"currentCheckpoint.EndVelX {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX} - velocity.X {velocity.X}");
+                        Console.WriteLine($"currentCheckpoint.EndVelY {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY} - velocity.Y {velocity.Y}");
+                        Console.WriteLine($"currentCheckpoint.EndVelZ {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ} - velocity.Z {velocity.Z}");
                         Console.WriteLine($"currentCheckpoint.Attempts {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].Attempts}");
 #endif
 
                         // Update the Checkpoint object values
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX = velocity_x;
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY = velocity_y;
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ = velocity_z;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX = velocity.X;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY = velocity.Y;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ = velocity.Z;
                         player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndTouch = player.Timer.Ticks;
 
                         // Show Prespeed for Checkpoints - will be enabled/disabled by the user?
-                        player.Controller.PrintToCenter($"Checkpoint {player.Timer.Checkpoint} - Prespeed: {velocity.ToString("0")} u/s");
+                        player.Controller.PrintToCenter($"Checkpoint {player.Timer.Checkpoint} - Prespeed: {velocity.velMag():0} u/s");
                     }
                 }
 
@@ -138,9 +135,9 @@ public partial class SurfTimer
                     if (player.Timer.Checkpoint != 0 && player.Timer.Checkpoint <= player.Stats.ThisRun.Checkpoints.Count)
                     {
 #if DEBUG
-                        Console.WriteLine($"currentCheckpoint.EndVelX {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX} - velocity_x {velocity_x}");
-                        Console.WriteLine($"currentCheckpoint.EndVelY {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY} - velocity_y {velocity_y}");
-                        Console.WriteLine($"currentCheckpoint.EndVelZ {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ} - velocity_z {velocity_z}");
+                        Console.WriteLine($"currentCheckpoint.EndVelX {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX} - velocity.X {velocity.X}");
+                        Console.WriteLine($"currentCheckpoint.EndVelY {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY} - velocity.Y {velocity.Y}");
+                        Console.WriteLine($"currentCheckpoint.EndVelZ {player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ} - velocity.Z {velocity.Z}");
 #endif
 
                         if (player.Timer.IsRunning && player.ReplayRecorder.IsRecording)
@@ -150,13 +147,13 @@ public partial class SurfTimer
                         }
 
                         // Update the Checkpoint object values
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX = velocity_x;
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY = velocity_y;
-                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ = velocity_z;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelX = velocity.X;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelY = velocity.Y;
+                        player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndVelZ = velocity.Z;
                         player.Stats.ThisRun.Checkpoints[player.Timer.Checkpoint].EndTouch = player.Timer.Ticks;
 
                         // Show Prespeed for stages - will be enabled/disabled by the user?
-                        player.Controller.PrintToCenter($"Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.ToString("0")} u/s");
+                        player.Controller.PrintToCenter($"Checkpoint {Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value} - Prespeed: {velocity.velMag():0} u/s");
                     }
                 }
 
@@ -187,10 +184,10 @@ public partial class SurfTimer
                     }
 
                     // Prespeed display
-                    player.Controller.PrintToCenter($"Prespeed: {velocity.ToString("0")} u/s");
-                    player.Stats.ThisRun.StartVelX = velocity_x; // Start pre speed for the Bonus run
-                    player.Stats.ThisRun.StartVelY = velocity_y; // Start pre speed for the Bonus run
-                    player.Stats.ThisRun.StartVelZ = velocity_z; // Start pre speed for the Bonus run
+                    player.Controller.PrintToCenter($"Prespeed: {velocity.velMag():0)} u/s");
+                    player.Stats.ThisRun.StartVelX = velocity.X; // Start pre speed for the Bonus run
+                    player.Stats.ThisRun.StartVelY = velocity.Y; // Start pre speed for the Bonus run
+                    player.Stats.ThisRun.StartVelZ = velocity.Z; // Start pre speed for the Bonus run
                 }
             }
 

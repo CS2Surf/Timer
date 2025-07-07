@@ -28,9 +28,9 @@ internal static class JsonSelp
     }
 }
 
-internal class VectorConverter : JsonConverter<Vector>
+internal class Vector_tConverter : JsonConverter<Vector_t>
 {
-    public override Vector Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Vector_t Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Ensure that the reader is positioned at the start of an object
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -63,10 +63,10 @@ internal class VectorConverter : JsonConverter<Vector>
             }
         }
 
-        return new Vector { X = x, Y = y, Z = z };
+        return new Vector_t { X = x, Y = y, Z = z };
     }
 
-    public override void Write(Utf8JsonWriter writer, Vector value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Vector_t value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
         writer.WriteNumber("X", value.X);
@@ -76,9 +76,9 @@ internal class VectorConverter : JsonConverter<Vector>
     }
 }
 
-internal class QAngleConverter : JsonConverter<QAngle>
+internal class QAngle_tConverter : JsonConverter<QAngle_t>
 {
-    public override QAngle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override QAngle_t Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Ensure that the reader is positioned at the start of an object
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -111,10 +111,10 @@ internal class QAngleConverter : JsonConverter<QAngle>
             }
         }
 
-        return new QAngle { X = X, Y = Y, Z = Z };
+        return new QAngle_t { X = X, Y = Y, Z = Z };
     }
 
-    public override void Write(Utf8JsonWriter writer, QAngle value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, QAngle_t value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
         writer.WriteNumber("X", value.X);
