@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SurfTimer.Data;
 
 namespace SurfTimer;
 
@@ -14,11 +15,14 @@ internal class PlayerProfile
     public int LastSeen { get; set; } = 0;
     public int Connections { get; set; } = 0;
     private readonly ILogger<PlayerProfile> _logger;
+    private readonly IDataAccessService _dataService;
 
     public PlayerProfile(ulong steamId, string name = "", string country = "")
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerProfile>>();
+        _dataService = SurfTimer.ServiceProvider.GetRequiredService<IDataAccessService>();
+
 
         this.SteamID = steamId;
         this.Name = name;
@@ -42,7 +46,7 @@ internal class PlayerProfile
 
     private async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
-        await Get_Player_Profile();
+        await GetPlayerProfile();
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> InitializeAsync -> [{ConnType}] We got ProfileID {ProfileID} ({PlayerName})",
             nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.ID, this.Name
@@ -52,63 +56,49 @@ internal class PlayerProfile
     /// <summary>
     /// Retrieves all the data for the player from the database.
     /// </summary>
-    public async Task Get_Player_Profile([CallerMemberName] string methodName = "")
+    public async Task GetPlayerProfile([CallerMemberName] string methodName = "")
     {
-        bool newPlayer = false;
+        var profile = await _dataService.GetPlayerProfileAsync(this.SteamID);
 
-        // Load player profile data from database
-        using (var playerData = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PP_GET_PROFILE, this.SteamID)))
+        if (profile != null)
         {
-            if (playerData.HasRows && playerData.Read())
-            {
-                // Player exists in database
-                this.ID = playerData.GetInt32("id");
-                this.Name = playerData.GetString("name");
-                if (this.Country == "XX" && playerData.GetString("country") != "XX")
-                    this.Country = playerData.GetString("country");
-                this.JoinDate = playerData.GetInt32("join_date");
-                this.LastSeen = playerData.GetInt32("last_seen");
-                this.Connections = playerData.GetInt32("connections");
-            }
-            else
-            {
-                newPlayer = true;
-            }
+            this.ID = profile.ID;
+            this.Name = profile.Name;
+            if (this.Country == "XX" && profile.Country != "XX")
+                this.Country = profile.Country;
+            this.JoinDate = profile.JoinDate;
+            this.LastSeen = profile.LastSeen;
+            this.Connections = profile.Connections;
+        }
+        else
+        {
+            await InsertPlayerProfile();
         }
 
 #if DEBUG
-        _logger.LogDebug("[{ClassName}] {MethodName} -> Get_Player_Profile -> [{ConnType}] Returning player {PlayerName} ({SteamID}) loaded with ID {ProfileID}.",
+        _logger.LogDebug("[{ClassName}] {MethodName} -> GetPlayerProfile -> [{ConnType}] Loaded player {PlayerName} ({SteamID}) with ID {ProfileID}.",
             nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
         );
 #endif
-        if (newPlayer)
-            await Insert_Player_Profile();
     }
 
     /// <summary>
     /// Insert new player information into the database.
     /// Retrieves the ID of the newly created player.
     /// </summary>
-    public async Task Insert_Player_Profile([CallerMemberName] string methodName = "")
+    public async Task InsertPlayerProfile([CallerMemberName] string methodName = "")
     {
-        // Player does not exist in database
-        int joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        int lastSeen = joinDate;
-        int connections = 1;
-
-        // Write new player to database
-        int newPlayerRows = await SurfTimer.DB.WriteAsync(string.Format(
-            Config.MySQL.Queries.DB_QUERY_PP_INSERT_PROFILE,
-            MySqlConnector.MySqlHelper.EscapeString(this.Name), this.SteamID, this.Country, joinDate, lastSeen, connections));
-        if (newPlayerRows != 1)
+        var profile = new PlayerProfileDataModel
         {
-            Exception ex = new($"Error inserting new player profile for '{this.Name}' ({this.SteamID})");
-            throw ex;
-        }
+            SteamID = this.SteamID,
+            Name = this.Name,
+            Country = this.Country
+        };
 
-        await Get_Player_Profile();
+        this.ID = await _dataService.InsertPlayerProfileAsync(profile);
+
 #if DEBUG
-        _logger.LogDebug("[{ClassName}] {MethodName} -> Insert_Player_Profile -> [{ConnType}] New player {PlayerName} ({SteamID}) added with ID {ProfileID}.",
+        _logger.LogDebug("[{ClassName}] {MethodName} -> InsertPlayerProfile -> [{ConnType}] New player {PlayerName} ({SteamID}) added with ID {ProfileID}.",
             nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
         );
 #endif
@@ -119,18 +109,19 @@ internal class PlayerProfile
     /// </summary>
     /// <param name="name">Player Name</param>
     /// <exception cref="Exception"></exception>
-    public async Task Update_Player_Profile(string name, [CallerMemberName] string methodName = "")
+    public async Task UpdatePlayerProfile(string name, [CallerMemberName] string methodName = "")
     {
-        int updatePlayerTask = await SurfTimer.DB.WriteAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PP_UPDATE_PROFILE, this.Country, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(), this.ID, name));
-        if (updatePlayerTask != 1)
+        this.Name = name;
+        await _dataService.UpdatePlayerProfileAsync(new PlayerProfileDataModel
         {
-            _logger.LogError("[{ClassName}] {MethodName} -> Update_Player_Profile -> [{ConnType}] Failed to update data in database. Player {PlayerName} ({SteamID})",
-                nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID
-            );
-            throw new Exception($"CS2 Surf ERROR >> internal class PlayerProfile -> Update_Player_Profile -> [{(Config.API.GetApiOnly() ? "API" : "DB")}] Failed to update player data in database. Player: {this.Name} ({this.SteamID})");
-        }
+            ID = this.ID,
+            SteamID = this.SteamID,
+            Name = this.Name,
+            Country = this.Country
+        });
+
 #if DEBUG
-        _logger.LogDebug("[{ClassName}] {MethodName} -> Update_Player_Profile -> [{ConnType}] Updated player {PlayerName} ({SteamID}) in database with ID {ProfileID}.",
+        _logger.LogDebug("[{ClassName}] {MethodName} -> UpdatePlayerProfile -> [{ConnType}] Updated player {PlayerName} ({SteamID}) with ID {ProfileID}.",
             nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.Name, this.SteamID, this.ID
         );
 #endif

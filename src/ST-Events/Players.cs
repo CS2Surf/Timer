@@ -15,8 +15,12 @@ public partial class SurfTimer
         if (!controller.IsValid || !controller.IsBot || CurrentMap.ReplayManager.IsControllerConnectedToReplayPlayer(controller))
             return HookResult.Continue;
 
+        _logger.LogTrace("OnPlayerSpawn -> Player {Name} spawned.",
+            controller.PlayerName
+        );
+
         // Set the controller for the MapWR bot
-        if (!CurrentMap.ReplayManager!.MapWR.IsPlayable)
+        if (!CurrentMap.ReplayManager!.MapWR.IsPlayable && controller.IsBot)
         {
             CurrentMap.ReplayManager.MapWR.SetController(controller, -1);
             CurrentMap.ReplayManager.MapWR.LoadReplayData();
@@ -32,7 +36,7 @@ public partial class SurfTimer
         }
 
         // Set the controller for the StageWR bot
-        if (CurrentMap.ReplayManager.StageWR != null && !CurrentMap.ReplayManager.StageWR.IsPlayable)
+        if (CurrentMap.ReplayManager.StageWR != null && !CurrentMap.ReplayManager.StageWR.IsPlayable && controller.IsBot)
         {
             CurrentMap.ReplayManager.StageWR.SetController(controller, 3);
             CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
@@ -48,7 +52,7 @@ public partial class SurfTimer
         }
 
         // Spawn the BonusWR bot
-        if (CurrentMap.ReplayManager.BonusWR != null && !CurrentMap.ReplayManager.BonusWR.IsPlayable)
+        if (CurrentMap.ReplayManager.BonusWR != null && !CurrentMap.ReplayManager.BonusWR.IsPlayable && controller.IsBot)
         {
             CurrentMap.ReplayManager.BonusWR.SetController(controller, 3);
             CurrentMap.ReplayManager.BonusWR.LoadReplayData();
@@ -182,7 +186,7 @@ public partial class SurfTimer
             else
             {
                 // Update data in Player DB table
-                playerList[player.UserId ?? 0].Profile.Update_Player_Profile(player.PlayerName).GetAwaiter().GetResult(); // Hold the thread until player data is updated
+                playerList[player.UserId ?? 0].Profile.UpdatePlayerProfile(player.PlayerName).GetAwaiter().GetResult(); // Hold the thread until player data is updated
 
                 // Remove player data from playerList
                 playerList.Remove(player.UserId ?? 0);

@@ -57,6 +57,9 @@ internal class PlayerHUD
         }
     }
 
+    /// <summary>
+    /// Displays the Center HUD for the client
+    /// </summary>
     public void Display()
     {
         if (!_player.Controller.IsValid)

@@ -57,6 +57,7 @@ public partial class SurfTimer
                         player.Stats.ThisRun.Ticks = player.Timer.Ticks;
                         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_EXIT;
                         player.ReplayRecorder.MapSituations.Add(player.ReplayRecorder.Frames.Count);
+                        // player.Controller.PrintToChat($"{ChatColors.Red}START_ZONE_EXIT: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
                         // Console.WriteLine($"START_ZONE_EXIT: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
                     }
 

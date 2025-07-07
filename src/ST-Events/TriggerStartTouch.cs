@@ -579,7 +579,8 @@ public partial class SurfTimer
         if (
             stage_run_time < CurrentMap.StageWR[stage][pStyle].Ticks ||
             CurrentMap.StageWR[stage][pStyle].ID == -1 ||
-            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].Ticks > stage_run_time
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].Ticks > stage_run_time ||
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1
         )
         {
             if (stage_run_time < CurrentMap.StageWR[stage][pStyle].Ticks) // Player beat the Stage WR

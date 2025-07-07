@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SurfTimer.Data;
 
 namespace SurfTimer;
 
@@ -40,6 +41,9 @@ internal class PlayerStats
     /// </summary>
     public CurrentRun ThisRun { get; set; } = new CurrentRun();
     private readonly ILogger<PlayerStats> _logger;
+    private readonly IDataAccessService _dataService;
+
+
 
     // Initialize PersonalBest for each `style` (e.g., 0 for normal)
     // Here we can loop through all available styles at some point and initialize them
@@ -47,6 +51,7 @@ internal class PlayerStats
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerStats>>();
+        _dataService = SurfTimer.ServiceProvider.GetRequiredService<IDataAccessService>();
 
         // Initialize MapPB for each style
         foreach (int style in Config.Styles)
@@ -72,7 +77,7 @@ internal class PlayerStats
         );
     }
 
-    // API
+    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
     public async void LoadMapTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=0");
@@ -110,7 +115,7 @@ internal class PlayerStats
         }
     }
 
-    // API
+    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
     public async void LoadStageTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=2");
@@ -138,7 +143,7 @@ internal class PlayerStats
         }
     }
 
-    // API
+    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
     public async void LoadBonusTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
         var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=1");
@@ -169,104 +174,185 @@ internal class PlayerStats
 
     /// <summary>
     /// Loads the player's map time data from the database along with their ranks. For all types and styles (may not work correctly for Stages/Bonuses)
-    /// `Checkpoints` are loaded separately from another method in the `PresonalBest` class as it uses the unique `ID` for the run.
+    /// `Checkpoints` are loaded separately from another method in the `PresonalBest` class as it uses the unique `ID` for the run. (This method calls it if needed)
     /// This populates all the `style` and `type` stats the player has for the map
     /// </summary>
     public async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0, [CallerMemberName] string methodName = "")
     {
-        using (var playerStats = await SurfTimer.DB.QueryAsync(
-            string.Format(Config.MySQL.Queries.DB_QUERY_PS_GET_ALL_RUNTIMES, player.Profile.ID, SurfTimer.CurrentMap.ID)))
+        var playerMapTimes = await _dataService.GetPlayerMapTimesAsync(player.Profile.ID, SurfTimer.CurrentMap.ID);
+
+        if (!playerMapTimes.Any())
         {
-            // int style = player.Timer.Style;
-            int style;
-            if (!playerStats.HasRows)
+            _logger.LogTrace("[{ClassName}] {MethodName} -> No MapTimes data found for Player {PlayerName} (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID);
+            return;
+        }
+
+        foreach (var mapTime in playerMapTimes)
+        {
+            int style = mapTime.Style;
+            switch (mapTime.Type)
             {
-                _logger.LogTrace("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> No MapTimes data found for Player {PlayerName} (ID {PlayerID}).",
-                    nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
-                );
-                return;
+                case 1: // Bonus time
+#if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB", nameof(PlayerStats), methodName);
+#endif
+                    BonusPB[mapTime.Stage][style].ID = mapTime.ID;
+                    BonusPB[mapTime.Stage][style].Ticks = mapTime.RunTime;
+                    BonusPB[mapTime.Stage][style].Type = mapTime.Type;
+                    BonusPB[mapTime.Stage][style].Rank = mapTime.Rank;
+                    BonusPB[mapTime.Stage][style].StartVelX = mapTime.StartVelX;
+                    BonusPB[mapTime.Stage][style].StartVelY = mapTime.StartVelY;
+                    BonusPB[mapTime.Stage][style].StartVelZ = mapTime.StartVelZ;
+                    BonusPB[mapTime.Stage][style].EndVelX = mapTime.EndVelX;
+                    BonusPB[mapTime.Stage][style].EndVelY = mapTime.EndVelY;
+                    BonusPB[mapTime.Stage][style].EndVelZ = mapTime.EndVelZ;
+                    BonusPB[mapTime.Stage][style].RunDate = mapTime.RunDate;
+                    break;
+
+                case 2: // Stage time
+#if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB", nameof(PlayerStats), methodName);
+#endif
+                    StagePB[mapTime.Stage][style].ID = mapTime.ID;
+                    StagePB[mapTime.Stage][style].Ticks = mapTime.RunTime;
+                    StagePB[mapTime.Stage][style].Type = mapTime.Type;
+                    StagePB[mapTime.Stage][style].Rank = mapTime.Rank;
+                    StagePB[mapTime.Stage][style].StartVelX = mapTime.StartVelX;
+                    StagePB[mapTime.Stage][style].StartVelY = mapTime.StartVelY;
+                    StagePB[mapTime.Stage][style].StartVelZ = mapTime.StartVelZ;
+                    StagePB[mapTime.Stage][style].EndVelX = mapTime.EndVelX;
+                    StagePB[mapTime.Stage][style].EndVelY = mapTime.EndVelY;
+                    StagePB[mapTime.Stage][style].EndVelZ = mapTime.EndVelZ;
+                    StagePB[mapTime.Stage][style].RunDate = mapTime.RunDate;
+                    break;
+
+                default: // Map time
+#if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB", nameof(PlayerStats), methodName);
+#endif
+                    PB[style].ID = mapTime.ID;
+                    PB[style].Ticks = mapTime.RunTime;
+                    PB[style].Type = mapTime.Type;
+                    PB[style].Rank = mapTime.Rank;
+                    PB[style].StartVelX = mapTime.StartVelX;
+                    PB[style].StartVelY = mapTime.StartVelY;
+                    PB[style].StartVelZ = mapTime.StartVelZ;
+                    PB[style].EndVelX = mapTime.EndVelX;
+                    PB[style].EndVelY = mapTime.EndVelY;
+                    PB[style].EndVelZ = mapTime.EndVelZ;
+                    PB[style].RunDate = mapTime.RunDate;
+
+                    await PB[style].LoadCheckpoints();
+                    break;
             }
-            while (playerStats.Read())
-            {
-                // Load data into each PersonalBest object
-                if (playerStats.GetInt32("type") == 1) // Bonus time
-                {
+
 #if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB",
-                        nameof(PlayerStats), methodName
-                    );
+            _logger.LogDebug("[{ClassName}] {MethodName} -> Loaded PB[{Style}] run {RunID} (Rank {Rank}) for '{PlayerName}' (ID {PlayerID}).",
+                nameof(PlayerStats), methodName, style, mapTime.ID, mapTime.Rank, player.Profile.Name, player.Profile.ID);
 #endif
-                    int bonusNum = playerStats.GetInt32("stage");
-                    style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
-                    BonusPB[bonusNum][style].ID = playerStats.GetInt32("id");
-                    BonusPB[bonusNum][style].Ticks = playerStats.GetInt32("run_time");
-                    BonusPB[bonusNum][style].Type = playerStats.GetInt32("type");
-                    BonusPB[bonusNum][style].Rank = playerStats.GetInt32("rank");
-                    BonusPB[bonusNum][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
-                    BonusPB[bonusNum][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
-                    BonusPB[bonusNum][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
-                    BonusPB[bonusNum][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
-                    BonusPB[bonusNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
-                    BonusPB[bonusNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                    BonusPB[bonusNum][style].RunDate = playerStats.GetInt32("run_date");
-                }
-                else if (playerStats.GetInt32("type") == 2) // Stage time
-                {
-#if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB",
-                        nameof(PlayerStats), methodName
-                    );
-#endif
-                    int stageNum = playerStats.GetInt32("stage");
-                    style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
-                    StagePB[stageNum][style].ID = playerStats.GetInt32("id");
-                    StagePB[stageNum][style].Ticks = playerStats.GetInt32("run_time");
-                    StagePB[stageNum][style].Type = playerStats.GetInt32("type");
-                    StagePB[stageNum][style].Rank = playerStats.GetInt32("rank");
-                    StagePB[stageNum][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
-                    StagePB[stageNum][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
-                    StagePB[stageNum][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
-                    StagePB[stageNum][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
-                    StagePB[stageNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
-                    StagePB[stageNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                    StagePB[stageNum][style].RunDate = playerStats.GetInt32("run_date");
-                    // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> StagePB Loaded:
-                    //     StagePB[{stageNum}][{style}] =
-                    //     Stage: {stageNum} | ID: {StagePB[stageNum][style].ID} | Ticks: {StagePB[stageNum][style].Ticks} | Rank: {StagePB[stageNum][style].Rank} | Type: {StagePB[stageNum][style].Type}"
-                    // );
-                }
-                else // Map time
-                {
-#if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB",
-                        nameof(PlayerStats), methodName
-                    );
-#endif
-                    style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
-                    PB[style].ID = playerStats.GetInt32("id");
-                    PB[style].Ticks = playerStats.GetInt32("run_time");
-                    PB[style].Type = playerStats.GetInt32("type");
-                    PB[style].Rank = playerStats.GetInt32("rank");
-                    PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
-                    PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
-                    PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
-                    PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
-                    PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
-                    PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
-                    PB[style].RunDate = playerStats.GetInt32("run_date");
-                    // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> PB Loaded:
-                    //     PB[{style}] =
-                    //     ID: {PB[style].ID} | Ticks: {PB[style].Ticks} | Rank: {PB[style].Rank} | Type: {PB[style].Type}"
-                    // );
-                    await this.PB[style].PB_LoadCheckpointsData();
-                }
-                // Console.WriteLine($"============== CS2 Surf DEBUG >> internal class PlayerStats -> public async Task LoadPlayerMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
-#if DEBUG
-                _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> Loaded PB[{Style}] run {RunID} (Rank {Rank}) for '{PlayerName}' (ID {PlayerID}).",
-                    nameof(PlayerStats), methodName, style, PB[style].ID, PB[style].Rank, player.Profile.Name, player.Profile.ID
-                );
-#endif
-            }
         }
     }
+
+
+    /*
+        public async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0, [CallerMemberName] string methodName = "")
+        {
+            using (var playerStats = await SurfTimer.DB.QueryAsync(
+                string.Format(Config.MySQL.Queries.DB_QUERY_PS_GET_ALL_RUNTIMES, player.Profile.ID, SurfTimer.CurrentMap.ID)))
+            {
+                // int style = player.Timer.Style;
+                int style;
+                if (!playerStats.HasRows)
+                {
+                    _logger.LogTrace("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> No MapTimes data found for Player {PlayerName} (ID {PlayerID}).",
+                        nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
+                    );
+                    return;
+                }
+                while (playerStats.Read())
+                {
+                    // Load data into each PersonalBest object
+                    if (playerStats.GetInt32("type") == 1) // Bonus time
+                    {
+    #if DEBUG
+                        _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB",
+                            nameof(PlayerStats), methodName
+                        );
+    #endif
+                        int bonusNum = playerStats.GetInt32("stage");
+                        style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
+                        BonusPB[bonusNum][style].ID = playerStats.GetInt32("id");
+                        BonusPB[bonusNum][style].Ticks = playerStats.GetInt32("run_time");
+                        BonusPB[bonusNum][style].Type = playerStats.GetInt32("type");
+                        BonusPB[bonusNum][style].Rank = playerStats.GetInt32("rank");
+                        BonusPB[bonusNum][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                        BonusPB[bonusNum][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                        BonusPB[bonusNum][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                        BonusPB[bonusNum][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                        BonusPB[bonusNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                        BonusPB[bonusNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                        BonusPB[bonusNum][style].RunDate = playerStats.GetInt32("run_date");
+                    }
+                    else if (playerStats.GetInt32("type") == 2) // Stage time
+                    {
+    #if DEBUG
+                        _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB",
+                            nameof(PlayerStats), methodName
+                        );
+    #endif
+                        int stageNum = playerStats.GetInt32("stage");
+                        style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
+                        StagePB[stageNum][style].ID = playerStats.GetInt32("id");
+                        StagePB[stageNum][style].Ticks = playerStats.GetInt32("run_time");
+                        StagePB[stageNum][style].Type = playerStats.GetInt32("type");
+                        StagePB[stageNum][style].Rank = playerStats.GetInt32("rank");
+                        StagePB[stageNum][style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                        StagePB[stageNum][style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                        StagePB[stageNum][style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                        StagePB[stageNum][style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                        StagePB[stageNum][style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                        StagePB[stageNum][style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                        StagePB[stageNum][style].RunDate = playerStats.GetInt32("run_date");
+                        // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> StagePB Loaded:
+                        //     StagePB[{stageNum}][{style}] =
+                        //     Stage: {stageNum} | ID: {StagePB[stageNum][style].ID} | Ticks: {StagePB[stageNum][style].Ticks} | Rank: {StagePB[stageNum][style].Rank} | Type: {StagePB[stageNum][style].Type}"
+                        // );
+                    }
+                    else // Map time
+                    {
+    #if DEBUG
+                        _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB",
+                            nameof(PlayerStats), methodName
+                        );
+    #endif
+                        style = playerStats.GetInt32("style"); // To-do: Uncomment when style is implemented
+                        PB[style].ID = playerStats.GetInt32("id");
+                        PB[style].Ticks = playerStats.GetInt32("run_time");
+                        PB[style].Type = playerStats.GetInt32("type");
+                        PB[style].Rank = playerStats.GetInt32("rank");
+                        PB[style].StartVelX = (float)playerStats.GetDouble("start_vel_x");
+                        PB[style].StartVelY = (float)playerStats.GetDouble("start_vel_y");
+                        PB[style].StartVelZ = (float)playerStats.GetDouble("start_vel_z");
+                        PB[style].EndVelX = (float)playerStats.GetDouble("end_vel_x");
+                        PB[style].EndVelY = (float)playerStats.GetDouble("end_vel_y");
+                        PB[style].EndVelZ = (float)playerStats.GetDouble("end_vel_z");
+                        PB[style].RunDate = playerStats.GetInt32("run_date");
+                        // Console.WriteLine(@$"DEBUG >> (func) LoadPlayerMapTimesData >> PB Loaded:
+                        //     PB[{style}] =
+                        //     ID: {PB[style].ID} | Ticks: {PB[style].Ticks} | Rank: {PB[style].Rank} | Type: {PB[style].Type}"
+                        // );
+                        await this.PB[style].LoadCheckpoints();
+                    }
+                    // Console.WriteLine($"============== CS2 Surf DEBUG >> internal class PlayerStats -> public async Task LoadPlayerMapTimesData -> PlayerID: {player.Profile.ID} | Rank: {PB[style].Rank} | ID: {PB[style].ID} | RunTime: {PB[style].Ticks} | SVX: {PB[style].StartVelX} | SVY: {PB[style].StartVelY} | SVZ: {PB[style].StartVelZ} | EVX: {PB[style].EndVelX} | EVY: {PB[style].EndVelY} | EVZ: {PB[style].EndVelZ} | Run Date (UNIX): {PB[style].RunDate}");
+    #if DEBUG
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData -> Loaded PB[{Style}] run {RunID} (Rank {Rank}) for '{PlayerName}' (ID {PlayerID}).",
+                        nameof(PlayerStats), methodName, style, PB[style].ID, PB[style].Rank, player.Profile.Name, player.Profile.ID
+                    );
+    #endif
+                }
+            }
+        }
+    */
+
 }
