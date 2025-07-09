@@ -17,8 +17,13 @@ public partial class SurfTimer
 
         if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
         {
-            Server.NextWorldUpdate(() => // Does NOT trigger a Joined X team message 
+            Server.NextFrame(() =>  // Weird CS2 bug that requires doing this twice to show the Joined X team in chat and not stay in limbo
                 {
+                    player.ChangeTeam(CsTeam.CounterTerrorist);
+                    player.Respawn();
+
+                    player.ChangeTeam(CsTeam.Spectator);
+
                     player.ChangeTeam(CsTeam.CounterTerrorist);
                     player.Respawn();
                 }
@@ -33,10 +38,13 @@ public partial class SurfTimer
         }
 
         // oPlayer.ReplayRecorder.Reset();
-        // To-do: players[userid].Timer.Reset() -> teleport player
         playerList[player.UserId ?? 0].Timer.Reset();
         if (!CurrentMap.StartZone.IsZero())
-            Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
+            Server.NextFrame(() =>
+            {
+                Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone);
+            }
+        );
     }
 
     [ConsoleCommand("css_rs", "Reset back to the start of the stage or bonus you were in.")]
@@ -48,8 +56,17 @@ public partial class SurfTimer
 
         if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
         {
-            player.ChangeTeam(CsTeam.CounterTerrorist);
-            player.Respawn();
+            Server.NextFrame(() =>  // Weird CS2 bug that requires doing this twice to show the Joined X team in chat and not stay in limbo
+                {
+                    player.ChangeTeam(CsTeam.CounterTerrorist);
+                    player.Respawn();
+
+                    player.ChangeTeam(CsTeam.Spectator);
+
+                    player.ChangeTeam(CsTeam.CounterTerrorist);
+                    player.Respawn();
+                }
+            );
         }
 
         Player oPlayer = playerList[player.UserId ?? 0];
@@ -67,7 +84,6 @@ public partial class SurfTimer
             else // Reset back to map start
                 Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.StartZone));
         }
-
         else
         {
             if (oPlayer.Timer.Stage != 0 && !CurrentMap.StageStartZone[oPlayer.Timer.Stage].IsZero())
@@ -79,7 +95,7 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_s", "Teleport to a stage")]
     [ConsoleCommand("css_stage", "Teleport to a stage")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    [CommandHelper(minArgs: 1, usage: "<Stage Number> [1/2/3]", whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToStage(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -98,25 +114,11 @@ public partial class SurfTimer
             return;
         }
 
-        // Must be 1 argument
-        if (command.ArgCount < 2 || stage <= 0)
-        {
-#if DEBUG
-            player.PrintToChat($"CS2 Surf DEBUG >> css_stage >> Arg#: {command.ArgCount} >> Args: {Int32.Parse(command.ArgByIndex(1))}");
-#endif
-
-            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
-                "!s <stage>"]}"
-            );
-            return;
-        }
-
-        else if (CurrentMap.Stages <= 0)
+        if (CurrentMap.Stages <= 0)
         {
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["not_staged"]}");
             return;
         }
-
         else if (stage > CurrentMap.Stages)
         {
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_stage_value",
@@ -131,8 +133,17 @@ public partial class SurfTimer
 
             if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
             {
-                player.ChangeTeam(CsTeam.CounterTerrorist);
-                player.Respawn();
+                Server.NextFrame(() =>  // Weird CS2 bug that requires doing this twice to show the Joined X team in chat and not stay in limbo
+                    {
+                        player.ChangeTeam(CsTeam.CounterTerrorist);
+                        player.Respawn();
+
+                        player.ChangeTeam(CsTeam.Spectator);
+
+                        player.ChangeTeam(CsTeam.CounterTerrorist);
+                        player.Respawn();
+                    }
+                );
             }
 
             if (stage == 1)
@@ -149,7 +160,6 @@ public partial class SurfTimer
             // To-do: If you run this while you're in the start zone, endtouch for the start zone runs after you've teleported
             //        causing the timer to start. This needs to be fixed.
         }
-
         else
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
                 "!s <stage>"]}"
@@ -158,7 +168,7 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_b", "Teleport to a bonus")]
     [ConsoleCommand("css_bonus", "Teleport to a bonus")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    [CommandHelper(minArgs: 1, usage: "<Bonus Number> [1/2/3]", whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayerGoToBonus(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -166,29 +176,23 @@ public partial class SurfTimer
 
         int bonus;
 
-        // Check for argument count
-        if (command.ArgCount < 2)
+        try
         {
-            if (CurrentMap.Bonuses > 0)
-                bonus = 1;
-            else
-            {
-                player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
-                    "!b <bonus>"]}"
-                );
-                return;
-            }
-        }
-
-        else
             bonus = Int32.Parse(command.ArgByIndex(1));
+        }
+        catch (System.Exception)
+        {
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!b <bonus>"]}"
+            );
+            return;
+        }
 
         if (CurrentMap.Bonuses <= 0)
         {
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["not_bonused"]}");
             return;
         }
-
         else if (bonus > CurrentMap.Bonuses)
         {
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_bonus_value",
@@ -204,13 +208,21 @@ public partial class SurfTimer
 
             if (player.Team == CsTeam.Spectator || player.Team == CsTeam.None)
             {
-                player.ChangeTeam(CsTeam.CounterTerrorist);
-                player.Respawn();
+                Server.NextFrame(() =>  // Weird CS2 bug that requires doing this twice to show the Joined X team in chat and not stay in limbo
+                    {
+                        player.ChangeTeam(CsTeam.CounterTerrorist);
+                        player.Respawn();
+
+                        player.ChangeTeam(CsTeam.Spectator);
+
+                        player.ChangeTeam(CsTeam.CounterTerrorist);
+                        player.Respawn();
+                    }
+                );
             }
 
             Server.NextFrame(() => Extensions.Teleport(player.PlayerPawn.Value!, CurrentMap.BonusStartZone[bonus]));
         }
-
         else
             player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
                 "!b <bonus>"]}"
@@ -218,9 +230,9 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_spec", "Moves a player automaticlly into spectator mode")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void MovePlayerToSpectator(CCSPlayerController? player, CommandInfo command)
     {
-        // if (player == null || player.Team == CsTeam.Spectator)
         if (player == null)
             return;
 
@@ -251,6 +263,7 @@ public partial class SurfTimer
     */
     [ConsoleCommand("css_replaybotpause", "Pause the replay bot playback")]
     [ConsoleCommand("css_rbpause", "Pause the replay bot playback")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PauseReplay(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null || player.Team != CsTeam.Spectator)
@@ -266,6 +279,7 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_rbplay", "Start all replays from the start")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void PlayReplay(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null || player.Team != CsTeam.Spectator)
@@ -289,6 +303,7 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_replaybotflip", "Flips the replay bot between Forward/Backward playback")]
     [ConsoleCommand("css_rbflip", "Flips the replay bot between Forward/Backward playback")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void ReverseReplay(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null || player.Team != CsTeam.Spectator)
@@ -350,6 +365,7 @@ public partial class SurfTimer
     ########################
     */
     [ConsoleCommand("css_saveloc", "Save current player location to be practiced")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void SavePlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -386,6 +402,7 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_tele", "Teleport player to current saved location")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void TeleportPlayerLocation(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -414,6 +431,7 @@ public partial class SurfTimer
         }
 
         if (command.ArgCount > 1)
+        {
             try
             {
                 int tele_n = int.Parse(command.ArgByIndex(1));
@@ -425,12 +443,14 @@ public partial class SurfTimer
                 Exception exception = new("sum ting wong");
                 throw exception;
             }
+        }
         SavelocFrame location = p.SavedLocations[p.CurrentSavedLocation];
         Server.NextFrame(() =>
-        {
-            Extensions.Teleport(p.Controller.PlayerPawn.Value!, location.Pos, location.Ang, location.Vel);
-            p.Timer.Ticks = location.Tick;
-        });
+            {
+                Extensions.Teleport(p.Controller.PlayerPawn.Value!, location.Pos, location.Ang, location.Vel);
+                p.Timer.Ticks = location.Tick;
+            }
+        );
 
         p.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["saveloc_teleported",
             p.CurrentSavedLocation]}"
@@ -438,6 +458,7 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_teleprev", "Teleport player to previous saved location")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void TeleportPlayerLocationPrev(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -473,6 +494,7 @@ public partial class SurfTimer
     }
 
     [ConsoleCommand("css_telenext", "Teleport player to next saved location")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void TeleportPlayerLocationNext(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
