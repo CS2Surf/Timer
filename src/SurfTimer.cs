@@ -1,11 +1,19 @@
 ﻿/*
-                      ___  _____  _________  ___ 
-                     ___  /  _/ |/ / __/ _ \/ _ |
-                    ___  _/ //    / _// , _/ __ |
-                   ___  /___/_/|_/_/ /_/|_/_/ |_|
+                   ___   _____   ____________  ___         
+                  ___   /  _/ | / / ____/ __ \/   |        
+                 ___    / //  |/ / /_  / /_/ / /| |        
+                ___   _/ // /|  / __/ / _, _/ ___ |        
+               ___   /___/_/ |_/_/   /_/ |_/_/  |_|  
+
+             ___   ___________ __    ___   _____ __  ______ 
+            ___   /_  __/ ___// /   /   | / ___// / / / __ \
+           ___     / /  \__ \/ /   / /| | \__ \/ /_/ / / / /
+          ___     / /  ___/ / /___/ ___ |___/ / __  / /_/ / 
+         ___     /_/  /____/_____/_/  |_/____/_/ /_/_____/  
 
     Official Timer plugin for the CS2 Surf Initiative.
     Copyright (C) 2024  Liam C. (Infra)
+    Copyright (C) 2025  tslashd
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -56,7 +64,6 @@ public partial class SurfTimer : BasePlugin
     // Globals
     private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
     internal static TimerDatabase DB = new TimerDatabase(Config.MySQL.GetConnectionString()); // Initiate it with the correct connection string
-    // internal Map CurrentMap = null!;
     internal static Map CurrentMap = null!;
 
     /* ========== MAP START HOOKS ========== */

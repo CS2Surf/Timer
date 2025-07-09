@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+using SurfTimer.Data;
+
 namespace SurfTimer;
 
 // Map Info structure
-internal class API_PostResponseData
+public class API_PostResponseData
 {
     public int inserted { get; set; }
     public float xtime { get; set; }
@@ -9,7 +12,7 @@ internal class API_PostResponseData
     public List<int>? trx { get; set; }
 }
 
-internal class API_Checkpoint
+public class API_Checkpoint
 {
     public int cp { get; set; }
     public int run_time { get; set; }
@@ -23,7 +26,7 @@ internal class API_Checkpoint
     public int attempts { get; set; }
 }
 
-internal class API_CurrentRun
+public class API_CurrentRun
 {
     public int player_id { get; set; }
     public int map_id { get; set; }
@@ -42,7 +45,7 @@ internal class API_CurrentRun
     public int? run_date { get; set; } = null;
 }
 
-internal class API_MapInfo
+public class API_MapInfo
 {
     public int id { get; set; } = 0;
     public string name { get; set; } = "N/A";
@@ -53,9 +56,31 @@ internal class API_MapInfo
     public int ranked { get; set; } = 0;
     public int? date_added { get; set; } = null;
     public int? last_played { get; set; } = null;
+
+    [JsonConstructor]
+    /// <summary>
+    /// Parameterless constructor for manual assigning of data
+    /// </summary>
+    public API_MapInfo() { }
+
+    /// <summary>
+    /// Assigns values to the needed data model for an API request
+    /// </summary>
+    public API_MapInfo(MapInfoDataModel data)
+    {
+        id = data.ID;
+        name = data.Name;
+        author = data.Author;
+        tier = data.Tier;
+        stages = data.Stages;
+        bonuses = data.Bonuses;
+        ranked = data.Ranked ? 1 : 0;
+        date_added = data.DateAdded;
+        last_played = data.LastPlayed;
+    }
 }
 
-internal class API_MapTime
+public class API_MapTime
 {
     public int id { get; set; }
     public int player_id { get; set; }
@@ -77,7 +102,7 @@ internal class API_MapTime
     public int total_count { get; set; }
 }
 
-internal class API_PlayerSurfProfile
+public class API_PlayerSurfProfile
 {
     public int id { get; set; }
     public string name { get; set; } = "N/A";
@@ -86,9 +111,29 @@ internal class API_PlayerSurfProfile
     public int join_date { get; set; }
     public int last_seen { get; set; }
     public int connections { get; set; }
+
+    [JsonConstructor]
+    /// <summary>
+    /// Parameterless constructor for manual assigning of data
+    /// </summary>
+    public API_PlayerSurfProfile() { }
+
+    /// <summary>
+    /// Assigns values to the needed data model for an API request
+    /// </summary>
+    public API_PlayerSurfProfile(PlayerProfileDataModel data)
+    {
+        id = data.ID;
+        name = data.Name;
+        steam_id = data.SteamID;
+        country = data.Country;
+        join_date = data.JoinDate;
+        last_seen = data.LastSeen;
+        connections = data.Connections == 0 ? 1 : data.Connections;
+    }
 }
 
-internal class API_PersonalBest
+public class API_PersonalBest
 {
     public int id { get; set; }
     public int player_id { get; set; }
@@ -108,9 +153,12 @@ internal class API_PersonalBest
     public List<API_Checkpoint>? checkpoints { get; set; } = null;
     public string name { get; set; } = "N/A";
     public int rank { get; set; }
+
+    [JsonConstructor]
+    public API_PersonalBest() { } // Parameterless constructor used by GET method
 }
 
-internal class API_SaveMapTime
+public class API_SaveMapTime
 {
     public int player_id { get; set; }
     public int map_id { get; set; }
@@ -127,4 +175,40 @@ internal class API_SaveMapTime
     public List<API_Checkpoint>? checkpoints { get; set; } = null;
     public string replay_frames { get; set; } = "";
     public int? run_date { get; set; } = null;
+
+    /// <summary>
+    /// Assigns values to the needed data model for an API request
+    /// </summary>
+    internal API_SaveMapTime(MapTimeDataModel data)
+    {
+        player_id = data.PlayerId;
+        map_id = data.MapId;
+        run_time = data.Ticks;
+        start_vel_x = data.StartVelX;
+        start_vel_y = data.StartVelY;
+        start_vel_z = data.StartVelZ;
+        end_vel_x = data.EndVelX;
+        end_vel_y = data.EndVelY;
+        end_vel_z = data.EndVelZ;
+        style = data.Style;
+        type = data.Type;
+        stage = data.Stage;
+        replay_frames = data.ReplayFramesBase64;
+        run_date = data.RunDate;
+
+        // Convert Checkpoints
+        checkpoints = data.Checkpoints.Select(cp => new API_Checkpoint
+        {
+            cp = cp.Key,
+            run_time = cp.Value.Ticks,
+            end_touch = cp.Value.EndTouch,
+            start_vel_x = cp.Value.StartVelX,
+            start_vel_y = cp.Value.StartVelY,
+            start_vel_z = cp.Value.StartVelZ,
+            end_vel_x = cp.Value.EndVelX,
+            end_vel_y = cp.Value.EndVelY,
+            end_vel_z = cp.Value.EndVelZ,
+            attempts = cp.Value.Attempts
+        }).ToList();
+    }
 }

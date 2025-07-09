@@ -38,10 +38,9 @@ internal class CurrentRun : RunStats
     {
         string replay_frames = "";
 
-        /* Test Time Saving */
-        if (methodName != "TestSetPb")
-            replay_frames = player.ReplayRecorder.TrimReplay(player, stage != 0 ? 2 : bonus != 0 ? 1 : 0, stage == SurfTimer.CurrentMap.Stages);
-
+        // /* Test Time Saving */
+        // if (methodName != "TestSetPb")
+        replay_frames = player.ReplayRecorder.TrimReplay(player, stage != 0 ? 2 : bonus != 0 ? 1 : 0, stage == SurfTimer.CurrentMap.Stages);
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> Sending total of {Frames} replay frames.",
             nameof(CurrentRun), methodName, replay_frames.Length);
@@ -67,44 +66,38 @@ internal class CurrentRun : RunStats
             Checkpoints = this.Checkpoints // Test out 
         };
 
-        /*
-        _logger.LogDebug(
-            "[{ClassName}] {MethodName} -> Sending data:\n" +
-            " PlayerId: {PlayerId}\n" +
-            " MapId: {MapId}\n" +
-            " Style: {Style}\n" +
-            " Type: {Type}\n" +
-            " Stage: {Stage}\n" +
-            " Ticks: {Ticks}\n" +
-            " StartVel: ({StartVelX}, {StartVelY}, {StartVelZ})\n" +
-            " EndVel: ({EndVelX}, {EndVelY}, {EndVelZ})\n" +
-            " ReplayFramesBase64: {ReplayFrames}\n" +
-            " Checkpoints: {CheckpointsCount}",
-            nameof(CurrentRun), methodName,
-            mapTime.PlayerId,
-            mapTime.MapId,
-            mapTime.Style,
-            mapTime.Type,
-            mapTime.Stage,
-            mapTime.Ticks,
-            mapTime.StartVelX, mapTime.StartVelY, mapTime.StartVelZ,
-            mapTime.EndVelX, mapTime.EndVelY, mapTime.EndVelZ,
-            mapTime.ReplayFramesBase64?.Length ?? 0, // log length to avoid dumping huge string
-            mapTime.Checkpoints?.Count ?? 0
-        );
-        */
-
-        await _dataService.InsertMapTimeAsync(mapTime);
+        int mapTimeId = await _dataService.InsertMapTimeAsync(mapTime);
 
         if (recType == 0 && !Config.API.GetApiOnly())
             await SaveCurrentRunCheckpoints(player, true);
 
+        // Reload the times for the map
         await player.CurrMap.LoadMapRecordRuns();
-        await player.Stats.LoadPlayerMapTimesData(player);
+
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Loading data for run {ID} with type {Type}.",
+            nameof(CurrentRun), methodName, mapTimeId, recType
+        );
+
+        // Reload the player PB time (could possibly be skipped as we have mapTimeId after inserting)
+        switch (recType)
+        {
+            case 0:
+                player.Stats.PB[player.Timer.Style].ID = mapTimeId;
+                await player.Stats.PB[player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+            case 1:
+                player.Stats.BonusPB[bonus][player.Timer.Style].ID = mapTimeId;
+                await player.Stats.BonusPB[bonus][player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+            case 2:
+                player.Stats.StagePB[stage][player.Timer.Style].ID = mapTimeId;
+                await player.Stats.StagePB[stage][player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+        }
 
         stopwatch.Stop();
-        _logger.LogInformation("[{Class}] {Method} -> Finished SaveMapTime for '{Name}' in {Elapsed}ms | API = {API}",
-            nameof(CurrentRun), methodName, player.Profile.Name, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+        _logger.LogInformation("[{Class}] {Method} -> Finished SaveMapTime for '{Name}' (ID {ID}) in {Elapsed}ms | API = {API}",
+            nameof(CurrentRun), methodName, player.Profile.Name, mapTimeId, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
         );
     }
 

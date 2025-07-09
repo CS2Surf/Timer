@@ -47,7 +47,7 @@ unsafe static class Extensions
 
     public static void SetCollisionGroup(this CCSPlayerController controller, CollisionGroup collisionGroup)
     {
-        if (!controller.IsValid || controller.Collision==null) return;
+        if (!controller.IsValid || controller.Collision == null) return;
         controller.Collision.CollisionAttribute.CollisionGroup = (byte)collisionGroup;
         controller.Collision.CollisionGroup = (byte)collisionGroup;
 

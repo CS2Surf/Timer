@@ -56,9 +56,7 @@ namespace SurfTimer.Data
                .ToDictionary(c => c.CP, c => c);
         }
 
-        public async Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(
-            int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = ""
-        )
+        public async Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = "")
         {
             string url = pbId == null || pbId == -1
                 ? string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_PB_BY_PLAYER,
@@ -74,20 +72,7 @@ namespace SurfTimer.Data
                 nameof(ApiDataAccessService), methodName
             );
 
-            return new PersonalBestDataModel
-            {
-                ID = apiResult.id,
-                Ticks = apiResult.run_time,
-                Rank = apiResult.rank,
-                StartVelX = apiResult.start_vel_x,
-                StartVelY = apiResult.start_vel_y,
-                StartVelZ = apiResult.start_vel_z,
-                EndVelX = apiResult.end_vel_x,
-                EndVelY = apiResult.end_vel_y,
-                EndVelZ = apiResult.end_vel_z,
-                RunDate = apiResult.run_date,
-                ReplayFramesBase64 = apiResult.replay_frames
-            };
+            return new PersonalBestDataModel(apiResult);
         }
 
 
@@ -103,18 +88,7 @@ namespace SurfTimer.Data
                     nameof(ApiDataAccessService), methodName
                 );
 
-                return new MapInfoDataModel
-                {
-                    ID = mapInfo.id,
-                    Name = mapInfo.name,
-                    Author = mapInfo.author,
-                    Tier = mapInfo.tier,
-                    Stages = mapInfo.stages,
-                    Bonuses = mapInfo.bonuses,
-                    Ranked = mapInfo.ranked == 1,
-                    DateAdded = mapInfo.date_added ?? 0,
-                    LastPlayed = mapInfo.last_played ?? 0
-                };
+                return new MapInfoDataModel(mapInfo);
             }
 
             return null;
@@ -122,16 +96,7 @@ namespace SurfTimer.Data
 
         public async Task<int> InsertMapInfoAsync(MapInfoDataModel mapInfo, [CallerMemberName] string methodName = "")
         {
-            var apiMapInfo = new API_MapInfo
-            {
-                id = -1, // API-side will ignore or auto-increment
-                name = mapInfo.Name,
-                author = mapInfo.Author,
-                tier = mapInfo.Tier,
-                stages = mapInfo.Stages,
-                bonuses = mapInfo.Bonuses,
-                ranked = mapInfo.Ranked ? 1 : 0,
-            };
+            var apiMapInfo = new API_MapInfo(mapInfo);
 
             var postResponse = await ApiMethod.POST(Config.API.Endpoints.ENDPOINT_MAP_INSERT_INFO, apiMapInfo);
 
@@ -145,17 +110,7 @@ namespace SurfTimer.Data
 
         public async Task UpdateMapInfoAsync(MapInfoDataModel mapInfo, [CallerMemberName] string methodName = "")
         {
-            var apiMapInfo = new API_MapInfo
-            {
-                id = mapInfo.ID,
-                name = mapInfo.Name,
-                author = mapInfo.Author,
-                tier = mapInfo.Tier,
-                stages = mapInfo.Stages,
-                bonuses = mapInfo.Bonuses,
-                ranked = mapInfo.Ranked ? 1 : 0,
-                // last_played = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            };
+            var apiMapInfo = new API_MapInfo(mapInfo);
 
             var response = await ApiMethod.PUT(Config.API.Endpoints.ENDPOINT_MAP_UPDATE_INFO, apiMapInfo);
             if (response == null)
@@ -171,7 +126,6 @@ namespace SurfTimer.Data
         /// <returns></returns>
         public async Task<List<MapRecordRunDataModel>> GetMapRecordRunsAsync(int mapId, [CallerMemberName] string methodName = "")
         {
-            // TODO: Re-do the API with the new query and fix the API assign of values
             var apiRuns = await ApiMethod.GET<API_MapTime[]>(
                 string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_RUNS, mapId));
 
@@ -181,24 +135,7 @@ namespace SurfTimer.Data
             {
                 foreach (var time in apiRuns)
                 {
-                    runs.Add(new MapRecordRunDataModel
-                    {
-                        ID = time.id,
-                        RunTime = time.run_time,
-                        Type = time.type, // API currently returns only map times, needs rework
-                        Stage = time.stage,
-                        Style = time.style, // Fix this when updating API
-                        Name = time.name,
-                        StartVelX = (float)time.start_vel_x,
-                        StartVelY = (float)time.start_vel_y,
-                        StartVelZ = (float)time.start_vel_z,
-                        EndVelX = (float)time.end_vel_x,
-                        EndVelY = (float)time.end_vel_y,
-                        EndVelZ = (float)time.end_vel_z,
-                        RunDate = time.run_date,
-                        TotalCount = time.total_count, // API should return total count, fix this as well
-                        ReplayFramesBase64 = time.replay_frames // API should return this
-                    });
+                    runs.Add(new MapRecordRunDataModel(time));
                 }
             }
 
@@ -209,9 +146,6 @@ namespace SurfTimer.Data
         /* PlayerProfile.cs */
         public async Task<PlayerProfileDataModel?> GetPlayerProfileAsync(ulong steamId, [CallerMemberName] string methodName = "")
         {
-            // TODO: Implement API logic
-            // throw new NotImplementedException();
-
             var player = await ApiMethod.GET<API_PlayerSurfProfile>(
                 string.Format(Config.API.Endpoints.ENDPOINT_PP_GET_PROFILE, steamId));
 
@@ -220,16 +154,7 @@ namespace SurfTimer.Data
                 _logger.LogInformation("[{ClassName}] {MethodName} -> GetPlayerProfileAsync -> Found PlayerProfile data",
                     nameof(ApiDataAccessService), methodName
                 );
-                return new PlayerProfileDataModel
-                {
-                    ID = player.id,
-                    // SteamID = steamId,
-                    Name = player.name,
-                    Country = player.country,
-                    JoinDate = player.join_date,
-                    LastSeen = player.last_seen,
-                    Connections = player.connections
-                };
+                return new PlayerProfileDataModel(player);
             }
 
             _logger.LogWarning("[{ClassName}] {MethodName} -> GetPlayerProfileAsync -> No PlayerProfile data found for {SteamID}",
@@ -240,19 +165,7 @@ namespace SurfTimer.Data
 
         public async Task<int> InsertPlayerProfileAsync(PlayerProfileDataModel profile, [CallerMemberName] string methodName = "")
         {
-            // TODO: Implement API logic
-            // throw new NotImplementedException();
-            int joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            var apiPlayerProfileInfo = new API_PlayerSurfProfile
-            {
-                steam_id = profile.SteamID,
-                name = profile.Name,
-                country = profile.Country,
-                join_date = joinDate,
-                last_seen = joinDate,
-                connections = 1
-            };
+            var apiPlayerProfileInfo = new API_PlayerSurfProfile(profile);
 
             var postResponse = await ApiMethod.POST(Config.API.Endpoints.ENDPOINT_PP_INSERT_PROFILE, apiPlayerProfileInfo);
 
@@ -266,20 +179,7 @@ namespace SurfTimer.Data
 
         public async Task UpdatePlayerProfileAsync(PlayerProfileDataModel profile, [CallerMemberName] string methodName = "")
         {
-            // TODO: Implement API logic
-            // throw new NotImplementedException();
-            int lastSeen = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            var apiPlayerProfileInfo = new API_PlayerSurfProfile
-            {
-                id = profile.ID,
-                steam_id = profile.SteamID,
-                name = profile.Name,
-                country = profile.Country,
-                join_date = profile.JoinDate,
-                last_seen = lastSeen,
-                connections = 1
-            };
+            var apiPlayerProfileInfo = new API_PlayerSurfProfile(profile);
 
             var response = await ApiMethod.PUT(Config.API.Endpoints.ENDPOINT_PP_UPDATE_PROFILE, apiPlayerProfileInfo);
             if (response == null)
@@ -292,7 +192,6 @@ namespace SurfTimer.Data
         /* PlayerStats.cs */
         public async Task<List<PlayerMapTimeDataModel>> GetPlayerMapTimesAsync(int playerId, int mapId, [CallerMemberName] string methodName = "")
         {
-            // TODO: Implement API logic
             var mapTimes = new List<PlayerMapTimeDataModel>();
 
             var apiResponse = await ApiMethod.GET<API_PersonalBest[]>(
@@ -307,23 +206,7 @@ namespace SurfTimer.Data
 
                 foreach (var time in apiResponse)
                 {
-                    mapTimes.Add(new PlayerMapTimeDataModel
-                    {
-                        ID = time.id,
-                        RunTime = time.run_time,
-                        Type = time.type,
-                        Stage = time.stage,
-                        Style = time.style,
-                        Rank = time.rank,
-                        StartVelX = (float)time.start_vel_x,
-                        StartVelY = (float)time.start_vel_y,
-                        StartVelZ = (float)time.start_vel_z,
-                        EndVelX = (float)time.end_vel_x,
-                        EndVelY = (float)time.end_vel_y,
-                        EndVelZ = (float)time.end_vel_z,
-                        RunDate = time.run_date,
-                        ReplayFramesBase64 = time.replay_frames
-                    });
+                    mapTimes.Add(new PlayerMapTimeDataModel(time));
                 }
             }
 
@@ -335,39 +218,8 @@ namespace SurfTimer.Data
         /* CurrentRun.cs */
         public async Task<int> InsertMapTimeAsync(MapTimeDataModel mapTime, [CallerMemberName] string methodName = "")
         {
-            // Convert the Checkpoint object to the API_Checkpoint one
-            var runCheckpoints = mapTime.Checkpoints.Select(cp => new API_Checkpoint
-            {
-                cp = cp.Key,
-                run_time = cp.Value.Ticks,
-                end_touch = cp.Value.EndTouch,
-                start_vel_x = cp.Value.StartVelX,
-                start_vel_y = cp.Value.StartVelY,
-                start_vel_z = cp.Value.StartVelZ,
-                end_vel_x = cp.Value.EndVelX,
-                end_vel_y = cp.Value.EndVelY,
-                end_vel_z = cp.Value.EndVelZ,
-                attempts = cp.Value.Attempts
-            }).ToList();
-
-            var apiSaveMapTime = new API_SaveMapTime
-            {
-                player_id = mapTime.PlayerId,
-                map_id = mapTime.MapId,
-                run_time = mapTime.Ticks,
-                start_vel_x = mapTime.StartVelX,
-                start_vel_y = mapTime.StartVelY,
-                start_vel_z = mapTime.StartVelZ,
-                end_vel_x = mapTime.EndVelX,
-                end_vel_y = mapTime.EndVelY,
-                end_vel_z = mapTime.EndVelZ,
-                style = mapTime.Style,
-                type = mapTime.Type,
-                stage = mapTime.Stage,
-                replay_frames = mapTime.ReplayFramesBase64,
-                run_date = mapTime.RunDate,
-                checkpoints = runCheckpoints
-            };
+            // Initialize the API structure for POST request
+            var apiSaveMapTime = new API_SaveMapTime(mapTime);
 
             /*
             _logger.LogDebug(
@@ -407,6 +259,11 @@ namespace SurfTimer.Data
             {
                 throw new Exception($"API failed to insert MapTime for Player ID '{mapTime.PlayerId}' on Map ID '{mapTime.MapId}'.");
             }
+
+            _logger.LogDebug(
+                "[{ClassName}] {MethodName} -> Successfully inserted entry with id {ID} with type {Type}",
+                nameof(CurrentRun), methodName, postResponse.last_id, mapTime.Type
+            );
 
             return postResponse.last_id;
         }

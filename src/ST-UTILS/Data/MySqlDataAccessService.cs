@@ -60,9 +60,7 @@ namespace SurfTimer.Data
             return dict;
         }
 
-        public async Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(
-            int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = ""
-        )
+        public async Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = "")
         {
             _logger.LogInformation("[{ClassName}] {MethodName} -> LoadPersonalBestRunAsync -> Using MySQL data access service.",
                 nameof(MySqlDataAccessService), methodName
@@ -90,19 +88,7 @@ namespace SurfTimer.Data
                 nameof(MySqlDataAccessService), methodName, pbId, playerId, mapId, type, style
             );
 
-            return new PersonalBestDataModel
-            {
-                ID = results.GetInt32("id"),
-                Ticks = results.GetInt32("run_time"),
-                Rank = results.GetInt32("rank"),
-                StartVelX = (float)results.GetDouble("start_vel_x"),
-                StartVelY = (float)results.GetDouble("start_vel_y"),
-                StartVelZ = (float)results.GetDouble("start_vel_z"),
-                EndVelX = (float)results.GetDouble("end_vel_x"),
-                EndVelY = (float)results.GetDouble("end_vel_y"),
-                EndVelZ = (float)results.GetDouble("end_vel_z"),
-                RunDate = results.GetInt32("run_date")
-            };
+            return new PersonalBestDataModel(results);
         }
 
 
@@ -118,16 +104,7 @@ namespace SurfTimer.Data
                     nameof(MySqlDataAccessService), methodName
                 );
 
-                return new MapInfoDataModel
-                {
-                    ID = mapData.GetInt32("id"),
-                    Name = mapName,
-                    Author = mapData.GetString("author") ?? "Unknown",
-                    Tier = mapData.GetInt32("tier"),
-                    Ranked = mapData.GetBoolean("ranked"),
-                    DateAdded = mapData.GetInt32("date_added"),
-                    LastPlayed = mapData.GetInt32("last_played"),
-                };
+                return new MapInfoDataModel(mapData);
             }
 
             return null;
@@ -183,36 +160,7 @@ namespace SurfTimer.Data
             {
                 while (results.Read())
                 {
-                    string replayFramesBase64;
-
-                    try
-                    {
-                        replayFramesBase64 = results.GetString("replay_frames");
-                    }
-                    catch (InvalidCastException)
-                    {
-                        byte[] replayFramesData = results.GetFieldValue<byte[]>("replay_frames");
-                        replayFramesBase64 = System.Text.Encoding.UTF8.GetString(replayFramesData);
-                    }
-
-                    runs.Add(new MapRecordRunDataModel
-                    {
-                        ID = results.GetInt32("id"),
-                        RunTime = results.GetInt32("run_time"),
-                        Type = results.GetInt32("type"),
-                        Stage = results.GetInt32("stage"),
-                        Style = results.GetInt32("style"),
-                        Name = results.GetString("name"),
-                        StartVelX = results.GetFloat("start_vel_x"),
-                        StartVelY = results.GetFloat("start_vel_y"),
-                        StartVelZ = results.GetFloat("start_vel_z"),
-                        EndVelX = results.GetFloat("end_vel_x"),
-                        EndVelY = results.GetFloat("end_vel_y"),
-                        EndVelZ = results.GetFloat("end_vel_z"),
-                        RunDate = results.GetInt32("run_date"),
-                        TotalCount = results.GetInt32("total_count"),
-                        ReplayFramesBase64 = replayFramesBase64
-                    });
+                    runs.Add(new MapRecordRunDataModel(results));
                 }
             }
 
@@ -229,16 +177,7 @@ namespace SurfTimer.Data
 
             if (playerData.HasRows && playerData.Read())
             {
-                return new PlayerProfileDataModel
-                {
-                    ID = playerData.GetInt32("id"),
-                    SteamID = steamId,
-                    Name = playerData.GetString("name"),
-                    Country = playerData.GetString("country"),
-                    JoinDate = playerData.GetInt32("join_date"),
-                    LastSeen = playerData.GetInt32("last_seen"),
-                    Connections = playerData.GetInt32("connections")
-                };
+                return new PlayerProfileDataModel(playerData);
             }
 
             return null;
@@ -290,22 +229,7 @@ namespace SurfTimer.Data
             {
                 while (results.Read())
                 {
-                    mapTimes.Add(new PlayerMapTimeDataModel
-                    {
-                        ID = results.GetInt32("id"),
-                        RunTime = results.GetInt32("run_time"),
-                        Type = results.GetInt32("type"),
-                        Stage = results.GetInt32("stage"),
-                        Style = results.GetInt32("style"),
-                        Rank = results.GetInt32("rank"),
-                        StartVelX = (float)results.GetDouble("start_vel_x"),
-                        StartVelY = (float)results.GetDouble("start_vel_y"),
-                        StartVelZ = (float)results.GetDouble("start_vel_z"),
-                        EndVelX = (float)results.GetDouble("end_vel_x"),
-                        EndVelY = (float)results.GetDouble("end_vel_y"),
-                        EndVelZ = (float)results.GetDouble("end_vel_z"),
-                        RunDate = results.GetInt32("run_date")
-                    });
+                    mapTimes.Add(new PlayerMapTimeDataModel(results));
                 }
             }
 

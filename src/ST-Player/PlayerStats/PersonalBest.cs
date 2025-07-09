@@ -77,9 +77,9 @@ internal class PersonalBest : RunStats
         if (model == null)
         {
             _logger.LogTrace(
-                "[{ClassName}] {MethodName} -> No personal best found for player {Player} (ID={Id}).",
+                "[{ClassName}] {MethodName} -> No personal best found for player {Player} (ID={Id} ; Type={Type}).",
                 nameof(PersonalBest), methodName,
-                player.Profile.Name, player.Profile.ID
+                player.Profile.Name, player.Profile.ID, this.Type
             );
             return;
         }
@@ -95,7 +95,7 @@ internal class PersonalBest : RunStats
         this.EndVelY = model.EndVelY;
         this.EndVelZ = model.EndVelZ;
         this.RunDate = model.RunDate;
-        // this.ReplayFrames = model.ReplayFrames; // Won't work with MySQL load?
+        this.ReplayFramesBase64 = model.ReplayFramesBase64; // Won't work with MySQL load? - Not tested
 
         _logger.LogDebug(
             "[{ClassName}] {MethodName} -> Loaded PB run {RunId} for {Player}.",
