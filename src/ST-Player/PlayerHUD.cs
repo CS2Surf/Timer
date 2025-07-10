@@ -162,6 +162,7 @@ internal class PlayerHUD
     }
 
     /// <summary>
+    /// Displays checkpoints comparison messages in player chat.
     /// Only calculates if the player has a PB, otherwise it will display N/A
     /// </summary>
     public void DisplayCheckpointMessages()

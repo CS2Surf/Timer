@@ -31,7 +31,6 @@ internal class PlayerProfile
 
     /// <summary>
     /// Deals with retrieving, creating and updating a Player's information in the database upon joining the server.
-    /// Automatically detects whether to use API Calls or Queries.
     /// </summary>
     /// <param name="steamId">Steam ID of the player</param>
     /// <param name="name">Name of the player</param>
@@ -54,7 +53,7 @@ internal class PlayerProfile
     }
 
     /// <summary>
-    /// Retrieves all the data for the player from the database.
+    /// Retrieves all the data for the player profile from the database.
     /// </summary>
     public async Task GetPlayerProfile([CallerMemberName] string methodName = "")
     {
@@ -83,7 +82,7 @@ internal class PlayerProfile
     }
 
     /// <summary>
-    /// Insert new player information into the database.
+    /// Insert new player profile information into the database.
     /// Retrieves the ID of the newly created player.
     /// </summary>
     public async Task InsertPlayerProfile([CallerMemberName] string methodName = "")
@@ -105,10 +104,9 @@ internal class PlayerProfile
     }
 
     /// <summary>
-    /// Updates the information in the database for the player. Increments `connections` and changes nickname.
+    /// Updates the information in the database for the player profile. Increments `connections` and changes nickname.
     /// </summary>
     /// <param name="name">Player Name</param>
-    /// <exception cref="Exception"></exception>
     public async Task UpdatePlayerProfile(string name, [CallerMemberName] string methodName = "")
     {
         this.Name = name;

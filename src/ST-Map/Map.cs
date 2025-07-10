@@ -119,7 +119,7 @@ internal class Map
     private async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
         // Load zones
-        Map_Load_Zones();
+        MapLoadZones();
         _logger.LogInformation("[{ClassName}] {MethodName} -> Zones have been loaded. | Bonuses: {Bonuses} | Stages: {Stages} | Checkpoints: {Checkpoints}",
             nameof(Map), methodName, this.Bonuses, this.Stages, this.TotalCheckpoints
         );
@@ -144,7 +144,7 @@ internal class Map
     // To-do: This loops through all the triggers. While that's great and comprehensive, some maps have two triggers with the exact same name, because there are two
     //        for each side of the course (left and right, for example). We should probably work on automatically catching this. 
     //        Maybe even introduce a new naming convention?
-    internal void Map_Load_Zones([CallerMemberName] string methodName = "")
+    internal void MapLoadZones([CallerMemberName] string methodName = "")
     {
         // Gathering zones from the map
         IEnumerable<CBaseTrigger> triggers = Utilities.FindAllEntitiesByDesignerName<CBaseTrigger>("trigger_multiple");
@@ -267,7 +267,6 @@ internal class Map
 
     /// <summary>
     /// Inserts a new map entry in the database.
-    /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
     internal async Task InsertMapInfo([CallerMemberName] string methodName = "")
     {
@@ -283,9 +282,8 @@ internal class Map
 
         try
         {
-            // this.ID = await _dataService.InsertMapInfoAsync(mapInfo);
-            int mapId = await _dataService.InsertMapInfoAsync(mapInfo);
-            this.ID = mapId;
+            this.ID = await _dataService.InsertMapInfoAsync(mapInfo);
+
             _logger.LogInformation("[{ClassName}] {MethodName} -> Map '{Map}' inserted successfully with ID {ID}.",
                 nameof(Map), methodName, this.Name, this.ID
             );
@@ -301,7 +299,6 @@ internal class Map
 
     /// <summary>
     /// Updates last played, stages, bonuses for the map in the database.
-    /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
     internal async Task UpdateMapInfo([CallerMemberName] string methodName = "")
     {
@@ -337,11 +334,10 @@ internal class Map
     }
 
     /// <summary>
-    /// Load map info data using MySQL Queries and update the info as well or create a new entry.
+    /// Load/update/create Map table entry.
     /// Loads the record runs for the map as well.
-    /// Automatically detects whether to use API Calls or MySQL query.
     /// </summary>
-    /// <param name="updateData" cref="bool">Should we run UPDATE query for the map</param>
+    /// <param name="updateData">Should we run UPDATE query for the map</param>
     internal async Task LoadMapInfo(bool updateData = true, [CallerMemberName] string methodName = "")
     {
         bool newMap = false;
@@ -385,14 +381,10 @@ internal class Map
     /// Extracts Map, Bonus, Stage record runs and the total completions for each style. 
     /// (NOT TESTED WITH MORE THAN 1 STYLE)
     /// For the Map WR it also gets the Checkpoints data.
-    /// Automatically detects whether to use API Calls or MySQL query.
-    /// TODO: Re-do the API with the new query and fix the API assign of values
+    /// TODO?: Re-do the API with the new query and fix the API assign of values
     /// </summary>
     internal async Task LoadMapRecordRuns([CallerMemberName] string methodName = "")
     {
-        // int totalMapRuns = 0;
-        // int totalStageRuns = 0;
-        // int totalBonusRuns = 0;
         this.ConnectedMapTimes.Clear();
 
         // Replay Stuff
@@ -415,7 +407,6 @@ internal class Map
                     WR[run.Style].EndVelZ = run.EndVelZ;
                     WR[run.Style].RunDate = run.RunDate;
                     WR[run.Style].Name = run.Name;
-                    // totalMapRuns = run.TotalCount;
                     ConnectedMapTimes.Add(run.ID);
                     MapCompletions[run.Style] = run.TotalCount;
 
@@ -475,16 +466,6 @@ internal class Map
                 );
             }
         }
-    }
-
-    /// <summary>
-    /// Redirects to `PersonalBest.LoadCheckpoints()`.
-    /// Extracts all entries from Checkpoints table of the World Record for the given `style` 
-    /// </summary>
-    /// <param name="style">Style to load</param>
-    internal async Task Get_Record_Run_Checkpoints(int style = 0)
-    {
-        await this.WR[style].LoadCheckpoints();
     }
 
     /// <summary>

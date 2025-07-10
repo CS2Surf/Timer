@@ -58,6 +58,9 @@ public class Injection : IPluginServiceCollection<SurfTimer>
     }
 }
 
+/// <summary>
+/// Handles translation files 
+/// </summary>
 public class LocalizationService
 {
     // Localizer as a Singleton
@@ -69,24 +72,3 @@ public class LocalizationService
         Localizer = localizer;
     }
 }
-
-/*
-public class Injection : IPluginServiceCollection<SurfTimer>
-{
-    public void ConfigureServices(IServiceCollection serviceCollection)
-    {
-        // Register Logging
-        serviceCollection.AddLogging(builder =>
-        {
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Debug);
-        });
-
-
-        // Register Dependencies
-        serviceCollection.AddScoped<ReplayRecorder>(); // Multiple instances for different players
-        serviceCollection.AddScoped<CurrentRun>(); // Multiple instances for different players
-        serviceCollection.AddSingleton<Map>();  // Single instance for 1 Map object
-    }
-}
-*/

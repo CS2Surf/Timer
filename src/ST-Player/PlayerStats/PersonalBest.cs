@@ -33,10 +33,9 @@ internal class PersonalBest : RunStats
     /// </summary>
     public async Task LoadCheckpoints([CallerMemberName] string methodName = "")
     {
-        // 1) ask the data service for your checkpoints
         var cps = await _dataService.LoadCheckpointsAsync(this.ID);
 
-        // 2) if none, just return
+        // If nothing found, log and return
         if (cps == null || cps.Count == 0)
         {
             _logger.LogInformation(
@@ -46,10 +45,8 @@ internal class PersonalBest : RunStats
             return;
         }
 
-        // 3) otherwise assign
         this.Checkpoints = cps;
 
-        // 4) log how many you got
         _logger.LogInformation(
             "[{ClassName}] {MethodName} -> Loaded {Count} checkpoints for run {RunId}.",
             nameof(PersonalBest), methodName, cps.Count, this.ID
@@ -64,7 +61,6 @@ internal class PersonalBest : RunStats
     /// <param name="player">Player object</param>
     public async Task LoadPlayerSpecificMapTimeData(Player player, [CallerMemberName] string methodName = "")
     {
-        // 1) call the data service, passing only the primitives:
         var model = await _dataService.LoadPersonalBestRunAsync(
             pbId: this.ID == -1 ? (int?)null : this.ID,
             playerId: player.Profile.ID,
@@ -73,7 +69,7 @@ internal class PersonalBest : RunStats
             style: player.Timer.Style
         );
 
-        // 2) if nothing found, log & return
+        // If nothing found, log and return
         if (model == null)
         {
             _logger.LogTrace(
@@ -84,7 +80,6 @@ internal class PersonalBest : RunStats
             return;
         }
 
-        // 3) map back into your instance
         this.ID = model.ID;
         this.Ticks = model.Ticks;
         this.Rank = model.Rank;
@@ -103,75 +98,4 @@ internal class PersonalBest : RunStats
             this.ID, player.Profile.Name
         );
     }
-
-    /* Delete after testing with API?
-        public async Task PB_LoadPlayerSpecificMapTimeData(Player player, [CallerMemberName] string methodName = "")
-        {
-            // Console.WriteLine($"CS2 Surf ERROR >> internal class PersonalBest -> public async Task PB_LoadPlayerSpecificMapTimeData -> QUERY:\n{string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_RUNTIME, player.Profile.ID, player.CurrMap.ID, 0, player.Timer.Style)}");
-            // using (var results = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_RUNTIME, player.Profile.ID, player.CurrMap.ID, 0, player.Timer.Style)))
-            if (this == null)
-            {
-    #if DEBUG
-                _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> PersonalBest object is null.",
-                    nameof(PersonalBest), methodName
-                );
-    #endif
-
-                return;
-            }
-
-            MySqlConnector.MySqlDataReader? results = null;
-
-            // Console.WriteLine(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_TYPE_RUNTIME, player.Profile.ID, SurfTimer.CurrentMap.ID, this.Type, player.Timer.Style));
-
-            if (this.ID == -1)
-                results = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_TYPE_RUNTIME, player.Profile.ID, SurfTimer.CurrentMap.ID, this.Type, player.Timer.Style));
-            else
-                results = await SurfTimer.DB.QueryAsync(string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_SPECIFIC_MAPTIME_DATA, this.ID));
-
-    #if DEBUG
-            Console.WriteLine($"----> public async Task PB_LoadPlayerSpecificMapTimeData -> this.ID {this.ID} ");
-            Console.WriteLine($"----> public async Task PB_LoadPlayerSpecificMapTimeData -> this.Ticks {this.Ticks} ");
-            Console.WriteLine($"----> public async Task PB_LoadPlayerSpecificMapTimeData -> this.RunDate {this.RunDate} ");
-    #endif
-
-            if (results == null || !results.HasRows)
-            {
-                // #if DEBUG
-                _logger.LogTrace("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> No MapTime data found for '{playerName}' ({playerID}). (Results Null? {IsNull})",
-                    nameof(PersonalBest), methodName, player.Profile.Name, player.Profile.ID, results == null
-                );
-                // #endif
-
-                return;
-            }
-
-            while (results.Read())
-            {
-    #if DEBUG
-                _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> Loading MapTime Run: RunID {RunID} | RunTicks {RunTicks} | StartVelX {StartVelX} | StartVelY {StartVelY}.",
-                    nameof(PersonalBest), methodName, results.GetInt32("id"), results.GetInt32("run_time"), results.GetFloat("start_vel_x"), results.GetFloat("start_vel_y")
-                );
-    #endif
-
-                this.ID = results.GetInt32("id");
-                this.Ticks = results.GetInt32("run_time");
-                this.Rank = results.GetInt32("rank");
-                this.StartVelX = (float)results.GetDouble("start_vel_x");
-                this.StartVelY = (float)results.GetDouble("start_vel_y");
-                this.StartVelZ = (float)results.GetDouble("start_vel_z");
-                this.EndVelX = (float)results.GetDouble("end_vel_x");
-                this.EndVelY = (float)results.GetDouble("end_vel_y");
-                this.EndVelZ = (float)results.GetDouble("end_vel_z");
-                this.RunDate = results.GetInt32("run_date");
-            }
-
-            // #if DEBUG
-            _logger.LogDebug("[{ClassName}] {MethodName} -> PB_LoadPlayerSpecificMapTimeData -> MapTime ID {ID} (Type: {Type}) loaded for '{PlayerName}' with time {RunTime}",
-                nameof(PersonalBest), methodName, this.ID, this.Type, player.Profile.Name, PlayerHUD.FormatTime(this.Ticks)
-            );
-            // #endif
-        }
-    */
-
 }

@@ -22,6 +22,9 @@ internal class PlayerTimer
     // Timing
     public int Ticks { get; set; } = 0; // To-do: sub-tick counting? This currently goes on OnTick, which is not sub-tick I believe? Needs investigating
 
+    /// <summary>
+    /// Different types of time formatting for chat and HUD
+    /// </summary>
     // Time Formatting - To-do: Move to player settings maybe?
     public enum TimeFormatStyle
     {

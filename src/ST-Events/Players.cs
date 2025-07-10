@@ -199,7 +199,7 @@ public partial class SurfTimer
     /// Checks whether an IP is a local one. Allows testing the plugin in a local environment setup for GeoIP
     /// </summary>
     /// <param name="ip">IP to check</param>
-    /// <returns cref="bool">True for Private IP</returns>
+    /// <returns>True for Private IP</returns>
     static bool IsPrivateIP(string ip)
     {
         var ipParts = ip.Split('.');

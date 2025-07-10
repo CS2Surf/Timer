@@ -8,16 +8,15 @@ namespace SurfTimer.Data
     {
         private readonly ILogger<ApiDataAccessService> _logger;
 
+        /// <summary>
+        /// Add/load data using API calls.
+        /// </summary>
         public ApiDataAccessService()
         {
             _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiDataAccessService>>();
         }
 
         /* PersonalBest.cs */
-        /// <summary>
-        /// Loads the Checkpoint data for the given MapTime_ID. Used for loading player's personal bests and Map's world records.
-        /// Bonus and Stage runs should NOT have any checkpoints.
-        /// </summary>
         public async Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
         {
             _logger.LogInformation("[{ClassName}] {MethodName} -> LoadCheckpointsAsync -> Using API data access service.",
@@ -119,11 +118,6 @@ namespace SurfTimer.Data
             }
         }
 
-        /// <summary>
-        /// Gets and loads all the record times for a given map ID
-        /// </summary>
-        /// <param name="mapId">ID of the map in DB</param>
-        /// <returns></returns>
         public async Task<List<MapRecordRunDataModel>> GetMapRecordRunsAsync(int mapId, [CallerMemberName] string methodName = "")
         {
             var apiRuns = await ApiMethod.GET<API_MapTime[]>(
@@ -218,7 +212,6 @@ namespace SurfTimer.Data
         /* CurrentRun.cs */
         public async Task<int> InsertMapTimeAsync(MapTimeDataModel mapTime, [CallerMemberName] string methodName = "")
         {
-            // Initialize the API structure for POST request
             var apiSaveMapTime = new API_SaveMapTime(mapTime);
 
             /*
@@ -267,13 +260,5 @@ namespace SurfTimer.Data
 
             return postResponse.last_id;
         }
-
-        // public async Task SaveRunCheckpointsAsync(int mapTimeId, IEnumerable<Checkpoint> checkpoints, [CallerMemberName] string methodName = "")
-        // {
-        //     // TODO: Implement API logic
-        //     // throw new NotImplementedException();
-
-        // }
-
     }
 }

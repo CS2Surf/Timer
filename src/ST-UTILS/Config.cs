@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
 using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
@@ -116,9 +115,9 @@ public static class Config
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(DB_CONFIG_PATH);
 
         /// <summary>
-        ///   Retrieves the connection details for connecting to the MySQL Database
+        /// Retrieves the connection details for connecting to the MySQL Database
         /// </summary>
-        /// <returns>A connection <see cref="string"/></returns>
+        /// <returns>A connection string</returns>
         public static string GetConnectionString()
         {
             string host = ConfigDocument.RootElement.GetProperty("host").GetString()!;
@@ -136,7 +135,7 @@ public static class Config
         }
 
         /// <summary>
-        ///   Contains all the queries used by MySQL for the SurfTimer plugin.
+        /// Contains all the queries used by MySQL for the SurfTimer plugin.
         /// </summary>
         public static class Queries
         {

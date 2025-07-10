@@ -2,7 +2,6 @@ using MySqlConnector;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
-using System.Data;
 
 namespace SurfTimer.Data
 {
@@ -10,16 +9,15 @@ namespace SurfTimer.Data
     {
         private readonly ILogger<MySqlDataAccessService> _logger;
 
+        /// <summary>
+        /// Add/load data using MySQL connection and queries.
+        /// </summary>
         public MySqlDataAccessService()
         {
             _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<MySqlDataAccessService>>();
         }
 
         /* PersonalBest.cs */
-        /// <summary>
-        /// Loads the Checkpoint data for the given MapTime_ID. Used for loading player's personal bests and Map's world records.
-        /// Bonus and Stage runs should NOT have any checkpoints.
-        /// </summary>
         public async Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
         {
             _logger.LogInformation("[{ClassName}] {MethodName} -> LoadCheckpointsAsync -> Using MySQL data access service.",
@@ -112,7 +110,6 @@ namespace SurfTimer.Data
 
         public async Task<int> InsertMapInfoAsync(MapInfoDataModel mapInfo, [CallerMemberName] string methodName = "")
         {
-            // int rowsWritten = await SurfTimer.DB.WriteAsync(
             var (rowsWritten, lastId) = await SurfTimer.DB.WriteAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_MAP_INSERT_INFO,
                     MySqlHelper.EscapeString(mapInfo.Name),
@@ -168,7 +165,6 @@ namespace SurfTimer.Data
         }
 
 
-
         /* PlayerProfile.cs */
         public async Task<PlayerProfileDataModel?> GetPlayerProfileAsync(ulong steamId, [CallerMemberName] string methodName = "")
         {
@@ -216,7 +212,6 @@ namespace SurfTimer.Data
         }
 
 
-
         /* PlayerStats.cs */
         public async Task<List<PlayerMapTimeDataModel>> GetPlayerMapTimesAsync(int playerId, int mapId, [CallerMemberName] string methodName = "")
         {
@@ -235,7 +230,6 @@ namespace SurfTimer.Data
 
             return mapTimes;
         }
-
 
 
         /* CurrentRun.cs */
@@ -266,7 +260,7 @@ namespace SurfTimer.Data
             }
 
             // Write the checkpoints after we have the `lastId`
-            if (mapTime.Checkpoints != null && mapTime.Checkpoints.Count > 0)
+            if (mapTime.Checkpoints != null && mapTime.Checkpoints.Count > 0 && mapTime.Type == 0)
             {
                 var commands = new List<string>();
                 foreach (var cp in mapTime.Checkpoints.Values)
@@ -279,24 +273,7 @@ namespace SurfTimer.Data
                 await SurfTimer.DB.TransactionAsync(commands);
             }
 
-
             return (int)lastId;
         }
-
-        // public async Task SaveRunCheckpointsAsync(int mapTimeId, IEnumerable<Checkpoint> checkpoints, [CallerMemberName] string methodName = "")
-        // {
-        //     var commands = new List<string>();
-
-        //     foreach (var cp in checkpoints)
-        //     {
-        //         commands.Add(string.Format(
-        //             Config.MySQL.Queries.DB_QUERY_CR_INSERT_CP,
-        //             mapTimeId, cp.CP, cp.Ticks, cp.StartVelX, cp.StartVelY, cp.StartVelZ,
-        //             cp.EndVelX, cp.EndVelY, cp.EndVelZ, cp.Attempts, cp.EndTouch));
-        //     }
-
-        //     await SurfTimer.DB.TransactionAsync(commands);
-        // }
-
     }
 }

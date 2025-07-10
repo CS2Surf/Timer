@@ -12,6 +12,12 @@ internal class ApiMethod
     private static readonly HttpClient _client = new();
     private static readonly string base_addr = Config.ApiUrl;
 
+    /// <summary>
+    /// Executes a GET request to the specified URL and deserializes the response to type T.
+    /// </summary>
+    /// <typeparam name="T">Type to deserialize response into</typeparam>
+    /// <param name="url">Relative URL to call</param>
+    /// <returns>Deserialized T or null</returns>
     public static async Task<T?> GET<T>(string url, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
@@ -52,6 +58,13 @@ internal class ApiMethod
         }
     }
 
+    /// <summary>
+    /// Executes a POST request to the specified URL with the given body and returns the response.
+    /// </summary>
+    /// <typeparam name="T">Type of the request body</typeparam>
+    /// <param name="url">Relative URL to call</param>
+    /// <param name="body">Request body to send</param>
+    /// <returns>API_PostResponseData or null</returns>
     public static async Task<API_PostResponseData?> POST<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
@@ -95,6 +108,13 @@ internal class ApiMethod
         }
     }
 
+    /// <summary>
+    /// Executes a PUT request to the specified URL with the given body and returns the response.
+    /// </summary>
+    /// <typeparam name="T">Type of the request body</typeparam>
+    /// <param name="url">Relative URL to call</param>
+    /// <param name="body">Request body to send</param>
+    /// <returns>API_PostResponseData or null</returns>
     public static async Task<API_PostResponseData?> PUT<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
