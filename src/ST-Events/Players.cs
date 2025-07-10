@@ -12,7 +12,7 @@ public partial class SurfTimer
     public HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
     {
         var controller = @event.Userid;
-        if (!controller.IsValid || !controller.IsBot || CurrentMap.ReplayManager.IsControllerConnectedToReplayPlayer(controller))
+        if (!controller!.IsValid || !controller.IsBot || CurrentMap.ReplayManager.IsControllerConnectedToReplayPlayer(controller))
             return HookResult.Continue;
 
         _logger.LogTrace("OnPlayerSpawn -> Player {Name} spawned.",
@@ -93,8 +93,8 @@ public partial class SurfTimer
     {
         var player = @event.Userid;
 
-        string name = player.PlayerName;
-        string country = "XX";
+        string name = player!.PlayerName;
+        string country;
 
         // GeoIP
         // Check if the IP is private before attempting GeoIP lookup

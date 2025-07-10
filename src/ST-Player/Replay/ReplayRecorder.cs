@@ -200,7 +200,7 @@ internal class ReplayRecorder
                         int endIndex = CalculateEndIndex(end_enter_index, Frames.Count, Config.ReplaysPre);
                         new_frames = GetTrimmedFrames(startIndex, endIndex);
 
-                        _logger.LogInformation("<<< [{ClassName}] {MethodName} -> Trimmed from {StartIndex} to {EndIndex} (new_frames = {NewFramesCount}) - from total {TotalFrames}",
+                        _logger.LogDebug("<<< [{ClassName}] {MethodName} -> Trimmed from {StartIndex} to {EndIndex} (new_frames = {NewFramesCount}) - from total {TotalFrames}",
                         nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count);
                     }
                     else
@@ -234,7 +234,7 @@ internal class ReplayRecorder
                         int endIndex = CalculateEndIndex(bonus_end_enter_index, Frames.Count, Config.ReplaysPre);
                         new_frames = GetTrimmedFrames(startIndex, endIndex);
 
-                        _logger.LogInformation("<<< [{ClassName}] {MethodName} -> Trimmed Bonus replay from {startIndex} to {endIndex} ({new_frames}) - from total {OldFrames}",
+                        _logger.LogDebug("<<< [{ClassName}] {MethodName} -> Trimmed Bonus replay from {startIndex} to {endIndex} ({new_frames}) - from total {OldFrames}",
                             nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count
                         );
                     }
@@ -258,35 +258,35 @@ internal class ReplayRecorder
 
                     if (lastStage)
                     {
-                        _logger.LogTrace("Stage replay trimming will use `STAGE_ZONE_X` + `END_ZONE_ENTER`");
+                        _logger.LogDebug("Stage replay trimming will use `STAGE_ZONE_X` + `END_ZONE_ENTER`");
                         stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
-                        _logger.LogTrace("stage_end_index = {stage_end_index}",
-                            stage_end_index
-                        );
+                        // _logger.LogDebug("stage_end_index = {stage_end_index}",
+                        //     stage_end_index
+                        // );
                         stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
-                        _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                            stage_exit_index
-                        );
+                        // _logger.LogDebug("stage_exit_index = {stage_exit_index}",
+                        //     stage_exit_index
+                        // );
                         stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
-                        _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                            stage_enter_index
-                        );
+                        // _logger.LogDebug("stage_enter_index = {stage_enter_index}",
+                        //     stage_enter_index
+                        // );
                     }
                     else if (player.Timer.Stage - 1 > 1)
                     {
-                        _logger.LogTrace("Stage replay trimming will use `STAGE_ZONE_X`");
+                        _logger.LogDebug("Stage replay trimming will use `STAGE_ZONE_X`");
                         stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
-                        _logger.LogTrace("stage_end_index = {stage_end_index}",
-                            stage_end_index
-                        );
+                        // _logger.LogDebug("stage_end_index = {stage_end_index}",
+                        //     stage_end_index
+                        // );
                         stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
-                        _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                            stage_exit_index
-                        );
+                        // _logger.LogDebug("stage_exit_index = {stage_exit_index}",
+                        //     stage_exit_index
+                        // );
                         stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
-                        _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                            stage_enter_index
-                        );
+                        // _logger.LogDebug("stage_enter_index = {stage_enter_index}",
+                        //     stage_enter_index
+                        // );
                     }
                     else if (player.Timer.Stage - 1 == -1) // Don't crash...?
                     {
@@ -302,19 +302,19 @@ internal class ReplayRecorder
                     }
                     else
                     {
-                        _logger.LogInformation("Stage replay trimming will use `START_ZONE_X`");
+                        _logger.LogDebug("Stage replay trimming will use `START_ZONE_X`");
                         stage_end_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER);
-                        _logger.LogTrace("stage_end_index = {stage_end_index}",
-                            stage_end_index
-                        );
+                        // _logger.LogDebug("stage_end_index = {stage_end_index}",
+                        //     stage_end_index
+                        // );
                         stage_exit_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
-                        _logger.LogTrace("stage_exit_index = {stage_exit_index}",
-                            stage_exit_index
-                        );
+                        // _logger.LogDebug("stage_exit_index = {stage_exit_index}",
+                        //     stage_exit_index
+                        // );
                         stage_enter_index = Frames.FindLastIndex(stage_end_index - 1, f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
-                        _logger.LogTrace("stage_enter_index = {stage_enter_index}",
-                            stage_enter_index
-                        );
+                        // _logger.LogDebug("stage_enter_index = {stage_enter_index}",
+                        //     stage_enter_index
+                        // );
                     }
                     _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Stage Run replay. Stage {Stage}, enter {stage_enter_index}, stage exit {stage_exit_index}, stage end {stage_end_index}",
                         nameof(ReplayRecorder), methodName, player.Timer.Stage - 1, stage_enter_index, stage_exit_index, stage_end_index
