@@ -218,6 +218,7 @@ namespace SurfTimer.Data
         /// </summary>
         public PlayerMapTimeDataModel(API_PersonalBest data)
         {
+            ID = data.id;
             RunTime = data.run_time;
             Type = data.type;
             Stage = data.stage;
@@ -238,6 +239,18 @@ namespace SurfTimer.Data
         /// </summary>
         public PlayerMapTimeDataModel(MySqlDataReader data)
         {
+            string replayFramesBase64;
+
+            try
+            {
+                replayFramesBase64 = data.GetString("replay_frames");
+            }
+            catch (InvalidCastException)
+            {
+                byte[] replayFramesData = data.GetFieldValue<byte[]>("replay_frames");
+                replayFramesBase64 = System.Text.Encoding.UTF8.GetString(replayFramesData);
+            }
+
             ID = data.GetInt32("id");
             RunTime = data.GetInt32("run_time");
             Type = data.GetInt32("type");
@@ -251,6 +264,7 @@ namespace SurfTimer.Data
             EndVelY = (float)data.GetDouble("end_vel_y");
             EndVelZ = (float)data.GetDouble("end_vel_z");
             RunDate = data.GetInt32("run_date");
+            ReplayFramesBase64 = replayFramesBase64;
         }
     }
 

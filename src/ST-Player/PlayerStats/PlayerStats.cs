@@ -204,7 +204,7 @@ internal class PlayerStats
             {
                 case 1: // Bonus time
 #if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB", nameof(PlayerStats), methodName);
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     BonusPB[mapTime.Stage][style].ID = mapTime.ID;
                     BonusPB[mapTime.Stage][style].Ticks = mapTime.RunTime;
@@ -221,7 +221,7 @@ internal class PlayerStats
 
                 case 2: // Stage time
 #if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB", nameof(PlayerStats), methodName);
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     StagePB[mapTime.Stage][style].ID = mapTime.ID;
                     StagePB[mapTime.Stage][style].Ticks = mapTime.RunTime;
@@ -238,7 +238,7 @@ internal class PlayerStats
 
                 default: // Map time
 #if DEBUG
-                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB", nameof(PlayerStats), methodName);
+                    _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     PB[style].ID = mapTime.ID;
                     PB[style].Ticks = mapTime.RunTime;
