@@ -17,7 +17,7 @@ public partial class SurfTimer
     [ConsoleCommand("css_mi", "Display the current map tier.")]
     [ConsoleCommand("css_difficulty", "Display the current map tier.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    public static void MapTier(CCSPlayerController? player, CommandInfo command)
+    public void MapTier(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
             return;
