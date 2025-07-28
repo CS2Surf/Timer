@@ -7,6 +7,12 @@ namespace SurfTimer.Data
     /// </summary>
     public interface IDataAccessService
     {
+        /// <summary>
+        /// Ping the Data Access Service.
+        /// </summary>
+        /// <returns>True for successful connection, False otherwise</returns>
+        Task<bool> PingAccessService([CallerMemberName] string methodName = "");
+
         /* PersonalBest.cs */
         /// <summary>
         /// Retrieve Checkpoints table entries for a given run ID (map time).

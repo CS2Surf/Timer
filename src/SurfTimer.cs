@@ -119,19 +119,31 @@ public partial class SurfTimer : BasePlugin
     {
         LocalizationService.Init(Localizer);
 
-        // Check if we have connected to the Database
-        if (DB != null)
+        bool accessService = false;
+
+        try
         {
-            _logger.LogInformation("[{Prefix}] Database connection established.",
-                Config.PluginName
+            accessService = Task.Run(() => _dataService!.PingAccessService()).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[{Prefix}] PingAccessService threw an exception.", Config.PluginName);
+        }
+
+        if (accessService)
+        {
+            _logger.LogInformation("[{Prefix}] {AccessService} connection established.",
+                Config.PluginName, Config.API.GetApiOnly() ? "API" : "DB"
             );
         }
         else
         {
-            _logger.LogCritical("[{Prefix}] Error connecting to the database.",
-                Config.PluginName
+            _logger.LogCritical("[{Prefix}] Error connecting to the {AccessService}.",
+                Config.PluginName, Config.API.GetApiOnly() ? "API" : "DB"
             );
-            // To-do: Abort plugin loading
+
+            Exception exception = new Exception($"[{Config.PluginName}] Error connecting to the {(Config.API.GetApiOnly() ? "API" : "DB")}");
+            throw exception;
         }
 
         _logger.LogInformation("""  

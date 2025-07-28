@@ -17,6 +17,30 @@ namespace SurfTimer.Data
             _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<MySqlDataAccessService>>();
         }
 
+        public async Task<bool> PingAccessService([CallerMemberName] string methodName = "")
+        {
+            try
+            {
+                using var result = await SurfTimer.DB.QueryAsync(Config.MySQL.Queries.DB_QUERY_PING);
+
+                if (result.HasRows)
+                {
+                    _logger.LogInformation("[{ClassName}] {MethodName} -> PingAccessService -> MySQL is reachable",
+                        nameof(MySqlDataAccessService), methodName
+                    );
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "[{ClassName}] {MethodName} -> PingAccessService -> MySQL is unreachable",
+                    nameof(MySqlDataAccessService), methodName
+                );
+            }
+
+            return false;
+        }
+
         /* PersonalBest.cs */
         public async Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
         {

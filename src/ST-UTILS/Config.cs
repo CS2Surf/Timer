@@ -79,6 +79,8 @@ public static class Config
         /// </summary>
         public static class Endpoints
         {
+            public const string ENDPOINT_PING = "/ping?client_unix={0}";
+            
             // Map.cs related endpoints
             public const string ENDPOINT_MAP_GET_INFO = "/surftimer/mapinfo?mapname={0}";
             public const string ENDPOINT_MAP_INSERT_INFO = "/surftimer/insertmap";
@@ -139,6 +141,8 @@ public static class Config
         /// </summary>
         public static class Queries
         {
+            public const string DB_QUERY_PING = "SELECT 1;";
+
             // Map.cs related queries
             public const string DB_QUERY_MAP_GET_INFO = "SELECT * FROM Maps WHERE name='{0}';";
             public const string DB_QUERY_MAP_INSERT_INFO = "INSERT INTO Maps (name, author, tier, stages, bonuses, ranked, date_added, last_played) VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6}, {6})"; // "INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})"

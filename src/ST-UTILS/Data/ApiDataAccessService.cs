@@ -16,6 +16,36 @@ namespace SurfTimer.Data
             _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiDataAccessService>>();
         }
 
+        public async Task<bool> PingAccessService([CallerMemberName] string methodName = "")
+        {
+            try
+            {
+                var response = await ApiMethod.GET<Dictionary<string, float>>(
+                    string.Format(Config.API.Endpoints.ENDPOINT_PING, DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                );
+
+                if (response != null && response.ContainsKey("client_unix"))
+                {
+                    _logger.LogInformation("[{ClassName}] {MethodName} -> Success -> Client: {ClientUnix} | Server: {ServerUnix} | Latency: {LatencyS}s | Latency: {LatencyMS}ms",
+                        nameof(ApiDataAccessService), methodName, response["client_unix"], response["server_unix"], response["latency_seconds"], response["latency_ms"]
+                    );
+                    return true;
+                }
+
+                _logger.LogWarning("[{ClassName}] {MethodName} -> Unexpected response structure.",
+                    nameof(ApiDataAccessService), methodName
+                );
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[{ClassName}] {MethodName} -> Failed to reach API.",
+                    nameof(ApiDataAccessService), methodName
+                );
+                return false;
+            }
+        }
+
         /* PersonalBest.cs */
         public async Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
         {
