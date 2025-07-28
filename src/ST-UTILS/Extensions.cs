@@ -54,4 +54,25 @@ unsafe static class Extensions
         Utilities.SetStateChanged(controller, "CColisionProperity", "m_collisionGroup");
         Utilities.SetStateChanged(controller, "CCollisionProperty", "m_collisionAttribute");
     }
+
+    /// <summary>
+    /// Asssigns a ChatColor to the given Tier value
+    /// </summary>
+    /// <param name="tier">Map Tier up to 8</param>
+    /// <returns>Appropriate ChatColor value for the Tier</returns>
+    public static char GetTierColor(int tier)
+    {
+        return tier switch
+        {
+            1 => ChatColors.Green,
+            2 => ChatColors.Lime,
+            3 => ChatColors.Yellow,
+            4 => ChatColors.Orange,
+            5 => ChatColors.LightRed,
+            6 => ChatColors.DarkRed,
+            7 => ChatColors.LightPurple,
+            8 => ChatColors.Purple,
+            _ => ChatColors.White
+        };
+    }
 }

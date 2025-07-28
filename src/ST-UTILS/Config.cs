@@ -142,7 +142,7 @@ public static class Config
             // Map.cs related queries
             public const string DB_QUERY_MAP_GET_INFO = "SELECT * FROM Maps WHERE name='{0}';";
             public const string DB_QUERY_MAP_INSERT_INFO = "INSERT INTO Maps (name, author, tier, stages, bonuses, ranked, date_added, last_played) VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6}, {6})"; // "INSERT INTO Maps (name, author, tier, stages, ranked, date_added, last_played) VALUES ('{MySqlHelper.EscapeString(Name)}', 'Unknown', {this.Stages}, {this.Bonuses}, 0, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()}, {(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()})"
-            public const string DB_QUERY_MAP_UPDATE_INFO_FULL = "UPDATE Maps SET last_played={0}, stages={1}, bonuses={2} WHERE id={3};";
+            public const string DB_QUERY_MAP_UPDATE_INFO_FULL = "UPDATE Maps SET last_played={0}, stages={1}, bonuses={2}, author='{3}', tier={4}, ranked={5}  WHERE id={6};";
             public const string DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT = @"
             SELECT 
                 ranked_times.*

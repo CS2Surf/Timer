@@ -1,7 +1,13 @@
 {
-    "prefix": "[{white}asd{green}asd{red}asd{default}]",
+    "prefix": "[{blue}Surf{bluegrey}Timer{default}]",
 
     "player_connected": "{green}{0}{default} has connected from {lime}{1}{default}.",
+
+    /* MapCommands */
+    "map_info": "{yellow}{0}{default} | Tier - {1}{default} | Author - {yellow}{2}{default} | Ranked - {3}{default} | Added - {yellow}{4}{default}",
+    "map_info_linear": " | Linear - {yellow}{0} Checkpoints{default}",
+    "map_info_stages": " | Stages - {yellow}{0}{default}",
+    "map_info_bonuses": " | Bonuses - {yellow}{0}{default}",
 
     /* PlayerCommands */
     "reset_delay": "Please wait for your run to be saved before resetting.",

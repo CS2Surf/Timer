@@ -136,6 +136,9 @@ namespace SurfTimer.Data
                 (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 mapInfo.Stages,
                 mapInfo.Bonuses,
+                mapInfo.Author,
+                mapInfo.Tier,
+                mapInfo.Ranked ? 1 : 0, // Table is using TINYINT so we need to send 0 or 1 instead of Boolean
                 mapInfo.ID
             );
 

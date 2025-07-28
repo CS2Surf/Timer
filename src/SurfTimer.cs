@@ -37,7 +37,9 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SurfTimer.Data;
 
 namespace SurfTimer;
 
@@ -47,12 +49,14 @@ public partial class SurfTimer : BasePlugin
 {
     private readonly ILogger<SurfTimer> _logger;
     public static IServiceProvider ServiceProvider { get; private set; } = null!;
+    private readonly IDataAccessService? _dataService;
 
     // Inject ILogger and store IServiceProvider globally
     public SurfTimer(ILogger<SurfTimer> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
         ServiceProvider = serviceProvider;
+        _dataService = ServiceProvider.GetRequiredService<IDataAccessService>();
     }
 
     // Metadata

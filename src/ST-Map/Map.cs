@@ -22,7 +22,7 @@ internal class Map
     public int Stages { get; set; } = 0;
     public int TotalCheckpoints { get; set; } = 0;
     public int Bonuses { get; set; } = 0;
-    public bool Ranked { get; set; } = false;
+    public bool Ranked { get; set; } = false; // Not decided on what to use this for
     public int DateAdded { get; set; } = 0;
     public int LastPlayed { get; set; } = 0;
     /// <summary>
@@ -306,11 +306,11 @@ internal class Map
         {
             ID = this.ID,
             Name = this.Name,
-            Author = "Unknown", // adjust as necessary
+            Author = this.Author,
             Tier = this.Tier,
             Stages = this.Stages,
             Bonuses = this.Bonuses,
-            Ranked = false,
+            Ranked = this.Ranked,
             LastPlayed = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
 
