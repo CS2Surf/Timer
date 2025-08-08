@@ -6,10 +6,9 @@ namespace SurfTimer;
 // Map Info structure
 public class API_PostResponseData
 {
-    public int inserted { get; set; }
-    public float xtime { get; set; }
-    public int last_id { get; set; }
-    public List<int>? trx { get; set; }
+    public int Id { get; set; }
+    public int Inserted { get; set; }
+    public bool Trx { get; set; }
 }
 
 public class API_Checkpoint
@@ -183,7 +182,7 @@ public class API_SaveMapTime
     {
         player_id = data.PlayerId;
         map_id = data.MapId;
-        run_time = data.Ticks;
+        run_time = data.RunTime;
         start_vel_x = data.StartVelX;
         start_vel_y = data.StartVelY;
         start_vel_z = data.StartVelZ;
@@ -193,14 +192,14 @@ public class API_SaveMapTime
         style = data.Style;
         type = data.Type;
         stage = data.Stage;
-        replay_frames = data.ReplayFramesBase64;
+        replay_frames = data.ReplayFrames;
         run_date = data.RunDate;
 
         // Convert Checkpoints
         checkpoints = data.Checkpoints.Select(cp => new API_Checkpoint
         {
             cp = cp.Key,
-            run_time = cp.Value.Ticks,
+            run_time = cp.Value.RunTime,
             end_touch = cp.Value.EndTouch,
             start_vel_x = cp.Value.StartVelX,
             start_vel_y = cp.Value.StartVelY,

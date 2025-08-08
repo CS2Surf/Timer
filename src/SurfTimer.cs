@@ -33,6 +33,7 @@
 
 #define DEBUG
 
+using System.Collections.Concurrent;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
@@ -44,7 +45,7 @@ using SurfTimer.Data;
 namespace SurfTimer;
 
 // Gameplan: https://github.com/CS2Surf/Timer/tree/dev/README.md
-[MinimumApiVersion(318)]
+[MinimumApiVersion(333)]
 public partial class SurfTimer : BasePlugin
 {
     private readonly ILogger<SurfTimer> _logger;
@@ -66,8 +67,8 @@ public partial class SurfTimer : BasePlugin
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
 
     // Globals
-    private Dictionary<int, Player> playerList = new Dictionary<int, Player>(); // This can probably be done way better, revisit
-    internal static TimerDatabase DB = new TimerDatabase(Config.MySQL.GetConnectionString()); // Initiate it with the correct connection string
+    private ConcurrentDictionary<int, Player> playerList = new();
+    internal static TimerDatabase DB = new(Config.MySQL.GetConnectionString()); // Initiate it with the correct connection string
     internal static Map CurrentMap = null!;
 
     /* ========== MAP START HOOKS ========== */

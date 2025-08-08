@@ -1,7 +1,7 @@
 namespace SurfTimer;
 using CounterStrikeSharp.API.Core;
 
-internal class Player 
+public class Player 
 {
     // CCS requirements
     public CCSPlayerController Controller {get;}
@@ -18,11 +18,8 @@ internal class Player
     // Player information
     public PlayerProfile Profile {get; set;}
 
-    // Map information
-    public Map CurrMap = null!;
-
     // Constructor
-    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile, Map CurrMap)
+    internal Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile)
     {
         this.Controller = Controller;
         this.MovementServices = MovementServices;
@@ -36,7 +33,6 @@ internal class Player
         CurrentSavedLocation = 0;
 
         this.HUD = new PlayerHUD(this);
-        this.CurrMap = CurrMap;
     }
 
     /// <summary>

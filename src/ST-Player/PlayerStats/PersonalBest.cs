@@ -9,9 +9,9 @@ namespace SurfTimer;
 /// As the PersonalBest object is being used for each different style, we shouldn't need a separate `Style` variable in here because each style entry will have unique ID in the Database
 /// and will therefore be a unique PersonalBest entry.
 /// </summary>
-internal class PersonalBest : RunStats
+public class PersonalBest : RunStats
 {
-    public int ID { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
+    // public int ID { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
     public int Rank { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
     public int Type { get; set; } = -1; // Identifies bonus # - 0 for map time -> huh, why o_O?
     public string Name { get; set; } = ""; // This is used only for WRs
@@ -20,7 +20,7 @@ internal class PersonalBest : RunStats
     // Add other properties as needed
 
     // Constructor
-    public PersonalBest() : base()
+    internal PersonalBest() : base()
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PersonalBest>>();
@@ -31,7 +31,7 @@ internal class PersonalBest : RunStats
     /// Loads the Checkpoint data for the given MapTime_ID. Used for loading player's personal bests and Map's world records.
     /// Bonus and Stage runs should NOT have any checkpoints.
     /// </summary>
-    public async Task LoadCheckpoints([CallerMemberName] string methodName = "")
+    internal async Task LoadCheckpoints([CallerMemberName] string methodName = "")
     {
         var cps = await _dataService.LoadCheckpointsAsync(this.ID);
 
@@ -59,7 +59,7 @@ internal class PersonalBest : RunStats
     /// Should be used to reload data from a specific `PersonalBest` object
     /// </summary>
     /// <param name="player">Player object</param>
-    public async Task LoadPlayerSpecificMapTimeData(Player player, [CallerMemberName] string methodName = "")
+    internal async Task LoadPlayerSpecificMapTimeData(Player player, [CallerMemberName] string methodName = "")
     {
         var model = await _dataService.LoadPersonalBestRunAsync(
             pbId: this.ID == -1 ? (int?)null : this.ID,
@@ -81,7 +81,7 @@ internal class PersonalBest : RunStats
         }
 
         this.ID = model.ID;
-        this.Ticks = model.Ticks;
+        this.RunTime = model.RunTime;
         this.Rank = model.Rank;
         this.StartVelX = model.StartVelX;
         this.StartVelY = model.StartVelY;
@@ -90,7 +90,7 @@ internal class PersonalBest : RunStats
         this.EndVelY = model.EndVelY;
         this.EndVelZ = model.EndVelZ;
         this.RunDate = model.RunDate;
-        this.ReplayFramesBase64 = model.ReplayFramesBase64; // Won't work with MySQL load? - Not tested
+        this.ReplayFrames = model.ReplayFrames; // Won't work with MySQL load? - Not tested
 
         _logger.LogDebug(
             "[{ClassName}] {MethodName} -> Loaded PB run {RunId} for {Player}.",

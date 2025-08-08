@@ -5,7 +5,7 @@ using SurfTimer.Data;
 
 namespace SurfTimer;
 
-internal class PlayerProfile
+public class PlayerProfile
 {
     public int ID { get; set; } = 0;
     public string Name { get; set; } = "";
@@ -17,7 +17,7 @@ internal class PlayerProfile
     private readonly ILogger<PlayerProfile> _logger;
     private readonly IDataAccessService _dataService;
 
-    public PlayerProfile(ulong steamId, string name = "", string country = "")
+    internal PlayerProfile(ulong steamId, string name = "", string country = "")
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerProfile>>();
@@ -36,14 +36,14 @@ internal class PlayerProfile
     /// <param name="name">Name of the player</param>
     /// <param name="country">Country of the player</param>
     /// <returns cref="PlayerProfile">PlayerProfile object</returns>
-    public static async Task<PlayerProfile> CreateAsync(ulong steamId, string name = "", string country = "")
+    internal static async Task<PlayerProfile> CreateAsync(ulong steamId, string name = "", string country = "")
     {
         var profile = new PlayerProfile(steamId, name, country);
         await profile.InitializeAsync();
         return profile;
     }
 
-    private async Task InitializeAsync([CallerMemberName] string methodName = "")
+    internal async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
         await GetPlayerProfile();
 
@@ -55,7 +55,7 @@ internal class PlayerProfile
     /// <summary>
     /// Retrieves all the data for the player profile from the database.
     /// </summary>
-    public async Task GetPlayerProfile([CallerMemberName] string methodName = "")
+    internal async Task GetPlayerProfile([CallerMemberName] string methodName = "")
     {
         var profile = await _dataService.GetPlayerProfileAsync(this.SteamID);
 
@@ -85,7 +85,7 @@ internal class PlayerProfile
     /// Insert new player profile information into the database.
     /// Retrieves the ID of the newly created player.
     /// </summary>
-    public async Task InsertPlayerProfile([CallerMemberName] string methodName = "")
+    internal async Task InsertPlayerProfile([CallerMemberName] string methodName = "")
     {
         var profile = new PlayerProfileDataModel
         {
@@ -107,7 +107,7 @@ internal class PlayerProfile
     /// Updates the information in the database for the player profile. Increments `connections` and changes nickname.
     /// </summary>
     /// <param name="name">Player Name</param>
-    public async Task UpdatePlayerProfile(string name, [CallerMemberName] string methodName = "")
+    internal async Task UpdatePlayerProfile(string name, [CallerMemberName] string methodName = "")
     {
         this.Name = name;
         await _dataService.UpdatePlayerProfileAsync(new PlayerProfileDataModel

@@ -1,7 +1,7 @@
 public class Checkpoint
 {
     public int CP { get; set; }
-    public int Ticks { get; set; }
+    public int RunTime { get; set; }
     public float StartVelX { get; set; }
     public float StartVelY { get; set; }
     public float StartVelZ { get; set; }
@@ -17,7 +17,7 @@ public class Checkpoint
     public Checkpoint(int cp, int ticks, float startVelX, float startVelY, float startVelZ, float endVelX, float endVelY, float endVelZ, int endTouch, int attempts)
     {
         CP = cp;
-        Ticks = ticks;
+        RunTime = ticks;
         StartVelX = startVelX;
         StartVelY = startVelY;
         StartVelZ = startVelZ;

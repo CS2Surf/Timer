@@ -1,8 +1,6 @@
-using CounterStrikeSharp.API.Modules.Utils;
-
 namespace SurfTimer;
 
-internal class SavelocFrame
+public class SavelocFrame
 {
         public Vector_t Pos { get; set; } = new Vector_t(0, 0, 0);
         public QAngle_t Ang { get; set; } = new QAngle_t(0, 0, 0);

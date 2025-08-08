@@ -1,9 +1,8 @@
-using System.Text.Json;
 using CounterStrikeSharp.API.Core;
 
 namespace SurfTimer;
 
-internal class ReplayManager
+public class ReplayManager
 {
     public ReplayPlayer MapWR { get; set; }
     public ReplayPlayer? BonusWR { get; set; } = null;
@@ -32,7 +31,7 @@ internal class ReplayManager
     /// <param name="map_time_id">ID of the run</param>
     /// <param name="style">Style of the run</param>
     /// <param name="stage">Stage/Bonus of the run</param>
-    public ReplayManager(int map_id, bool staged, bool bonused, List<ReplayFrame> frames, int run_time = 0, string playerName = "", int map_time_id = -1, int style = 0, int stage = 0)
+    internal ReplayManager(int map_id, bool staged, bool bonused, List<ReplayFrame> frames, int run_time = 0, string playerName = "", int map_time_id = -1, int style = 0, int stage = 0)
     {
         MapWR = new ReplayPlayer
         {

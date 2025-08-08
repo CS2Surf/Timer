@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Modules.Utils;
+using CounterStrikeSharp.API.Modules.Admin;
 
 namespace SurfTimer;
 
@@ -249,7 +250,7 @@ public partial class SurfTimer
             return;
 
         int pRank = playerList[player.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].Rank;
-        int tRank = playerList[player.UserId ?? 0].CurrMap.MapCompletions[playerList[player.UserId ?? 0].Timer.Style];
+        int tRank = CurrentMap.MapCompletions[playerList[player.UserId ?? 0].Timer.Style];
         player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["rank",
             CurrentMap.Name, pRank, tRank]}"
         );
@@ -539,6 +540,7 @@ public partial class SurfTimer
     */
     [ConsoleCommand("css_rx", "x")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    [RequiresPermissions("@css/root")]
     public void TestSituationCmd(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -552,6 +554,7 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_setpb", "xxxxx")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    [RequiresPermissions("@css/root")]
     public async void TestSetPb(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -611,6 +614,7 @@ public partial class SurfTimer
 
     [ConsoleCommand("css_testx", "x")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    [RequiresPermissions("@css/root")]
     public void TestCmd(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
@@ -623,14 +627,14 @@ public partial class SurfTimer
         player.PrintToChat($"{Config.PluginPrefix}{ChatColors.Lime}====== PLAYER ======");
         player.PrintToChat($"{Config.PluginPrefix} Profile ID: {ChatColors.Green}{oPlayer.Profile.ID}");
         player.PrintToChat($"{Config.PluginPrefix} Steam ID: {ChatColors.Green}{oPlayer.Profile.SteamID}");
-        player.PrintToChat($"{Config.PluginPrefix} MapTime ID: {ChatColors.Green}{oPlayer.Stats.PB[style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.PB[style].Ticks)}");
+        player.PrintToChat($"{Config.PluginPrefix} MapTime ID: {ChatColors.Green}{oPlayer.Stats.PB[style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.PB[style].RunTime)}");
         player.PrintToChat($"{Config.PluginPrefix} Stage: {ChatColors.Green}{oPlayer.Timer.Stage}");
         player.PrintToChat($"{Config.PluginPrefix} IsStageMode: {ChatColors.Green}{oPlayer.Timer.IsStageMode}");
         player.PrintToChat($"{Config.PluginPrefix} IsRunning: {ChatColors.Green}{oPlayer.Timer.IsRunning}");
         player.PrintToChat($"{Config.PluginPrefix} Checkpoint: {ChatColors.Green}{oPlayer.Timer.Checkpoint}");
         player.PrintToChat($"{Config.PluginPrefix} Bonus: {ChatColors.Green}{oPlayer.Timer.Bonus}");
         player.PrintToChat($"{Config.PluginPrefix} Ticks: {ChatColors.Green}{oPlayer.Timer.Ticks}");
-        player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[1][style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.StagePB[1][style].Ticks)}");
+        player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[1][style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.StagePB[1][style].RunTime)}");
         // player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[style][1].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.StagePB[style][1].Ticks)}");
 
 
@@ -640,7 +644,7 @@ public partial class SurfTimer
         player.PrintToChat($"{Config.PluginPrefix} Map Stages: {ChatColors.Green}{CurrentMap.Stages}");
         player.PrintToChat($"{Config.PluginPrefix} Map Bonuses: {ChatColors.Green}{CurrentMap.Bonuses}");
         player.PrintToChat($"{Config.PluginPrefix} Map Completions (Style: {ChatColors.Green}{style}{ChatColors.Default}): {ChatColors.Green}{CurrentMap.MapCompletions[style]}");
-        player.PrintToChat($"{Config.PluginPrefix} .CurrentMap.WR[].Ticks: {ChatColors.Green}{CurrentMap.WR[style].Ticks}");
+        player.PrintToChat($"{Config.PluginPrefix} .CurrentMap.WR[].Ticks: {ChatColors.Green}{CurrentMap.WR[style].RunTime}");
         player.PrintToChat($"{Config.PluginPrefix} .CurrentMap.WR[].Checkpoints.Count: {ChatColors.Green}{CurrentMap.WR[style].Checkpoints.Count}");
 
 
@@ -741,6 +745,38 @@ public partial class SurfTimer
         //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.IsPlaying: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.IsPlaying}");
         //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.Controller Null?: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.Controller == null}");
         // }
+    }
+
+    [ConsoleCommand("css_ctest", "x")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [RequiresPermissions("@css/root")]
+    public void ConsoleTestCmd(CCSPlayerController? player, CommandInfo command)
+    {
+        Console.WriteLine($"Map ID: {CurrentMap.ID}");
+        Console.WriteLine($"Map Name: {CurrentMap.Name}");
+        Console.WriteLine($"Map Author: {CurrentMap.Author}");
+        Console.WriteLine($"Map Tier: {CurrentMap.Tier}");
+        Console.WriteLine($"Map Stages: {CurrentMap.Stages}");
+        Console.WriteLine($"Map Bonuses: {CurrentMap.Bonuses}");
+        Console.WriteLine($"Map Completions: {CurrentMap.MapCompletions[0]}");
+
+        Console.WriteLine($"Map WR ID: {CurrentMap.WR[0].ID}");
+        Console.WriteLine($"Map WR Name: {CurrentMap.WR[0].Name}");
+        Console.WriteLine($"Map WR Type: {CurrentMap.WR[0].Type}");
+        Console.WriteLine($"Map WR Rank: {CurrentMap.WR[0].Rank}");
+        Console.WriteLine($"Map WR Checkpoints.Count: {CurrentMap.WR[0].Checkpoints.Count}");
+        Console.WriteLine($"Map WR ReplayFramesBase64.Length: {CurrentMap.WR[0].ReplayFrames.Length}");
+        Console.WriteLine($"Map WR ReplayFrames.Length: {CurrentMap.WR[0].ReplayFrames.Length}");
+
+        Console.WriteLine($"Map Stage Completions: {CurrentMap.StageCompletions.Length}");
+        Console.WriteLine($"Map StageWR ID: {CurrentMap.StageWR[1][0].ID}");
+        Console.WriteLine($"Map StageWR Name: {CurrentMap.StageWR[1][0].Name}");
+        Console.WriteLine($"Map StageWR Type: {CurrentMap.StageWR[1][0].Type}");
+        Console.WriteLine($"Map StageWR Rank: {CurrentMap.StageWR[1][0].Rank}");
+        Console.WriteLine($"Map StageWR ReplayFramesBase64.Length: {CurrentMap.StageWR[1][0].ReplayFrames.Length}");
+        Console.WriteLine($"Map StageWR ReplayFrames.Length: {CurrentMap.StageWR[1][0].ReplayFrames.Length}");
+
+        Console.WriteLine($"Map Bonus Completions: {CurrentMap.BonusCompletions.Length}");
     }
 
 

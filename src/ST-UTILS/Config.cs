@@ -79,34 +79,31 @@ public static class Config
         /// </summary>
         public static class Endpoints
         {
-            public const string ENDPOINT_PING = "/ping?client_unix={0}";
-            
+            public const string ENDPOINT_PING = "/api/Utilities/ping/clientUnix={0}";
+
             // Map.cs related endpoints
-            public const string ENDPOINT_MAP_GET_INFO = "/surftimer/mapinfo?mapname={0}";
-            public const string ENDPOINT_MAP_INSERT_INFO = "/surftimer/insertmap";
-            public const string ENDPOINT_MAP_UPDATE_INFO = "/surftimer/updateMap";
-            // public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maptotals?map_id={0}&style={1}";
-            // public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maprunsdata?map_id={0}&style={1}&type={2}";
-            public const string ENDPOINT_MAP_GET_RUNS = "/surftimer/maprunsdata?id={0}";
-            public const string ENDPOINT_MAP_GET_RUN_CPS = "/surftimer/mapcheckpointsdata?maptime_id={0}";
+            public const string ENDPOINT_MAP_GET_INFO = "/api/Map/mapName={0}";
+            public const string ENDPOINT_MAP_INSERT_INFO = "/api/Map";
+            public const string ENDPOINT_MAP_UPDATE_INFO = "/api/Map/mapId={0}";
+            public const string ENDPOINT_MAP_GET_RUNS = "/api/Map/mapId={0}";
+            public const string ENDPOINT_MAP_GET_RUN_CPS = "/api/PersonalBest/checkpoints/mapTimeId={0}";
 
             // CurrentRun.cs
-            public const string ENDPOINT_CR_SAVE_MAP_TIME = "/surftimer/savemaptime";
+            public const string ENDPOINT_CR_SAVE_MAP_TIME = "/api/CurrentRun/saveMapTime";
+            public const string ENDPOINT_CR_UPDATE_MAP_TIME = "/api/CurrentRun/updateMapTime/mapTimeId={0}";
             public const string ENDPOINT_CR_SAVE_STAGE_TIME = "/surftimer/savestagetime";
 
-
             // PersonalBest.cs
-            public const string ENDPOINT_MAP_GET_PB_BY_PLAYER = "/surftimer/runbyplayer?player_id={0}&map_id={1}&type={2}&style={3}";
-            public const string ENDPOINT_MAP_GET_PB_BY_ID = "/surftimer/runbyid?run_id={0}";
-
+            public const string ENDPOINT_MAP_GET_PB_BY_PLAYER = "/api/PersonalBest/playerId={0}&mapId={1}&type={2}&style={3}";
+            public const string ENDPOINT_MAP_GET_PB_BY_ID = "/api/PersonalBest/runById/mapTimeId={0}";
 
             // PlayerProfile.cs
-            public const string ENDPOINT_PP_GET_PROFILE = "/surftimer/playersurfprofile/{0}";
-            public const string ENDPOINT_PP_INSERT_PROFILE = "/surftimer/insertplayer";
-            public const string ENDPOINT_PP_UPDATE_PROFILE = "/surftimer/updateplayerprofile";
+            public const string ENDPOINT_PP_GET_PROFILE = "/api/PlayerProfile/steamId={0}";
+            public const string ENDPOINT_PP_INSERT_PROFILE = "/api/PlayerProfile";
+            public const string ENDPOINT_PP_UPDATE_PROFILE = "/api/PlayerProfile/playerId={0}";
 
             // PlayerStats.cs
-            public const string ENDPOINT_PS_GET_PLAYER_MAP_DATA = "/surftimer/playermapdata?player_id={0}&map_id={1}";
+            public const string ENDPOINT_PS_GET_PLAYER_MAP_DATA = "/api/PlayerStats/playerId={0}&mapId={1}";
 
         }
     }
@@ -172,7 +169,7 @@ public static class Config
                 WHERE subquery.`map_id` = mainquery.`map_id` AND subquery.`style` = mainquery.`style` 
                 AND subquery.`run_time` <= mainquery.`run_time` AND subquery.`type` = mainquery.`type` AND subquery.`stage` = mainquery.`stage`) AS `rank` FROM `MapTimes` AS mainquery 
                 WHERE mainquery.`player_id` = {0} AND mainquery.`map_id` = {1}; 
-            "; // Deprecated
+            ";
 
             // PersonalBest.cs related queries
             public const string DB_QUERY_PB_GET_TYPE_RUNTIME = @"
@@ -230,46 +227,3 @@ public static class Config
         }
     }
 }
-
-
-
-/*
-    /// <summary>
-    /// Replaces color codes from strings to CS# ChatColors.
-    /// {white} -> {ChatColors.White}
-    /// </summary>
-    /// <param name="message">String to replace colors</param>
-    /// <returns><see cref="string"/> with 'ChatColors'</returns>
-    private static string ReplaceColors(string message)
-    {
-        var replacements = new Dictionary<string, string>
-            {
-                { "{default}",      $"{ChatColors.Default}" },
-                { "{red}",          $"{ChatColors.Red}" },
-                { "{white}",        $"{ChatColors.White}" },
-                { "{darkred}",      $"{ChatColors.DarkRed}" },
-                { "{green}",        $"{ChatColors.Green}" },
-                { "{lightyellow}",  $"{ChatColors.LightYellow}" },
-                { "{lightblue}",    $"{ChatColors.LightBlue}" },
-                { "{olive}",        $"{ChatColors.Olive}" },
-                { "{lime}",         $"{ChatColors.Lime}" },
-                { "{lightpurple}",  $"{ChatColors.LightPurple}" },
-                { "{purple}",       $"{ChatColors.Purple}" },
-                { "{grey}",         $"{ChatColors.Grey}" },
-                { "{yellow}",       $"{ChatColors.Yellow}" },
-                { "{gold}",         $"{ChatColors.Gold}" },
-                { "{silver}",       $"{ChatColors.Silver}" },
-                { "{blue}",         $"{ChatColors.Blue}" },
-                { "{darkblue}",     $"{ChatColors.DarkBlue}" },
-                { "{bluegrey}",     $"{ChatColors.BlueGrey}" },
-                { "{magenta}",      $"{ChatColors.Magenta}" },
-                { "{lightred}",     $"{ChatColors.LightRed}" },
-                { "{orange}",       $"{ChatColors.Orange}" }
-            };
-
-        foreach (var replacement in replacements)
-            message = message.Replace(replacement.Key, replacement.Value);
-
-        return message;
-    }
-*/

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using CounterStrikeSharp.API;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
@@ -9,13 +10,13 @@ namespace SurfTimer;
 /// <summary>
 /// This class stores data for the current run.
 /// </summary>
-internal class CurrentRun : RunStats
+public class CurrentRun : RunStats
 {
     private readonly ILogger<CurrentRun> _logger;
     private readonly IDataAccessService _dataService;
 
 
-    public CurrentRun() : base()
+    internal CurrentRun() : base()
     {
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<CurrentRun>>();
         _dataService = SurfTimer.ServiceProvider.GetRequiredService<IDataAccessService>();
@@ -35,7 +36,7 @@ internal class CurrentRun : RunStats
     /// <param name="bonus">Bonus number</param>
     /// <param name="stage">Stage number</param>
     /// <param name="run_ticks">Ticks for the run - used for Stage and Bonus entries</param>
-    public async Task SaveMapTime(Player player, int bonus = 0, int stage = 0, int run_ticks = -1, [CallerMemberName] string methodName = "")
+    internal async Task SaveMapTime(Player player, int bonus = 0, int stage = 0, int run_ticks = -1, [CallerMemberName] string methodName = "")
     {
         string replay_frames = "";
 
@@ -43,34 +44,54 @@ internal class CurrentRun : RunStats
         // if (methodName != "TestSetPb")
         replay_frames = player.ReplayRecorder.TrimReplay(player, stage != 0 ? 2 : bonus != 0 ? 1 : 0, stage == SurfTimer.CurrentMap.Stages);
 
-        _logger.LogTrace("[{ClassName}] {MethodName} -> Sending total of {Frames} replay frames.",
-            nameof(CurrentRun), methodName, replay_frames.Length);
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Sending total of {Frames} serialized and compressed replay frames.",
+            nameof(CurrentRun), methodName, replay_frames.Length
+        );
 
         var stopwatch = Stopwatch.StartNew();
         int recType = stage != 0 ? 2 : bonus != 0 ? 1 : 0;
+        int style = player.Timer.Style;
+        int mapTimeId = 0;
 
         var mapTime = new MapTimeDataModel
         {
             PlayerId = player.Profile.ID,
-            MapId = player.CurrMap.ID,
+            MapId = SurfTimer.CurrentMap.ID,
             Style = player.Timer.Style,
             Type = recType,
             Stage = stage != 0 ? stage : bonus,
-            Ticks = run_ticks == -1 ? this.Ticks : run_ticks,
+            RunTime = run_ticks == -1 ? this.RunTime : run_ticks,
             StartVelX = this.StartVelX,
             StartVelY = this.StartVelY,
             StartVelZ = this.StartVelZ,
             EndVelX = this.EndVelX,
             EndVelY = this.EndVelY,
             EndVelZ = this.EndVelZ,
-            ReplayFramesBase64 = replay_frames,
-            Checkpoints = this.Checkpoints // Test out 
+            ReplayFrames = replay_frames,
+            Checkpoints = this.Checkpoints
         };
 
-        int mapTimeId = await _dataService.InsertMapTimeAsync(mapTime);
+        switch (recType)
+        {
+            case 0:
+                mapTimeId = player.Stats.PB[style].ID;
+                break;
+            case 1:
+                mapTimeId = player.Stats.BonusPB[bonus][style].ID;
+                break;
+            case 2:
+                mapTimeId = player.Stats.StagePB[stage][style].ID;
+                break;
+        }
+
+        if (mapTimeId <= 0)
+            mapTimeId = await _dataService.InsertMapTimeAsync(mapTime);
+        else
+            mapTimeId = await _dataService.UpdateMapTimeAsync(mapTime, mapTimeId);
+
 
         // Reload the times for the map
-        await player.CurrMap.LoadMapRecordRuns();
+        await SurfTimer.CurrentMap.LoadMapRecordRuns();
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> Loading data for run {ID} with type {Type}.",
             nameof(CurrentRun), methodName, mapTimeId, recType
@@ -98,6 +119,75 @@ internal class CurrentRun : RunStats
             nameof(CurrentRun), methodName, player.Profile.Name, mapTimeId, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
         );
     }
+
+    /// <summary>
+    /// Deals with saving a Stage MapTime (Type 2) in the Database.
+    /// Should deal with `IsStageMode` runs, Stages during Map Runs and also Last Stage.
+    /// </summary>
+    /// <param name="player">Player object</param>
+    /// <param name="stage">Stage to save</param>
+    /// <param name="saveLastStage">Is it the last stage?</param>
+    /// <param name="stage_run_time">Run Time (Ticks) for the stage run</param>
+    internal async Task SaveStageTime(Player player, int stage = -1, int stage_run_time = -1, bool saveLastStage = false)
+    {
+        // player.Controller.PrintToChat($"{Config.PluginPrefix} SaveStageTime received: {player.Profile.Name}, {stage}, {stage_run_time}, {saveLastStage}");
+        int pStyle = player.Timer.Style;
+        if (
+            stage_run_time < SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime ||
+            SurfTimer.CurrentMap.StageWR[stage][pStyle].ID == -1 ||
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].RunTime > stage_run_time ||
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1
+        )
+        {
+            if (stage_run_time < SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime) // Player beat the Stage WR
+            {
+                int timeImprove = SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime - stage_run_time;
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_improved",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime)]}"
+                );
+            }
+            else if (SurfTimer.CurrentMap.StageWR[stage][pStyle].ID == -1) // No Stage record was set on the map
+            {
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_set",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time)]}"
+                );
+            }
+            else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1) // Player first Stage personal best
+            {
+                player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_set",
+                    stage, PlayerHUD.FormatTime(stage_run_time)]}"
+                );
+            }
+            else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].RunTime > stage_run_time) // Player beating their existing Stage personal best
+            {
+                int timeImprove = player.Stats.StagePB[stage][pStyle].RunTime - stage_run_time;
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_improved",
+                    player.Controller.PlayerName, stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.StagePB[stage][pStyle].RunTime)]}"
+                );
+            }
+
+            player.ReplayRecorder.IsSaving = true;
+
+            // Save stage run
+            Console.WriteLine($"==== OnTriggerStartTouch -> SaveStageTime -> [StageWR (IsStageMode? {player.Timer.IsStageMode} | Last? {saveLastStage})] Saving Stage {stage} ({stage}) time of {PlayerHUD.FormatTime(stage_run_time)} ({stage_run_time})");
+            await player.Stats.ThisRun.SaveMapTime(player, stage: stage, run_ticks: stage_run_time); // Save the Stage MapTime PB data
+
+            // AddTimer(1.0f, async () =>
+            // {
+            //     // Save stage run
+            //     Console.WriteLine($"==== OnTriggerStartTouch -> SaveStageTime -> [StageWR (IsStageMode? {player.Timer.IsStageMode} | Last? {saveLastStage})] Saving Stage {stage} ({stage}) time of {PlayerHUD.FormatTime(stage_run_time)} ({stage_run_time})");
+            //     await player.Stats.ThisRun.SaveMapTime(player, stage: stage, run_ticks: stage_run_time); // Save the Stage MapTime PB data
+            // });
+        }
+        else if (stage_run_time > SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime && player.Timer.IsStageMode) // Player is behind the Stage WR for the map
+        {
+            int timeImprove = stage_run_time - SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime;
+            player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_missed",
+                stage, PlayerHUD.FormatTime(stage_run_time), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime)]}"
+            );
+        }
+    }
+
 
     public void PrintSituations(Player player)
     {

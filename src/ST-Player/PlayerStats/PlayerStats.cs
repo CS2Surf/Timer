@@ -5,22 +5,11 @@ using SurfTimer.Data;
 
 namespace SurfTimer;
 
-internal class PlayerStats
+public class PlayerStats
 {
     // To-Do: Each stat should be a class of its own, with its own methods and properties - easier to work with. 
     //        Temporarily, we store ticks + basic info so we can experiment
     // These account for future style support and a relevant index.
-
-    // /// <summary>
-    // /// Stage Personal Best - Refer to as StagePB[style][stage#]
-    // /// To-do: DEPRECATE THIS WHEN IMPLEMENTING STAGES, FOLLOW NEW PB STRUCTURE
-    // /// </summary>
-    // public int[,] StagePB { get; set; } = { { 0, 0 } };
-    // /// <summary>
-    // /// Stage Personal Best - Refer to as StageRank[style][stage#]
-    // /// To-do: DEPRECATE THIS WHEN IMPLEMENTING STAGES, FOLLOW NEW PB STRUCTURE
-    // /// </summary>
-    // public int[,] StageRank { get; set; } = { { 0, 0 } }; 
 
     /// <summary>
     /// Map Personal Best - Refer to as PB[style]
@@ -47,7 +36,7 @@ internal class PlayerStats
 
     // Initialize PersonalBest for each `style` (e.g., 0 for normal)
     // Here we can loop through all available styles at some point and initialize them
-    public PlayerStats([CallerMemberName] string methodName = "")
+    internal PlayerStats([CallerMemberName] string methodName = "")
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerStats>>();
@@ -81,9 +70,9 @@ internal class PlayerStats
     /// Not used 
     /// </summary>
     // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    public async void LoadMapTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
+    internal async void LoadMapTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
-        var player_maptime = await ApiMethod.GET<API_MapTime>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=0");
+        var player_maptime = await ApiMethod.GET<API_MapTime>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=0");
         if (player_maptime == null)
         {
             _logger.LogTrace("[{ClassName}] {MethodName} -> LoadMapTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
@@ -93,7 +82,7 @@ internal class PlayerStats
         }
 
         PB[style].ID = player_maptime.id;
-        PB[style].Ticks = player_maptime.run_time;
+        PB[style].RunTime = player_maptime.run_time;
         PB[style].Type = player_maptime.type;
         PB[style].StartVelX = player_maptime.start_vel_x;
         PB[style].StartVelY = player_maptime.start_vel_y;
@@ -122,9 +111,9 @@ internal class PlayerStats
     /// Not used 
     /// </summary>
     // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    public async void LoadStageTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
+    internal async void LoadStageTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
-        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=2");
+        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=2");
         if (player_maptime == null)
         {
             _logger.LogTrace("[{ClassName}] {MethodName} -> LoadStageTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
@@ -136,7 +125,7 @@ internal class PlayerStats
         foreach (API_MapTime mt in player_maptime)
         {
             StagePB[mt.stage][style].ID = mt.id;
-            StagePB[mt.stage][style].Ticks = mt.run_time;
+            StagePB[mt.stage][style].RunTime = mt.run_time;
             StagePB[mt.stage][style].Type = mt.type;
             StagePB[mt.stage][style].StartVelX = mt.start_vel_x;
             StagePB[mt.stage][style].StartVelY = mt.start_vel_y;
@@ -153,9 +142,9 @@ internal class PlayerStats
     /// Not used 
     /// </summary>
     // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    public async void LoadBonusTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
+    internal async void LoadBonusTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
     {
-        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={player.CurrMap.ID}&style={style}&type=1");
+        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=1");
         if (player_maptime == null)
         {
             _logger.LogTrace("[{ClassName}] {MethodName} -> LoadBonusTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
@@ -167,7 +156,7 @@ internal class PlayerStats
         foreach (API_MapTime mt in player_maptime)
         {
             BonusPB[mt.stage][style].ID = mt.id;
-            BonusPB[mt.stage][style].Ticks = mt.run_time;
+            BonusPB[mt.stage][style].RunTime = mt.run_time;
             BonusPB[mt.stage][style].Type = mt.type;
             BonusPB[mt.stage][style].StartVelX = mt.start_vel_x;
             BonusPB[mt.stage][style].StartVelY = mt.start_vel_y;
@@ -186,7 +175,7 @@ internal class PlayerStats
     /// `Checkpoints` are loaded separately from another method in the `PresonalBest` class as it uses the unique `ID` for the run. (This method calls it if needed)
     /// This populates all the `style` and `type` stats the player has for the map
     /// </summary>
-    public async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0, [CallerMemberName] string methodName = "")
+    internal async Task LoadPlayerMapTimesData(Player player, int playerId = 0, int mapId = 0, [CallerMemberName] string methodName = "")
     {
         var playerMapTimes = await _dataService.GetPlayerMapTimesAsync(player.Profile.ID, SurfTimer.CurrentMap.ID);
 
@@ -207,7 +196,7 @@ internal class PlayerStats
                     _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> BonusPB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     BonusPB[mapTime.Stage][style].ID = mapTime.ID;
-                    BonusPB[mapTime.Stage][style].Ticks = mapTime.RunTime;
+                    BonusPB[mapTime.Stage][style].RunTime = mapTime.RunTime;
                     BonusPB[mapTime.Stage][style].Type = mapTime.Type;
                     BonusPB[mapTime.Stage][style].Rank = mapTime.Rank;
                     BonusPB[mapTime.Stage][style].StartVelX = mapTime.StartVelX;
@@ -224,7 +213,7 @@ internal class PlayerStats
                     _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> StagePB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     StagePB[mapTime.Stage][style].ID = mapTime.ID;
-                    StagePB[mapTime.Stage][style].Ticks = mapTime.RunTime;
+                    StagePB[mapTime.Stage][style].RunTime = mapTime.RunTime;
                     StagePB[mapTime.Stage][style].Type = mapTime.Type;
                     StagePB[mapTime.Stage][style].Rank = mapTime.Rank;
                     StagePB[mapTime.Stage][style].StartVelX = mapTime.StartVelX;
@@ -241,7 +230,7 @@ internal class PlayerStats
                     _logger.LogDebug("[{ClassName}] {MethodName} -> LoadPlayerMapTimesData >> MapPB with ID {ID}", nameof(PlayerStats), methodName, mapTime.ID);
 #endif
                     PB[style].ID = mapTime.ID;
-                    PB[style].Ticks = mapTime.RunTime;
+                    PB[style].RunTime = mapTime.RunTime;
                     PB[style].Type = mapTime.Type;
                     PB[style].Rank = mapTime.Rank;
                     PB[style].StartVelX = mapTime.StartVelX;

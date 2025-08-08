@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SurfTimer;
 
-internal class ReplayPlayer
+public class ReplayPlayer
 {
     /// <summary>
     /// Enable or Disable the replay bots.
@@ -63,7 +63,7 @@ internal class ReplayPlayer
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ReplayPlayer>>();
     }
 
-    public void ResetReplay()
+    internal void ResetReplay()
     {
         this.CurrentFrameTick = 0;
         this.FrameTickIncrement = 1;
@@ -74,7 +74,7 @@ internal class ReplayPlayer
         this.ReplayCurrentRunTime = 0;
     }
 
-    public void Reset()
+    internal void Reset()
     {
         this.IsPlaying = false;
         this.IsPaused = false;
@@ -88,7 +88,7 @@ internal class ReplayPlayer
         this.Controller = null;
     }
 
-    public void SetController(CCSPlayerController c, int repeat_count = -1, [CallerMemberName] string methodName = "")
+    internal void SetController(CCSPlayerController c, int repeat_count = -1, [CallerMemberName] string methodName = "")
     {
         this.Controller = c;
         if (repeat_count != -1)
@@ -100,7 +100,7 @@ internal class ReplayPlayer
         );
     }
 
-    public void Start([CallerMemberName] string methodName = "")
+    internal void Start([CallerMemberName] string methodName = "")
     {
         if (!this.IsPlayable || !this.IsEnabled)
             return;
@@ -118,7 +118,7 @@ internal class ReplayPlayer
     });
     }
 
-    public void Stop([CallerMemberName] string methodName = "")
+    internal void Stop([CallerMemberName] string methodName = "")
     {
         this.IsPlaying = false;
 #if DEBUG
@@ -128,7 +128,7 @@ internal class ReplayPlayer
 #endif
     }
 
-    public void Pause([CallerMemberName] string methodName = "")
+    internal void Pause([CallerMemberName] string methodName = "")
     {
         if (!this.IsPlaying || !this.IsEnabled)
             return;
@@ -142,7 +142,7 @@ internal class ReplayPlayer
 #endif
     }
 
-    public void Tick()
+    internal void Tick()
     {
         if (this.MapID == -1 || !this.IsEnabled || !this.IsPlaying || !this.IsPlayable || this.Frames.Count == 0)
             return;
@@ -210,7 +210,7 @@ internal class ReplayPlayer
         //     Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> Tick -> ====================> {this.RepeatCount} <====================");
     }
 
-    public void LoadReplayData(int repeat_count = -1, [CallerMemberName] string methodName = "")
+    internal void LoadReplayData(int repeat_count = -1, [CallerMemberName] string methodName = "")
     {
         if (!this.IsPlayable || !this.IsEnabled)
             return;
@@ -231,7 +231,7 @@ internal class ReplayPlayer
         this.RepeatCount = repeat_count;
     }
 
-    public void FormatBotName([CallerMemberName] string methodName = "")
+    internal void FormatBotName([CallerMemberName] string methodName = "")
     {
         if (!this.IsPlayable || !this.IsEnabled || this.MapID == -1)
             return;

@@ -120,12 +120,20 @@ namespace SurfTimer.Data
 
         /* CurrentRun.cs */
         /// <summary>
-        /// Adds/updates a MapTime table entry through API or MySQL. Deals with checkpoints for map runs of type 0
+        /// Adds a MapTime table entry through API or MySQL. Deals with checkpoints for map runs of type 0
         /// </summary>
         /// <param name="mapTime">Data to insert/update in table</param>
         /// <returns>int mapTimeId given by DB</returns>
         Task<int> InsertMapTimeAsync(
             MapTimeDataModel mapTime, [CallerMemberName] string methodName = ""
+        );
+        /// <summary>
+        /// Updates a MapTime table entry through API or MySQL. Deals with checkpoints for map runs of type 0
+        /// </summary>
+        /// <param name="mapTime">Data to update in table</param>
+        /// <returns>int mapTimeId that was updated</returns>
+        Task<int> UpdateMapTimeAsync(
+            MapTimeDataModel mapTime, int mapTimeId, [CallerMemberName] string methodName = ""
         );
     }
 }

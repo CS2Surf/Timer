@@ -270,7 +270,7 @@ namespace SurfTimer.Data
                     mapTime.Style,
                     mapTime.Type,
                     mapTime.Stage,
-                    mapTime.Ticks,
+                    mapTime.RunTime,
                     mapTime.StartVelX,
                     mapTime.StartVelY,
                     mapTime.StartVelZ,
@@ -278,7 +278,7 @@ namespace SurfTimer.Data
                     mapTime.EndVelY,
                     mapTime.EndVelZ,
                     mapTime.RunDate,
-                    mapTime.ReplayFramesBase64)
+                    mapTime.ReplayFrames)
             );
 
             if (rowsInserted <= 0)
@@ -294,13 +294,18 @@ namespace SurfTimer.Data
                 {
                     commands.Add(string.Format(
                         Config.MySQL.Queries.DB_QUERY_CR_INSERT_CP,
-                        lastId, cp.CP, cp.Ticks, cp.StartVelX, cp.StartVelY, cp.StartVelZ,
+                        lastId, cp.CP, cp.RunTime, cp.StartVelX, cp.StartVelY, cp.StartVelZ,
                         cp.EndVelX, cp.EndVelY, cp.EndVelZ, cp.Attempts, cp.EndTouch));
                 }
                 await SurfTimer.DB.TransactionAsync(commands);
             }
 
             return (int)lastId;
+        }
+
+        public async Task<int> UpdateMapTimeAsync(MapTimeDataModel mapTime, int mapTimeId, [CallerMemberName] string methodName = "")
+        {
+            throw new NotImplementedException();
         }
     }
 }

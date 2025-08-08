@@ -55,7 +55,7 @@ public partial class SurfTimer
         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_ZONE_ENTER;
         player.ReplayRecorder.MapSituations.Add(player.Timer.Ticks);
 
-        player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the Map run
+        player.Stats.ThisRun.RunTime = player.Timer.Ticks; // End time for the Map run
         player.Stats.ThisRun.EndVelX = velocity.X; // End speed for the Map run
         player.Stats.ThisRun.EndVelY = velocity.Y; // End speed for the Map run
         player.Stats.ThisRun.EndVelZ = velocity.Z; // End speed for the Map run
@@ -70,12 +70,12 @@ public partial class SurfTimer
             if (player.Timer.IsPracticeMode)
                 PracticeString = $"({ChatColors.Grey}Practice{ChatColors.Default}) ";
 
-            if (player.Timer.Ticks < CurrentMap.WR[pStyle].Ticks) // Player beat the Map WR
+            if (player.Timer.Ticks < CurrentMap.WR[pStyle].RunTime) // Player beat the Map WR
             {
                 saveMapTime = true;
-                int timeImprove = CurrentMap.WR[pStyle].Ticks - player.Timer.Ticks;
+                int timeImprove = CurrentMap.WR[pStyle].RunTime - player.Timer.Ticks;
                 Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mapwr_improved",
-                    player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.WR[pStyle].Ticks)]}"
+                    player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.WR[pStyle].RunTime)]}"
                 );
             }
             else if (CurrentMap.WR[pStyle].ID == -1) // No record was set on the map
@@ -85,19 +85,19 @@ public partial class SurfTimer
                     player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
                 );
             }
-            else if (player.Stats.PB[pStyle].Ticks <= 0) // Player first ever PersonalBest for the map
+            else if (player.Stats.PB[pStyle].RunTime <= 0) // Player first ever PersonalBest for the map
             {
                 saveMapTime = true;
                 player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mappb_set",
                     PlayerHUD.FormatTime(player.Timer.Ticks)]}"
                 );
             }
-            else if (player.Timer.Ticks < player.Stats.PB[pStyle].Ticks) // Player beating their existing PersonalBest for the map
+            else if (player.Timer.Ticks < player.Stats.PB[pStyle].RunTime) // Player beating their existing PersonalBest for the map
             {
                 saveMapTime = true;
-                int timeImprove = player.Stats.PB[pStyle].Ticks - player.Timer.Ticks;
+                int timeImprove = player.Stats.PB[pStyle].RunTime - player.Timer.Ticks;
                 Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["mappb_improved",
-                    player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)]}"
+                    player.Controller.PlayerName, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].RunTime)]}"
                 );
             }
             else // Player did not beat their existing PersonalBest for the map nor the map record
@@ -110,7 +110,7 @@ public partial class SurfTimer
             if (saveMapTime)
             {
                 player.ReplayRecorder.IsSaving = true;
-                AddTimer(1.0f, async () =>
+                AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     await player.Stats.ThisRun.SaveMapTime(player); // Save the MapTime PB data
                 });
@@ -122,18 +122,18 @@ public partial class SurfTimer
                 // Should we also save a last stage run?
                 if (CurrentMap.Stages > 0)
                 {
-                    AddTimer(0.1f, () =>
+                    AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                     {
                         // This calculation is wrong unless we wait for a bit in order for the `END_ZONE_ENTER` to be available in the `Frames` object
                         int stage_run_time = player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER) - player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
 
                         // player.Controller.PrintToChat($"{Config.PluginPrefix} [LAST StageWR (Map RUN)] Sending to SaveStageTime: {player.Profile.Name}, {CurrentMap.Stages}, {stage_run_time}");
-                        SaveStageTime(player, CurrentMap.Stages, stage_run_time, true);
+                        await player.Stats.ThisRun.SaveStageTime(player, CurrentMap.Stages, stage_run_time, true);
                     });
                 }
 
                 // This section checks if the PB is better than WR
-                if (player.Timer.Ticks < CurrentMap.WR[pStyle].Ticks || CurrentMap.WR[pStyle].ID == -1)
+                if (player.Timer.Ticks < CurrentMap.WR[pStyle].RunTime || CurrentMap.WR[pStyle].ID == -1)
                 {
                     AddTimer(2f, () =>
                     {
@@ -152,13 +152,13 @@ public partial class SurfTimer
 
             if (!player.Timer.IsPracticeMode)
             {
-                AddTimer(0.1f, () =>
+                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     // This calculation is wrong unless we wait for a bit in order for the `END_ZONE_ENTER` to be available in the `Frames` object
                     int stage_run_time = player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER) - player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
 
                     // player.Controller.PrintToChat($"{Config.PluginPrefix} [LAST StageWR (IsStageMode)] Sending to SaveStageTime: {player.Profile.Name}, {CurrentMap.Stages}, {stage_run_time}");
-                    SaveStageTime(player, CurrentMap.Stages, stage_run_time, true);
+                    await player.Stats.ThisRun.SaveStageTime(player, CurrentMap.Stages, stage_run_time, true);
                 });
             }
         }
@@ -225,8 +225,11 @@ public partial class SurfTimer
             if (stage > 1 && !failed_stage && !player.Timer.IsPracticeMode)
             {
                 int stage_run_time = player.Timer.Ticks;
+                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                {
+                    await player.Stats.ThisRun.SaveStageTime(player, stage - 1, stage_run_time);
+                });
                 // player.Controller.PrintToChat($"{Config.PluginPrefix} [StageWR (IsStageMode)] Sending to SaveStageTime: {player.Profile.Name}, {stage - 1}, {stage_run_time}");
-                SaveStageTime(player, stage - 1, stage_run_time);
             }
             player.Timer.Reset();
             player.Timer.IsStageMode = true;
@@ -247,9 +250,13 @@ public partial class SurfTimer
             // Save Stage MapTime during a Map run
             if (stage > 1 && !failed_stage && !player.Timer.IsPracticeMode)
             {
-                int stage_run_time = player.Timer.Ticks - player.Stats.ThisRun.Ticks; // player.Stats.ThisRun.Ticks should be the Tick we left the previous Stage zone
-                // player.Controller.PrintToChat($"{Config.PluginPrefix} [StageWR (Map RUN)] Sending to SaveStageTime: {player.Profile.Name}, {stage - 1}, {stage_run_time}");
-                SaveStageTime(player, stage - 1, stage_run_time);
+                int stage_run_time = player.Timer.Ticks - player.Stats.ThisRun.RunTime; // player.Stats.ThisRun.RunTime should be the Tick we left the previous Stage zone
+                                                                                        // player.Controller.PrintToChat($"{Config.PluginPrefix} [StageWR (Map RUN)] Sending to SaveStageTime: {player.Profile.Name}, {stage - 1}, {stage_run_time}");
+                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                {
+                    await player.Stats.ThisRun.SaveStageTime(player, stage - 1, stage_run_time);
+                });
+
             }
 
             player.Timer.Checkpoint = stage - 1; // Stage = Checkpoint when in a run on a Staged map
@@ -376,7 +383,7 @@ public partial class SurfTimer
         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.END_ZONE_ENTER;
         player.ReplayRecorder.BonusSituations.Add(player.Timer.Ticks);
 
-        player.Stats.ThisRun.Ticks = player.Timer.Ticks; // End time for the run
+        player.Stats.ThisRun.RunTime = player.Timer.Ticks; // End time for the run
         player.Stats.ThisRun.EndVelX = velocity.X; // End pre speed for the run
         player.Stats.ThisRun.EndVelY = velocity.Y; // End pre speed for the run
         player.Stats.ThisRun.EndVelZ = velocity.Z; // End pre speed for the run
@@ -386,12 +393,12 @@ public partial class SurfTimer
         if (player.Timer.IsPracticeMode)
             PracticeString = $"({ChatColors.Grey}Practice{ChatColors.Default}) ";
 
-        if (player.Timer.Ticks < CurrentMap.BonusWR[bonus_idx][pStyle].Ticks) // Player beat the Bonus WR
+        if (player.Timer.Ticks < CurrentMap.BonusWR[bonus_idx][pStyle].RunTime) // Player beat the Bonus WR
         {
             saveBonusTime = true;
-            int timeImprove = CurrentMap.BonusWR[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
+            int timeImprove = CurrentMap.BonusWR[bonus_idx][pStyle].RunTime - player.Timer.Ticks;
             Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuswr_improved",
-                player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.BonusWR[bonus_idx][pStyle].Ticks)]}"
+                player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(CurrentMap.BonusWR[bonus_idx][pStyle].RunTime)]}"
             );
         }
         else if (CurrentMap.BonusWR[bonus_idx][pStyle].ID == -1) // No Bonus record was set on the map
@@ -401,19 +408,19 @@ public partial class SurfTimer
                 player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
             );
         }
-        else if (player.Stats.BonusPB[bonus_idx][pStyle].Ticks <= 0) // Player first ever PersonalBest for the bonus
+        else if (player.Stats.BonusPB[bonus_idx][pStyle].RunTime <= 0) // Player first ever PersonalBest for the bonus
         {
             saveBonusTime = true;
             player.Controller.PrintToChat($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuspb_set",
                 bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks)]}"
             );
         }
-        else if (player.Timer.Ticks < player.Stats.BonusPB[bonus_idx][pStyle].Ticks) // Player beating their existing PersonalBest for the bonus
+        else if (player.Timer.Ticks < player.Stats.BonusPB[bonus_idx][pStyle].RunTime) // Player beating their existing PersonalBest for the bonus
         {
             saveBonusTime = true;
-            int timeImprove = player.Stats.BonusPB[bonus_idx][pStyle].Ticks - player.Timer.Ticks;
+            int timeImprove = player.Stats.BonusPB[bonus_idx][pStyle].RunTime - player.Timer.Ticks;
             Server.PrintToChatAll($"{Config.PluginPrefix} {PracticeString}{LocalizationService.LocalizerNonNull["bonuspb_improved",
-                player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].Ticks)]}"
+                player.Controller.PlayerName, bonus_idx, PlayerHUD.FormatTime(player.Timer.Ticks), PlayerHUD.FormatTime(timeImprove), PlayerHUD.FormatTime(player.Stats.PB[pStyle].RunTime)]}"
             );
         }
         else // Player did not beat their existing personal best for the bonus
@@ -428,7 +435,7 @@ public partial class SurfTimer
             if (saveBonusTime)
             {
                 player.ReplayRecorder.IsSaving = true;
-                AddTimer(1.0f, async () =>
+                AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     await player.Stats.ThisRun.SaveMapTime(player, bonus: bonus_idx); // Save the Bonus MapTime data
                 });
@@ -451,7 +458,7 @@ public partial class SurfTimer
         if (!player.Timer.IsStageMode && !player.Timer.IsBonusMode)
         {
             player.Timer.Start();
-            player.Stats.ThisRun.Ticks = player.Timer.Ticks;
+            player.Stats.ThisRun.RunTime = player.Timer.Ticks;
             player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_EXIT;
             player.ReplayRecorder.MapSituations.Add(player.ReplayRecorder.Frames.Count);
             // player.Controller.PrintToChat($"{ChatColors.Red}START_ZONE_EXIT: player.ReplayRecorder.MapSituations.Add({player.ReplayRecorder.Frames.Count})");
@@ -481,7 +488,7 @@ public partial class SurfTimer
         // Set replay situation
         player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.STAGE_ZONE_EXIT;
         player.ReplayRecorder.StageExitSituations.Add(player.ReplayRecorder.Frames.Count);
-        player.Stats.ThisRun.Ticks = player.Timer.Ticks;
+        player.Stats.ThisRun.RunTime = player.Timer.Ticks;
         // Console.WriteLine($"STAGE_ZONE_EXIT: player.ReplayRecorder.StageExitSituations.Add({player.ReplayRecorder.Frames.Count})");
 
         // Start the Stage timer
@@ -566,7 +573,7 @@ public partial class SurfTimer
         {
             player.Timer.Start();
             // Set the CurrentRunData values
-            player.Stats.ThisRun.Ticks = player.Timer.Ticks;
+            player.Stats.ThisRun.RunTime = player.Timer.Ticks;
 
             player.ReplayRecorder.CurrentSituation = ReplayFrameSituation.START_ZONE_EXIT;
             player.ReplayRecorder.BonusSituations.Add(player.ReplayRecorder.Frames.Count);

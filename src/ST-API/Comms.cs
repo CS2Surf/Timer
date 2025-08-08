@@ -31,8 +31,13 @@ internal class ApiMethod
 
         try
         {
-            _logger.LogInformation("[{ClassName}] {MethodName} -> GET {URL} => {StatusCode}",
-                nameof(ApiMethod), methodName, url, response.StatusCode
+            var responseTime = response.Headers.TryGetValues("x-response-time-ms", out var values) &&
+                            !string.IsNullOrEmpty(values.FirstOrDefault())
+                ? $"{values.First()}ms"
+                : "N/A";
+
+            _logger.LogInformation("[{ClassName}] {MethodName} -> GET {URL} => {StatusCode} | x-response-time-ms {ResponseTime}",
+                nameof(ApiMethod), methodName, url, response.StatusCode, responseTime
             );
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
@@ -74,9 +79,14 @@ internal class ApiMethod
         {
             using var response = await _client.PostAsJsonAsync(uri, body);
 
+            var responseTime = response.Headers.TryGetValues("x-response-time-ms", out var values) &&
+                            !string.IsNullOrEmpty(values.FirstOrDefault())
+                ? $"{values.First()}ms"
+                : "N/A";
+
             _logger.LogInformation(
-                "[{ClassName}] {MethodName} -> POST {URL} => {StatusCode}",
-                nameof(ApiMethod), methodName, url, response.StatusCode
+                "[{ClassName}] {MethodName} -> POST {URL} => {StatusCode} | x-response-time-ms {ResponseTime}",
+                nameof(ApiMethod), methodName, url, response.StatusCode, responseTime
             );
 
             if (response.IsSuccessStatusCode)
@@ -124,9 +134,14 @@ internal class ApiMethod
         {
             using var response = await _client.PutAsJsonAsync(uri, body);
 
+            var responseTime = response.Headers.TryGetValues("x-response-time-ms", out var values) &&
+                            !string.IsNullOrEmpty(values.FirstOrDefault())
+                ? $"{values.First()}ms"
+                : "N/A";
+
             _logger.LogInformation(
-                "[{ClassName}] {MethodName} -> PUT {URL} => {StatusCode}",
-                nameof(ApiMethod), methodName, url, response.StatusCode
+                "[{ClassName}] {MethodName} -> PUT {URL} => {StatusCode} | x-response-time-ms {ResponseTime}",
+                nameof(ApiMethod), methodName, url, response.StatusCode, responseTime
             );
 
             if (response.IsSuccessStatusCode)

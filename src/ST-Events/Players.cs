@@ -109,9 +109,7 @@ public partial class SurfTimer
         {
             country = "LL";  // Handle local IP appropriately
         }
-        // #if DEBUG
-        //         Console.WriteLine($"CS2 Surf DEBUG >> OnPlayerConnectFull -> GeoIP -> {name} -> {player.IpAddress!.Split(":")[0]} -> {country}");
-        // #endif
+
         if (DB == null)
         {
             _logger.LogCritical("OnPlayerConnect -> DB object is null, this shouldn't happen.");
@@ -119,22 +117,27 @@ public partial class SurfTimer
             throw ex;
         }
 
-        // Create Player object and add to playerList
-        PlayerProfile Profile = PlayerProfile.CreateAsync(player.SteamID, name, country).GetAwaiter().GetResult();
-        playerList[player.UserId ?? 0] = new Player(player,
-                                                new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle),
-                                                Profile, CurrentMap);
+        var profile = PlayerProfile.CreateAsync(player.SteamID, name, country).GetAwaiter().GetResult();
+        var movement = new CCSPlayer_MovementServices(player.PlayerPawn.Value!.MovementServices!.Handle);
 
-        // Load MapTimes for the player's PB and their Checkpoints
-        playerList[player.UserId ?? 0].Stats.LoadPlayerMapTimesData(playerList[player.UserId ?? 0]).GetAwaiter().GetResult(); // Holds here until result is available
+        var p = new Player(player, movement, profile);
 
-        // Print join messages
-        Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["player_connected",
-            name, country]}"
-        );
-        _logger.LogTrace("[{Prefix}] {PlayerName} has connected from {Country}.",
-            Config.PluginName, name, playerList[player.UserId ?? 0].Profile.Country
-        );
+        // No lock - we use thread-safe method AddOrUpdate
+        playerList.AddOrUpdate(player.UserId ?? 0, p, (_, _) => p);
+
+        _ = p.Stats.LoadPlayerMapTimesData(p);
+
+        // Go back to the Main Thread for chat message
+        Server.NextFrame(() =>
+        {
+            // Print join messages
+            Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["player_connected",
+                name, country]}"
+            );
+            _logger.LogTrace("[{Prefix}] {PlayerName} has connected from {Country}.",
+                Config.PluginName, name, playerList[player.UserId ?? 0].Profile.Country
+            );
+        });
         return HookResult.Continue;
     }
 
@@ -185,11 +188,13 @@ public partial class SurfTimer
             }
             else
             {
-                // Update data in Player DB table
-                playerList[player.UserId ?? 0].Profile.UpdatePlayerProfile(player.PlayerName).GetAwaiter().GetResult(); // Hold the thread until player data is updated
+                int userId = player.UserId ?? 0;
 
-                // Remove player data from playerList
-                playerList.Remove(player.UserId ?? 0);
+                if (playerList.TryGetValue(userId, out var playerData))
+                {
+                    _ = playerData.Profile.UpdatePlayerProfile(player.PlayerName);
+                    playerList.TryRemove(userId, out _);
+                }
             }
             return HookResult.Continue;
         }

@@ -12,7 +12,7 @@ using SurfTimer.Data;
 
 namespace SurfTimer;
 
-internal class Map
+public class Map
 {
     // Map information
     public int ID { get; set; } = -1; // Can we use this to re-trigger retrieving map information from the database?? (all db IDs are auto-incremented)
@@ -109,14 +109,14 @@ internal class Map
         }
     }
 
-    public static async Task<Map> CreateAsync(string name)
+    internal static async Task<Map> CreateAsync(string name)
     {
         var map = new Map(name);
         await map.InitializeAsync();
         return map;
     }
 
-    private async Task InitializeAsync([CallerMemberName] string methodName = "")
+    internal async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
         // Load zones
         MapLoadZones();
@@ -258,7 +258,7 @@ internal class Map
         if (this.Stages > 0) // Account for stage 1, not counted above
             this.Stages += 1;
 
-        _logger.LogTrace("[{ClassName}] {MethodName} -> Start zone: {StartZoneX},{StartZoneY},{StartZoneZ} | End zone: {EndZoneX},{EndZoneY},{EndZoneZ}",
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Start zone: {StartZoneX}, {StartZoneY}, {StartZoneZ} | End zone: {EndZoneX}, {EndZoneY}, {EndZoneZ}",
             nameof(Map), methodName, this.StartZone.X, this.StartZone.Y, this.StartZone.Z, this.EndZone.X, this.EndZone.Y, this.EndZone.Z
         );
 
@@ -387,10 +387,11 @@ internal class Map
     {
         this.ConnectedMapTimes.Clear();
 
-        // Replay Stuff
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new Vector_tConverter(), new QAngle_tConverter() } };
-
         var runs = await _dataService.GetMapRecordRunsAsync(this.ID);
+
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Received {Length} of runs from `GetMapRecordRunsAsync`",
+            nameof(Map), methodName, runs.Count
+        );
 
         foreach (var run in runs)
         {
@@ -398,7 +399,7 @@ internal class Map
             {
                 case 0: // Map WR data and total completions
                     WR[run.Style].ID = run.ID;
-                    WR[run.Style].Ticks = run.RunTime;
+                    WR[run.Style].RunTime = run.RunTime;
                     WR[run.Style].StartVelX = run.StartVelX;
                     WR[run.Style].StartVelY = run.StartVelY;
                     WR[run.Style].StartVelZ = run.StartVelZ;
@@ -410,12 +411,12 @@ internal class Map
                     ConnectedMapTimes.Add(run.ID);
                     MapCompletions[run.Style] = run.TotalCount;
 
-                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFramesBase64);
+                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFrames);
                     break;
 
                 case 1: // Bonus WR data and total completions
                     BonusWR[run.Stage][run.Style].ID = run.ID;
-                    BonusWR[run.Stage][run.Style].Ticks = run.RunTime;
+                    BonusWR[run.Stage][run.Style].RunTime = run.RunTime;
                     BonusWR[run.Stage][run.Style].StartVelX = run.StartVelX;
                     BonusWR[run.Stage][run.Style].StartVelY = run.StartVelY;
                     BonusWR[run.Stage][run.Style].StartVelZ = run.StartVelZ;
@@ -426,12 +427,12 @@ internal class Map
                     BonusWR[run.Stage][run.Style].Name = run.Name;
                     BonusCompletions[run.Stage][run.Style] = run.TotalCount;
 
-                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFramesBase64);
+                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFrames);
                     break;
 
                 case 2: // Stage WR data and total completions
                     StageWR[run.Stage][run.Style].ID = run.ID;
-                    StageWR[run.Stage][run.Style].Ticks = run.RunTime;
+                    StageWR[run.Stage][run.Style].RunTime = run.RunTime;
                     StageWR[run.Stage][run.Style].StartVelX = run.StartVelX;
                     StageWR[run.Stage][run.Style].StartVelY = run.StartVelY;
                     StageWR[run.Stage][run.Style].StartVelZ = run.StartVelZ;
@@ -442,7 +443,7 @@ internal class Map
                     StageWR[run.Stage][run.Style].Name = run.Name;
                     StageCompletions[run.Stage][run.Style] = run.TotalCount;
 
-                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFramesBase64);
+                    SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFrames);
                     break;
             }
         }
@@ -453,7 +454,7 @@ internal class Map
             {
 #if DEBUG
                 _logger.LogDebug("[{ClassName}] {MethodName} -> LoadMapRecordRuns : Map -> [{DBorAPI}] Loaded {MapCompletions} runs (MapID {MapID} | Style {Style}). WR by {PlayerName} - {Time}",
-                    nameof(Map), methodName, (Config.API.GetApiOnly() ? "API" : "DB"), this.MapCompletions[style], this.ID, style, this.WR[style].Name, PlayerHUD.FormatTime(this.WR[style].Ticks)
+                    nameof(Map), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.MapCompletions[style], this.ID, style, this.WR[style].Name, PlayerHUD.FormatTime(this.WR[style].RunTime)
                 );
 #endif
 
@@ -491,13 +492,13 @@ internal class Map
             case 0: // Map Replays
                 // Console.WriteLine($"CS2 Surf DEBUG >> internal class Map -> internal void SetReplayData -> [MapWR] Setting run {this.WR[style].ID} {PlayerHUD.FormatTime(this.WR[style].Ticks)} (Ticks = {this.WR[style].Ticks}; Frames = {frames.Count}) to `ReplayManager.MapWR`");
                 _logger.LogTrace("[{ClassName}] {MethodName} -> SetReplayData -> [MapWR] Setting run {RunID} {RunTime} (Ticks = {RunTicks}; Frames = {TotalFrames})",
-                    nameof(Map), methodName, this.WR[style].ID, PlayerHUD.FormatTime(this.WR[style].Ticks), this.WR[style].Ticks, frames.Count
+                    nameof(Map), methodName, this.WR[style].ID, PlayerHUD.FormatTime(this.WR[style].RunTime), this.WR[style].RunTime, frames.Count
                 );
                 if (this.ReplayManager.MapWR.IsPlaying)
                     this.ReplayManager.MapWR.Stop();
 
                 this.ReplayManager.MapWR.RecordPlayerName = this.WR[style].Name;
-                this.ReplayManager.MapWR.RecordRunTime = this.WR[style].Ticks;
+                this.ReplayManager.MapWR.RecordRunTime = this.WR[style].RunTime;
                 this.ReplayManager.MapWR.Frames = frames;
                 this.ReplayManager.MapWR.MapTimeID = this.WR[style].ID;
                 this.ReplayManager.MapWR.MapID = this.ID;
@@ -542,18 +543,18 @@ internal class Map
                 break;
             case 1: // Bonus Replays
                 // Skip if the same bonus run already exists
-                if (this.ReplayManager.AllBonusWR[stage][style].RecordRunTime == this.BonusWR[stage][style].Ticks)
+                if (this.ReplayManager.AllBonusWR[stage][style].RecordRunTime == this.BonusWR[stage][style].RunTime)
                     break;
 #if DEBUG
                 _logger.LogDebug("[{ClassName}] {MethodName} -> SetReplayData -> [BonusWR] Adding run {ID} {Time} (Ticks = {Ticks}; Frames = {Frames}) to `ReplayManager.AllBonusWR`",
-                    nameof(Map), methodName, this.BonusWR[stage][style].ID, PlayerHUD.FormatTime(this.BonusWR[stage][style].Ticks), this.BonusWR[stage][style].Ticks, frames.Count
+                    nameof(Map), methodName, this.BonusWR[stage][style].ID, PlayerHUD.FormatTime(this.BonusWR[stage][style].RunTime), this.BonusWR[stage][style].RunTime, frames.Count
                 );
 #endif
 
                 // Add all stages found to a dictionary with their data
                 this.ReplayManager.AllBonusWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllBonusWR[stage][style].Frames = frames;
-                this.ReplayManager.AllBonusWR[stage][style].RecordRunTime = this.BonusWR[stage][style].Ticks;
+                this.ReplayManager.AllBonusWR[stage][style].RecordRunTime = this.BonusWR[stage][style].RunTime;
                 this.ReplayManager.AllBonusWR[stage][style].RecordPlayerName = this.BonusWR[stage][style].Name;
                 this.ReplayManager.AllBonusWR[stage][style].MapTimeID = this.BonusWR[stage][style].ID;
                 this.ReplayManager.AllBonusWR[stage][style].Stage = stage;
@@ -585,7 +586,7 @@ internal class Map
                         this.ReplayManager.BonusWR.Stop();
                     this.ReplayManager.BonusWR.MapID = this.ID;
                     this.ReplayManager.BonusWR.Frames = frames;
-                    this.ReplayManager.BonusWR.RecordRunTime = this.BonusWR[stage][style].Ticks;
+                    this.ReplayManager.BonusWR.RecordRunTime = this.BonusWR[stage][style].RunTime;
                     this.ReplayManager.BonusWR.RecordPlayerName = this.BonusWR[stage][style].Name;
                     this.ReplayManager.BonusWR.MapTimeID = this.BonusWR[stage][style].ID;
                     this.ReplayManager.BonusWR.Stage = stage;
@@ -595,18 +596,18 @@ internal class Map
                 break;
             case 2: // Stage Replays
                 // Skip if the same stage run already exists
-                if (this.ReplayManager.AllStageWR[stage][style].RecordRunTime == this.StageWR[stage][style].Ticks)
+                if (this.ReplayManager.AllStageWR[stage][style].RecordRunTime == this.StageWR[stage][style].RunTime)
                     break;
 #if DEBUG
                 _logger.LogDebug("[{ClassName}] {MethodName} -> SetReplayData -> [StageWR] Adding run {ID} {Time} (Ticks = {Ticks}; Frames = {Frames}) to `ReplayManager.AllStageWR`",
-                    nameof(Map), methodName, this.StageWR[stage][style].ID, PlayerHUD.FormatTime(this.StageWR[stage][style].Ticks), this.StageWR[stage][style].Ticks, frames.Count
+                    nameof(Map), methodName, this.StageWR[stage][style].ID, PlayerHUD.FormatTime(this.StageWR[stage][style].RunTime), this.StageWR[stage][style].RunTime, frames.Count
                 );
 #endif
 
                 // Add all stages found to a dictionary with their data
                 this.ReplayManager.AllStageWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllStageWR[stage][style].Frames = frames;
-                this.ReplayManager.AllStageWR[stage][style].RecordRunTime = this.StageWR[stage][style].Ticks;
+                this.ReplayManager.AllStageWR[stage][style].RecordRunTime = this.StageWR[stage][style].RunTime;
                 this.ReplayManager.AllStageWR[stage][style].RecordPlayerName = this.StageWR[stage][style].Name;
                 this.ReplayManager.AllStageWR[stage][style].MapTimeID = this.StageWR[stage][style].ID;
                 this.ReplayManager.AllStageWR[stage][style].Stage = stage;
@@ -639,7 +640,7 @@ internal class Map
                         this.ReplayManager.StageWR.Stop();
                     this.ReplayManager.StageWR.MapID = this.ID;
                     this.ReplayManager.StageWR.Frames = frames;
-                    this.ReplayManager.StageWR.RecordRunTime = this.StageWR[stage][style].Ticks;
+                    this.ReplayManager.StageWR.RecordRunTime = this.StageWR[stage][style].RunTime;
                     this.ReplayManager.StageWR.RecordPlayerName = this.StageWR[stage][style].Name;
                     this.ReplayManager.StageWR.MapTimeID = this.StageWR[stage][style].ID;
                     this.ReplayManager.StageWR.Stage = stage;

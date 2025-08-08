@@ -24,7 +24,7 @@ internal class ApiCall
         API_CurrentRun stage_time = new()
         {
             player_id = player.Profile.ID,
-            map_id = player.CurrMap.ID,
+            map_id = SurfTimer.CurrentMap.ID,
             style = player.Timer.Style,
             type = 2,
             stage = player.Timer.Stage - 1,

@@ -1,4 +1,3 @@
-// File: Data/PersonalBestDataModel.cs
 using System.Data;
 using MySqlConnector;
 
@@ -6,8 +5,12 @@ namespace SurfTimer.Data
 {
     public class PersonalBestDataModel : RunStats
     {
-        public int ID { get; set; }
+        public int PlayerID { get; set; }
+        public int MapID { get; set; }
+        // public int ID { get; set; }
         public int Rank { get; set; }
+
+        public PersonalBestDataModel() { }
 
         /// <summary>
         /// Assigns data from API response to the needed data model
@@ -15,7 +18,7 @@ namespace SurfTimer.Data
         public PersonalBestDataModel(API_PersonalBest data)
         {
             ID = data.id;
-            Ticks = data.run_time;
+            RunTime = data.run_time;
             Rank = data.rank;
             StartVelX = data.start_vel_x;
             StartVelY = data.start_vel_y;
@@ -24,7 +27,7 @@ namespace SurfTimer.Data
             EndVelY = data.end_vel_y;
             EndVelZ = data.end_vel_z;
             RunDate = data.run_date;
-            ReplayFramesBase64 = data.replay_frames;
+            ReplayFrames = data.replay_frames;
         }
 
         /// <summary>
@@ -33,7 +36,7 @@ namespace SurfTimer.Data
         public PersonalBestDataModel(MySqlDataReader data)
         {
             ID = data.GetInt32("id");
-            Ticks = data.GetInt32("run_time");
+            RunTime = data.GetInt32("run_time");
             Rank = data.GetInt32("rank");
             StartVelX = (float)data.GetDouble("start_vel_x");
             StartVelY = (float)data.GetDouble("start_vel_y");
@@ -95,13 +98,17 @@ namespace SurfTimer.Data
 
     public class MapRecordRunDataModel : RunStats
     {
-        public int ID { get; set; }
-        public int RunTime { get; set; }
+        public int PlayerID { get; set; }
+        public int MapID { get; set; }
+        public int TotalCount { get; set; }
+        // public int ID { get; set; }
+        // public int RunTime { get; set; }
         public int Type { get; set; }      // 0 = Map, 1 = Bonus, 2 = Stage
         public int Stage { get; set; }
         public int Style { get; set; }
         public string Name { get; set; } = "";
-        public int TotalCount { get; set; }
+
+        public MapRecordRunDataModel() { }
 
         /// <summary>
         /// Assigns data from API response to the needed data model
@@ -122,7 +129,7 @@ namespace SurfTimer.Data
             EndVelZ = (float)data.end_vel_z;
             RunDate = data.run_date;
             TotalCount = data.total_count;
-            ReplayFramesBase64 = data.replay_frames;
+            ReplayFrames = data.replay_frames;
         }
 
         /// <summary>
@@ -156,7 +163,7 @@ namespace SurfTimer.Data
             EndVelZ = data.GetFloat("end_vel_z");
             RunDate = data.GetInt32("run_date");
             TotalCount = data.GetInt32("total_count");
-            ReplayFramesBase64 = replayFramesBase64;
+            ReplayFrames = replayFramesBase64;
         }
     }
 
@@ -206,12 +213,14 @@ namespace SurfTimer.Data
 
     public class PlayerMapTimeDataModel : RunStats
     {
-        public int ID { get; set; }
-        public int RunTime { get; set; }
+        // public int ID { get; set; }
+        // public int RunTime { get; set; }
         public int Type { get; set; }  // 0 = Map, 1 = Bonus, 2 = Stage
         public int Stage { get; set; }
         public int Style { get; set; }
         public int Rank { get; set; }
+
+        public PlayerMapTimeDataModel() { }
 
         /// <summary>
         /// Assigns data from API response to the needed data model
@@ -231,7 +240,7 @@ namespace SurfTimer.Data
             EndVelY = (float)data.end_vel_y;
             EndVelZ = (float)data.end_vel_z;
             RunDate = data.run_date;
-            ReplayFramesBase64 = data.replay_frames;
+            ReplayFrames = data.replay_frames;
         }
 
         /// <summary>
@@ -264,7 +273,7 @@ namespace SurfTimer.Data
             EndVelY = (float)data.GetDouble("end_vel_y");
             EndVelZ = (float)data.GetDouble("end_vel_z");
             RunDate = data.GetInt32("run_date");
-            ReplayFramesBase64 = replayFramesBase64;
+            ReplayFrames = replayFramesBase64;
         }
     }
 
