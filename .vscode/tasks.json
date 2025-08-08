@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/SurfTimer.csproj",
+                "${workspaceFolder}/src/SurfTimer.Plugin.csproj",
                 "/property:Configuration=Debug"
             ],
             "problemMatcher": "$msCompile"
@@ -18,7 +18,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/SurfTimer.csproj",
+                "${workspaceFolder}/src/SurfTimer.Plugin.csproj",
                 "/property:Configuration=Release"
             ],
             "problemMatcher": "$msCompile"

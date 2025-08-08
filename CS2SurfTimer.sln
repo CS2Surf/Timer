@@ -5,7 +5,11 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A9962DB7-AE8A-4370-B381-19529A91B7EC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurfTimer", "src\SurfTimer.csproj", "{98841535-B479-49B7-8D35-03786D4C31B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurfTimer.Plugin", "src\SurfTimer.Plugin.csproj", "{98841535-B479-49B7-8D35-03786D4C31B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurfTimer.Api", "..\SurfTimer.Api\SurfTimer.Api.csproj", "{F53C6067-0A4E-18EF-53CB-69AB97901241}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurfTimer.Shared", "..\SurfTimer.Shared\SurfTimer.Shared.csproj", "{6FA80551-EAFE-9030-69AA-1CEE7BEC44FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +21,14 @@ Global
 		{98841535-B479-49B7-8D35-03786D4C31B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98841535-B479-49B7-8D35-03786D4C31B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98841535-B479-49B7-8D35-03786D4C31B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F53C6067-0A4E-18EF-53CB-69AB97901241}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F53C6067-0A4E-18EF-53CB-69AB97901241}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F53C6067-0A4E-18EF-53CB-69AB97901241}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F53C6067-0A4E-18EF-53CB-69AB97901241}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FA80551-EAFE-9030-69AA-1CEE7BEC44FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FA80551-EAFE-9030-69AA-1CEE7BEC44FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FA80551-EAFE-9030-69AA-1CEE7BEC44FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FA80551-EAFE-9030-69AA-1CEE7BEC44FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
