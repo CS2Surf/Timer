@@ -764,17 +764,17 @@ public partial class SurfTimer
         Console.WriteLine($"Map WR Name: {CurrentMap.WR[0].Name}");
         Console.WriteLine($"Map WR Type: {CurrentMap.WR[0].Type}");
         Console.WriteLine($"Map WR Rank: {CurrentMap.WR[0].Rank}");
-        Console.WriteLine($"Map WR Checkpoints.Count: {CurrentMap.WR[0].Checkpoints.Count}");
-        Console.WriteLine($"Map WR ReplayFramesBase64.Length: {CurrentMap.WR[0].ReplayFrames.Length}");
-        Console.WriteLine($"Map WR ReplayFrames.Length: {CurrentMap.WR[0].ReplayFrames.Length}");
+        Console.WriteLine($"Map WR Checkpoints.Count: {CurrentMap.WR[0].Checkpoints?.Count}");
+        Console.WriteLine($"Map WR ReplayFramesBase64.Length: {CurrentMap.WR[0].ReplayFrames?.ToString().Length}");
+        Console.WriteLine($"Map WR ReplayFrames.Length: {CurrentMap.WR[0].ReplayFrames?.ToString().Length}");
 
         Console.WriteLine($"Map Stage Completions: {CurrentMap.StageCompletions.Length}");
         Console.WriteLine($"Map StageWR ID: {CurrentMap.StageWR[1][0].ID}");
         Console.WriteLine($"Map StageWR Name: {CurrentMap.StageWR[1][0].Name}");
         Console.WriteLine($"Map StageWR Type: {CurrentMap.StageWR[1][0].Type}");
         Console.WriteLine($"Map StageWR Rank: {CurrentMap.StageWR[1][0].Rank}");
-        Console.WriteLine($"Map StageWR ReplayFramesBase64.Length: {CurrentMap.StageWR[1][0].ReplayFrames.Length}");
-        Console.WriteLine($"Map StageWR ReplayFrames.Length: {CurrentMap.StageWR[1][0].ReplayFrames.Length}");
+        Console.WriteLine($"Map StageWR ReplayFramesBase64.Length: {CurrentMap.StageWR[1][0].ReplayFrames?.ToString().Length}");
+        Console.WriteLine($"Map StageWR ReplayFrames.Length: {CurrentMap.StageWR[1][0].ReplayFrames?.ToString().Length}");
 
         Console.WriteLine($"Map Bonus Completions: {CurrentMap.BonusCompletions.Length}");
     }

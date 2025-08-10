@@ -1,8 +1,10 @@
+using SurfTimer.Shared.Entities;
+
 namespace SurfTimer;
 
 public abstract class RunStats
 {
-    public Dictionary<int, Checkpoint> Checkpoints { get; set; }
+    public Dictionary<int, CheckpointEntity> Checkpoints { get; set; }
     public int ID { get; set; }
     public int RunTime { get; set; }
     public float StartVelX { get; set; }
@@ -16,7 +18,7 @@ public abstract class RunStats
 
     protected RunStats()
     {
-        Checkpoints = new Dictionary<int, Checkpoint>();
+        Checkpoints = new Dictionary<int, CheckpointEntity>();
         RunTime = 0;
         StartVelX = 0.0f;
         StartVelY = 0.0f;

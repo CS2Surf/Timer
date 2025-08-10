@@ -1,7 +1,8 @@
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using SurfTimer.Shared.Entities;
+using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
 
@@ -9,17 +10,12 @@ namespace SurfTimer;
 /// As the PersonalBest object is being used for each different style, we shouldn't need a separate `Style` variable in here because each style entry will have unique ID in the Database
 /// and will therefore be a unique PersonalBest entry.
 /// </summary>
-public class PersonalBest : RunStats
+public class PersonalBest : MapTimeRunDataEntity
 {
-    // public int ID { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
-    public int Rank { get; set; } = -1; // Exclude from constructor, retrieve from Database when loading/saving
-    public int Type { get; set; } = -1; // Identifies bonus # - 0 for map time -> huh, why o_O?
-    public string Name { get; set; } = ""; // This is used only for WRs
+    public Dictionary<int, CheckpointEntity>? Checkpoints { get; set; }
     private readonly ILogger<PersonalBest> _logger;
     private readonly IDataAccessService _dataService;
-    // Add other properties as needed
 
-    // Constructor
     internal PersonalBest() : base()
     {
         // Resolve the logger instance from the DI container

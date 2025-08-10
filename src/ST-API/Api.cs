@@ -1,3 +1,4 @@
+/*
 using System.Net.Http.Json;
 
 namespace SurfTimer;
@@ -39,3 +40,4 @@ internal class ApiCall
         // await CurrentMap.ApiGetMapRecordAndTotals(); // Reload the Map record and totals for the HUD
     }
 }
+*/

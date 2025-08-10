@@ -1,6 +1,8 @@
-using MySqlConnector;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using MySqlConnector;
+using SurfTimer.Shared.DTO;
+using SurfTimer.Shared.Entities;
 using System.Runtime.CompilerServices;
 
 namespace SurfTimer.Data
@@ -42,13 +44,13 @@ namespace SurfTimer.Data
         }
 
         /* PersonalBest.cs */
-        public async Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
+        public async Task<Dictionary<int, CheckpointEntity>> LoadCheckpointsAsync(int runId, [CallerMemberName] string methodName = "")
         {
             _logger.LogInformation("[{ClassName}] {MethodName} -> LoadCheckpointsAsync -> Using MySQL data access service.",
                 nameof(MySqlDataAccessService), methodName
             );
 
-            var dict = new Dictionary<int, Checkpoint>();
+            var dict = new Dictionary<int, CheckpointEntity>();
 
             using (var results = await SurfTimer.DB.QueryAsync(
                        string.Format(Config.MySQL.Queries.DB_QUERY_PB_GET_CPS, runId)))
@@ -56,9 +58,9 @@ namespace SurfTimer.Data
                 if (results == null || !results.HasRows)
                     return dict;
 
-                while (results.Read())
+                while (await results.ReadAsync())
                 {
-                    var cp = new Checkpoint(
+                    var cp = new CheckpointEntity(
                         results.GetInt32("cp"),
                         results.GetInt32("run_time"),
                         results.GetFloat("start_vel_x"),
@@ -70,7 +72,7 @@ namespace SurfTimer.Data
                         results.GetInt32("end_touch"),
                         results.GetInt32("attempts")
                     );
-                    cp.ID = results.GetInt32("cp");
+                    cp.MapTimeID = results.GetInt32("maptime_id");
                     dict[cp.CP] = cp;
                 }
             }
@@ -82,7 +84,7 @@ namespace SurfTimer.Data
             return dict;
         }
 
-        public async Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = "")
+        public async Task<MapTimeRunDataEntity?> LoadPersonalBestRunAsync(int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = "")
         {
             _logger.LogInformation("[{ClassName}] {MethodName} -> LoadPersonalBestRunAsync -> Using MySQL data access service.",
                 nameof(MySqlDataAccessService), methodName
@@ -110,12 +112,12 @@ namespace SurfTimer.Data
                 nameof(MySqlDataAccessService), methodName, pbId, playerId, mapId, type, style
             );
 
-            return new PersonalBestDataModel(results);
+            return new MapTimeRunDataEntity(results);
         }
 
 
         /* Map.cs */
-        public async Task<MapInfoDataModel?> GetMapInfoAsync(string mapName, [CallerMemberName] string methodName = "")
+        public async Task<MapEntity?> GetMapInfoAsync(string mapName, [CallerMemberName] string methodName = "")
         {
             using var mapData = await SurfTimer.DB.QueryAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_MAP_GET_INFO, MySqlHelper.EscapeString(mapName)));
@@ -126,13 +128,13 @@ namespace SurfTimer.Data
                     nameof(MySqlDataAccessService), methodName
                 );
 
-                return new MapInfoDataModel(mapData);
+                return new MapEntity(mapData);
             }
 
             return null;
         }
 
-        public async Task<int> InsertMapInfoAsync(MapInfoDataModel mapInfo, [CallerMemberName] string methodName = "")
+        public async Task<int> InsertMapInfoAsync(MapDto mapInfo, [CallerMemberName] string methodName = "")
         {
             var (rowsWritten, lastId) = await SurfTimer.DB.WriteAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_MAP_INSERT_INFO,
@@ -153,7 +155,7 @@ namespace SurfTimer.Data
             return (int)lastId;
         }
 
-        public async Task UpdateMapInfoAsync(MapInfoDataModel mapInfo, [CallerMemberName] string methodName = "")
+        public async Task UpdateMapInfoAsync(MapDto mapInfo, int mapId, [CallerMemberName] string methodName = "")
         {
             string updateQuery = string.Format(
                 Config.MySQL.Queries.DB_QUERY_MAP_UPDATE_INFO_FULL,
@@ -163,19 +165,19 @@ namespace SurfTimer.Data
                 mapInfo.Author,
                 mapInfo.Tier,
                 mapInfo.Ranked ? 1 : 0, // Table is using TINYINT so we need to send 0 or 1 instead of Boolean
-                mapInfo.ID
+                mapId
             );
 
             var (rowsUpdated, lastId) = await SurfTimer.DB.WriteAsync(updateQuery);
             if (rowsUpdated != 1)
             {
-                throw new Exception($"Failed to update map '{mapInfo.Name}' (ID {mapInfo.ID}) in database.");
+                throw new Exception($"Failed to update map '{mapInfo.Name}' (ID {mapId}) in database.");
             }
         }
 
-        public async Task<List<MapRecordRunDataModel>> GetMapRecordRunsAsync(int mapId, [CallerMemberName] string methodName = "")
+        public async Task<List<MapTimeRunDataEntity>> GetMapRecordRunsAsync(int mapId, [CallerMemberName] string methodName = "")
         {
-            var runs = new List<MapRecordRunDataModel>();
+            var runs = new List<MapTimeRunDataEntity>();
 
             using var results = await SurfTimer.DB.QueryAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_MAP_GET_RECORD_RUNS_AND_COUNT, mapId));
@@ -184,7 +186,7 @@ namespace SurfTimer.Data
             {
                 while (results.Read())
                 {
-                    runs.Add(new MapRecordRunDataModel(results));
+                    runs.Add(new MapTimeRunDataEntity(results));
                 }
             }
 
@@ -193,20 +195,20 @@ namespace SurfTimer.Data
 
 
         /* PlayerProfile.cs */
-        public async Task<PlayerProfileDataModel?> GetPlayerProfileAsync(ulong steamId, [CallerMemberName] string methodName = "")
+        public async Task<PlayerProfileEntity?> GetPlayerProfileAsync(ulong steamId, [CallerMemberName] string methodName = "")
         {
             using var playerData = await SurfTimer.DB.QueryAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_PP_GET_PROFILE, steamId));
 
             if (playerData.HasRows && playerData.Read())
             {
-                return new PlayerProfileDataModel(playerData);
+                return new PlayerProfileEntity(playerData);
             }
 
             return null;
         }
 
-        public async Task<int> InsertPlayerProfileAsync(PlayerProfileDataModel profile, [CallerMemberName] string methodName = "")
+        public async Task<int> InsertPlayerProfileAsync(PlayerProfileDto profile, [CallerMemberName] string methodName = "")
         {
             int joinDate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var (rowsInserted, lastId) = await SurfTimer.DB.WriteAsync(string.Format(
@@ -224,14 +226,14 @@ namespace SurfTimer.Data
             return (int)lastId;
         }
 
-        public async Task UpdatePlayerProfileAsync(PlayerProfileDataModel profile, [CallerMemberName] string methodName = "")
+        public async Task UpdatePlayerProfileAsync(PlayerProfileDto profile, int playerId, [CallerMemberName] string methodName = "")
         {
             int lastSeen = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var (rowsUpdated, lastId) = await SurfTimer.DB.WriteAsync(string.Format(
                 Config.MySQL.Queries.DB_QUERY_PP_UPDATE_PROFILE,
                 profile.Country,
                 lastSeen,
-                profile.ID,
+                playerId,
                 MySqlConnector.MySqlHelper.EscapeString(profile.Name)));
 
             if (rowsUpdated != 1)
@@ -240,9 +242,9 @@ namespace SurfTimer.Data
 
 
         /* PlayerStats.cs */
-        public async Task<List<PlayerMapTimeDataModel>> GetPlayerMapTimesAsync(int playerId, int mapId, [CallerMemberName] string methodName = "")
+        public async Task<List<MapTimeRunDataEntity>> GetPlayerMapTimesAsync(int playerId, int mapId, [CallerMemberName] string methodName = "")
         {
-            var mapTimes = new List<PlayerMapTimeDataModel>();
+            var mapTimes = new List<MapTimeRunDataEntity>();
 
             using var results = await SurfTimer.DB.QueryAsync(
                 string.Format(Config.MySQL.Queries.DB_QUERY_PS_GET_ALL_RUNTIMES, playerId, mapId));
@@ -251,7 +253,7 @@ namespace SurfTimer.Data
             {
                 while (results.Read())
                 {
-                    mapTimes.Add(new PlayerMapTimeDataModel(results));
+                    mapTimes.Add(new MapTimeRunDataEntity(results));
                 }
             }
 
@@ -260,13 +262,13 @@ namespace SurfTimer.Data
 
 
         /* CurrentRun.cs */
-        public async Task<int> InsertMapTimeAsync(MapTimeDataModel mapTime, [CallerMemberName] string methodName = "")
+        public async Task<int> InsertMapTimeAsync(MapTimeRunDataDto mapTime, [CallerMemberName] string methodName = "")
         {
             var (rowsInserted, lastId) = await SurfTimer.DB.WriteAsync(
                 string.Format(
                     Config.MySQL.Queries.DB_QUERY_CR_INSERT_TIME,
-                    mapTime.PlayerId,
-                    mapTime.MapId,
+                    mapTime.PlayerID,
+                    mapTime.MapID,
                     mapTime.Style,
                     mapTime.Type,
                     mapTime.Stage,
@@ -283,7 +285,7 @@ namespace SurfTimer.Data
 
             if (rowsInserted <= 0)
             {
-                throw new Exception($"Failed to insert map time for PlayerId {mapTime.PlayerId}.");
+                throw new Exception($"Failed to insert map time for PlayerId {mapTime.PlayerID}.");
             }
 
             // Write the checkpoints after we have the `lastId`
@@ -303,7 +305,7 @@ namespace SurfTimer.Data
             return (int)lastId;
         }
 
-        public async Task<int> UpdateMapTimeAsync(MapTimeDataModel mapTime, int mapTimeId, [CallerMemberName] string methodName = "")
+        public async Task<int> UpdateMapTimeAsync(MapTimeRunDataDto mapTime, int mapTimeId, [CallerMemberName] string methodName = "")
         {
             throw new NotImplementedException();
         }

@@ -60,7 +60,7 @@ unsafe static class Extensions
     /// </summary>
     /// <param name="tier">Map Tier up to 8</param>
     /// <returns>Appropriate ChatColor value for the Tier</returns>
-    public static char GetTierColor(int tier)
+    public static char GetTierColor(short tier)
     {
         return tier switch
         {

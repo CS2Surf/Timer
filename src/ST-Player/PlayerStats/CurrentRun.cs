@@ -1,16 +1,17 @@
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using CounterStrikeSharp.API;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using SurfTimer.Shared.DTO;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
 
 /// <summary>
 /// This class stores data for the current run.
 /// </summary>
-public class CurrentRun : RunStats
+public class CurrentRun : RunStats // TODO: Inherit from RunStatsEntity instead of RunStats
 {
     private readonly ILogger<CurrentRun> _logger;
     private readonly IDataAccessService _dataService;
@@ -53,10 +54,10 @@ public class CurrentRun : RunStats
         int style = player.Timer.Style;
         int mapTimeId = 0;
 
-        var mapTime = new MapTimeDataModel
+        var mapTime = new MapTimeRunDataDto
         {
-            PlayerId = player.Profile.ID,
-            MapId = SurfTimer.CurrentMap.ID,
+            PlayerID = player.Profile.ID,
+            MapID = SurfTimer.CurrentMap.ID,
             Style = player.Timer.Style,
             Type = recType,
             Stage = stage != 0 ? stage : bonus,

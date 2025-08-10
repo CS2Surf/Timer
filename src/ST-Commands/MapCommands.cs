@@ -1,10 +1,10 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Admin;
-using SurfTimer.Data;
+using SurfTimer.Shared.DTO;
 using System.Text.RegularExpressions;
 
 namespace SurfTimer;
@@ -59,10 +59,10 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        int tier;
+        short tier;
         try
         {
-            tier = int.Parse(command.ArgByIndex(1));
+            tier = short.Parse(command.ArgByIndex(1));
         }
         catch (System.Exception)
         {
@@ -80,11 +80,10 @@ public partial class SurfTimer
             return;
         }
 
-        var mapInfo = new MapInfoDataModel
+        var mapInfo = new MapDto
         {
-            ID = CurrentMap.ID,
-            Name = CurrentMap.Name,
-            Author = CurrentMap.Author,
+            Name = CurrentMap.Name!,
+            Author = CurrentMap.Author!,
             Tier = tier,
             Stages = CurrentMap.Stages,
             Bonuses = CurrentMap.Bonuses,
@@ -96,7 +95,7 @@ public partial class SurfTimer
 
         Task.Run(async () =>
         {
-            await _dataService!.UpdateMapInfoAsync(mapInfo);
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
         });
 
         string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Tier to {Extensions.GetTierColor(CurrentMap.Tier)}{CurrentMap.Tier}{ChatColors.Default}.";
@@ -124,10 +123,9 @@ public partial class SurfTimer
             return;
         }
 
-        var mapInfo = new MapInfoDataModel
+        var mapInfo = new MapDto
         {
-            ID = CurrentMap.ID,
-            Name = CurrentMap.Name,
+            Name = CurrentMap.Name!,
             Author = author,
             Tier = CurrentMap.Tier,
             Stages = CurrentMap.Stages,
@@ -140,7 +138,7 @@ public partial class SurfTimer
 
         Task.Run(async () =>
         {
-            await _dataService!.UpdateMapInfoAsync(mapInfo);
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
         });
 
         string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Author to {ChatColors.Green}{CurrentMap.Author}{ChatColors.Default}.";
@@ -162,11 +160,10 @@ public partial class SurfTimer
         else
             CurrentMap.Ranked = true;
 
-        var mapInfo = new MapInfoDataModel
+        var mapInfo = new MapDto
         {
-            ID = CurrentMap.ID,
-            Name = CurrentMap.Name,
-            Author = CurrentMap.Author,
+            Name = CurrentMap.Name!,
+            Author = CurrentMap.Author!,
             Tier = CurrentMap.Tier,
             Stages = CurrentMap.Stages,
             Bonuses = CurrentMap.Bonuses,
@@ -176,7 +173,7 @@ public partial class SurfTimer
 
         Task.Run(async () =>
         {
-            await _dataService!.UpdateMapInfoAsync(mapInfo);
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
         });
 
         string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Ranked to {(CurrentMap.Ranked ? ChatColors.Green : ChatColors.Red)}{CurrentMap.Ranked}{ChatColors.Default}.";

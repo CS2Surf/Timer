@@ -1,7 +1,8 @@
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using SurfTimer.Shared.Entities;
+using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
 
@@ -103,7 +104,7 @@ public class PlayerStats
 
         foreach (var cp in player_maptime.checkpoints)
         {
-            PB[style].Checkpoints[cp.cp] = new Checkpoint(cp.cp, cp.run_time, cp.start_vel_x, cp.start_vel_y, cp.start_vel_z, cp.end_vel_x, cp.end_vel_y, cp.end_vel_z, cp.end_touch, cp.attempts);
+            PB[style].Checkpoints[cp.cp] = new CheckpointEntity(cp.cp, cp.run_time, cp.start_vel_x, cp.start_vel_y, cp.start_vel_z, cp.end_vel_x, cp.end_vel_y, cp.end_vel_z, cp.end_touch, cp.attempts);
         }
     }
 

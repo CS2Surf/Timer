@@ -1,8 +1,9 @@
-using System.Text.RegularExpressions;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API;
+using SurfTimer.Shared.Entities;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace SurfTimer;
 
@@ -272,7 +273,7 @@ public partial class SurfTimer
             // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
             if (!player.Stats.ThisRun.Checkpoints.ContainsKey(player.Timer.Checkpoint))
             {
-                Checkpoint cp2 = new Checkpoint(player.Timer.Checkpoint,
+                var cp2 = new CheckpointEntity(player.Timer.Checkpoint,
                                                 player.Timer.Ticks,
                                                 velocity.X,
                                                 velocity.Y,
@@ -324,7 +325,7 @@ public partial class SurfTimer
             if (!player.Stats.ThisRun.Checkpoints.ContainsKey(checkpoint))
             {
                 // store the checkpoint in the player's current run checkpoints used for Checkpoint functionality
-                Checkpoint cp2 = new Checkpoint(checkpoint,
+                var cp2 = new CheckpointEntity(checkpoint,
                                                 player.Timer.Ticks,
                                                 velocity.X,
                                                 velocity.Y,

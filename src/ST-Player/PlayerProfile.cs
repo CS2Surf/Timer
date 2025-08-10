@@ -1,19 +1,14 @@
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using SurfTimer.Shared.DTO;
+using SurfTimer.Shared.Entities;
+using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
 
-public class PlayerProfile
+public class PlayerProfile : PlayerProfileEntity
 {
-    public int ID { get; set; } = 0;
-    public string Name { get; set; } = "";
-    public ulong SteamID { get; set; } = 0;
-    public string Country { get; set; } = "";
-    public int JoinDate { get; set; } = 0;
-    public int LastSeen { get; set; } = 0;
-    public int Connections { get; set; } = 0;
     private readonly ILogger<PlayerProfile> _logger;
     private readonly IDataAccessService _dataService;
 
@@ -87,11 +82,11 @@ public class PlayerProfile
     /// </summary>
     internal async Task InsertPlayerProfile([CallerMemberName] string methodName = "")
     {
-        var profile = new PlayerProfileDataModel
+        var profile = new PlayerProfileDto
         {
             SteamID = this.SteamID,
-            Name = this.Name,
-            Country = this.Country
+            Name = this.Name!,
+            Country = this.Country!
         };
 
         this.ID = await _dataService.InsertPlayerProfileAsync(profile);
@@ -110,13 +105,14 @@ public class PlayerProfile
     internal async Task UpdatePlayerProfile(string name, [CallerMemberName] string methodName = "")
     {
         this.Name = name;
-        await _dataService.UpdatePlayerProfileAsync(new PlayerProfileDataModel
+        var dto = new PlayerProfileDto
         {
-            ID = this.ID,
             SteamID = this.SteamID,
             Name = this.Name,
-            Country = this.Country
-        });
+            Country = this.Country!
+        };
+
+        await _dataService.UpdatePlayerProfileAsync(dto, this.ID);
 
 #if DEBUG
         _logger.LogDebug("[{ClassName}] {MethodName} -> UpdatePlayerProfile -> [{ConnType}] Updated player {PlayerName} ({SteamID}) with ID {ProfileID}.",

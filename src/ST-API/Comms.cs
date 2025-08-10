@@ -1,16 +1,28 @@
-using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SurfTimer.Shared.Entities;
+using SurfTimer.Shared.JsonConverters;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace SurfTimer;
 
 internal class ApiMethod
 {
-    private ApiMethod() { }
-
     private static readonly HttpClient _client = new();
     private static readonly string base_addr = Config.ApiUrl;
+
+    // Custom Converter for ReplayFramesString
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    static ApiMethod()
+    {
+        _jsonOptions.Converters.Add(new ReplayFramesStringConverter());
+    }
 
     /// <summary>
     /// Executes a GET request to the specified URL and deserializes the response to type T.
@@ -54,7 +66,8 @@ internal class ApiMethod
                 throw exception;
             }
 
-            return await response.Content.ReadFromJsonAsync<T>();
+            // Input the custom JsonSerializerOptions to handle ReplayFramesString conversion
+            return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
         }
         catch (Exception ex)
         {
@@ -70,7 +83,7 @@ internal class ApiMethod
     /// <param name="url">Relative URL to call</param>
     /// <param name="body">Request body to send</param>
     /// <returns>API_PostResponseData or null</returns>
-    public static async Task<API_PostResponseData?> POST<T>(string url, T body, [CallerMemberName] string methodName = "")
+    public static async Task<PostResponseEntity?> POST<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
@@ -91,7 +104,7 @@ internal class ApiMethod
 
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+                return await response.Content.ReadFromJsonAsync<PostResponseEntity>();
             }
             else
             {
@@ -125,7 +138,7 @@ internal class ApiMethod
     /// <param name="url">Relative URL to call</param>
     /// <param name="body">Request body to send</param>
     /// <returns>API_PostResponseData or null</returns>
-    public static async Task<API_PostResponseData?> PUT<T>(string url, T body, [CallerMemberName] string methodName = "")
+    public static async Task<PostResponseEntity?> PUT<T>(string url, T body, [CallerMemberName] string methodName = "")
     {
         var uri = new Uri(base_addr + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
@@ -146,7 +159,7 @@ internal class ApiMethod
 
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<API_PostResponseData>();
+                return await response.Content.ReadFromJsonAsync<PostResponseEntity>();
             }
             else
             {

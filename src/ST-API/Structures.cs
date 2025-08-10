@@ -3,13 +3,14 @@ using SurfTimer.Data;
 
 namespace SurfTimer;
 
-// Map Info structure
+/*
 public class API_PostResponseData
 {
     public int Id { get; set; }
     public int Inserted { get; set; }
     public bool Trx { get; set; }
 }
+*/
 
 public class API_Checkpoint
 {
@@ -25,6 +26,7 @@ public class API_Checkpoint
     public int attempts { get; set; }
 }
 
+/*
 public class API_CurrentRun
 {
     public int player_id { get; set; }
@@ -43,7 +45,9 @@ public class API_CurrentRun
     public string replay_frames { get; set; } = ""; // This needs to be checked touroughly
     public int? run_date { get; set; } = null;
 }
+*/
 
+/*
 public class API_MapInfo
 {
     public int id { get; set; } = 0;
@@ -78,7 +82,7 @@ public class API_MapInfo
         last_played = data.LastPlayed;
     }
 }
-
+*/
 public class API_MapTime
 {
     public int id { get; set; }
@@ -101,6 +105,7 @@ public class API_MapTime
     public int total_count { get; set; }
 }
 
+/*
 public class API_PlayerSurfProfile
 {
     public int id { get; set; }
@@ -131,7 +136,9 @@ public class API_PlayerSurfProfile
         connections = data.Connections == 0 ? 1 : data.Connections;
     }
 }
+*/
 
+/*
 public class API_PersonalBest
 {
     public int id { get; set; }
@@ -156,7 +163,9 @@ public class API_PersonalBest
     [JsonConstructor]
     public API_PersonalBest() { } // Parameterless constructor used by GET method
 }
+*/
 
+/*
 public class API_SaveMapTime
 {
     public int player_id { get; set; }
@@ -211,3 +220,4 @@ public class API_SaveMapTime
         }).ToList();
     }
 }
+*/

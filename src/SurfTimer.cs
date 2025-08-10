@@ -33,7 +33,6 @@
 
 #define DEBUG
 
-using System.Collections.Concurrent;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
@@ -41,6 +40,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using System.Collections.Concurrent;
 
 namespace SurfTimer;
 
@@ -75,7 +75,7 @@ public partial class SurfTimer : BasePlugin
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        if ((CurrentMap == null || !CurrentMap.Name.Equals(mapName)) && mapName.Contains("surf_"))
+        if ((CurrentMap == null || CurrentMap.Name.Equals(mapName)) && mapName.Contains("surf_"))
         {
             Server.NextWorldUpdate(() => Console.WriteLine(String.Format("  ____________    ____         ___\n"
                                     + " / ___/ __/_  |  / __/_ ______/ _/\n"

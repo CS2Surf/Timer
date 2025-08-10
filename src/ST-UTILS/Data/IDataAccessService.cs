@@ -1,3 +1,5 @@
+using SurfTimer.Shared.DTO;
+using SurfTimer.Shared.Entities;
 using System.Runtime.CompilerServices;
 
 namespace SurfTimer.Data
@@ -19,8 +21,8 @@ namespace SurfTimer.Data
         /// Bonus and Stage runs should NOT have any checkpoints.
         /// </summary>
         /// <param name="runId">ID of the run from DB</param>
-        /// <returns>Dictionary[int, Checkpoint] data or NULL if none found</returns>
-        Task<Dictionary<int, Checkpoint>> LoadCheckpointsAsync(
+        /// <returns>Dictionary[int, CheckpointEntity] data or NULL if none found</returns>
+        Task<Dictionary<int, CheckpointEntity>> LoadCheckpointsAsync(
             int runId,
             [CallerMemberName] string methodName = ""
         );
@@ -35,8 +37,8 @@ namespace SurfTimer.Data
         /// <param name="mapId">ID of the map from DB. If pbId is null or -1</param>
         /// <param name="type">Run Type (0 = Map ; 1 = Bonus ; 2 = Stage). If pbId is null or -1</param>
         /// <param name="style">If pbId is null or -1</param>
-        /// <returns>PersonalBestDataModel data or null if not found</returns>
-        Task<PersonalBestDataModel?> LoadPersonalBestRunAsync(
+        /// <returns>MapTimeRunDataEntity data or null if not found</returns>
+        Task<MapTimeRunDataEntity?> LoadPersonalBestRunAsync(
             int? pbId,
             int playerId,
             int mapId,
@@ -51,8 +53,8 @@ namespace SurfTimer.Data
         /// Retrieves Map table entry for map through API or MySQL.
         /// </summary>
         /// <param name="mapName">Name of map</param>
-        /// <returns>MapInfoDataModel data</returns>
-        Task<MapInfoDataModel?> GetMapInfoAsync(
+        /// <returns>MapEntity data</returns>
+        Task<MapEntity?> GetMapInfoAsync(
             string mapName, [CallerMemberName] string methodName = ""
         );
         /// <summary>
@@ -61,21 +63,21 @@ namespace SurfTimer.Data
         /// <param name="mapInfo">Data to add in table</param>
         /// <returns>int mapId</returns>
         Task<int> InsertMapInfoAsync(
-            MapInfoDataModel mapInfo, [CallerMemberName] string methodName = ""
+            MapDto mapInfo, [CallerMemberName] string methodName = ""
         );
         /// <summary>
         /// Updates Map table entry for map through API or MySQL.
         /// </summary>
         /// <param name="mapInfo">Data to update in table</param>
         Task UpdateMapInfoAsync(
-            MapInfoDataModel mapInfo, [CallerMemberName] string methodName = ""
+            MapDto mapInfo, int mapId, [CallerMemberName] string methodName = ""
         );
         /// <summary>
         /// Retrieves MapTime table record runs for given mapId through API or MySQL.
         /// </summary>
         /// <param name="mapId">ID from DB</param>
-        /// <returns>List[MapRecordRunDataModel] data</returns>
-        Task<List<MapRecordRunDataModel>> GetMapRecordRunsAsync(
+        /// <returns>List[MapTimeRunDataEntity] data</returns>
+        Task<List<MapTimeRunDataEntity>> GetMapRecordRunsAsync(
             int mapId, [CallerMemberName] string methodName = ""
         );
 
@@ -85,8 +87,8 @@ namespace SurfTimer.Data
         /// Retrieve Player table entry for the player through API or MySQL.
         /// </summary>
         /// <param name="steamId">SteamID for the player</param>
-        /// <returns>PlayerProfileDataModel data</returns>
-        Task<PlayerProfileDataModel?> GetPlayerProfileAsync(
+        /// <returns>PlayerProfileEntity data</returns>
+        Task<PlayerProfileEntity?> GetPlayerProfileAsync(
             ulong steamId, [CallerMemberName] string methodName = ""
         );
         /// <summary>
@@ -95,14 +97,14 @@ namespace SurfTimer.Data
         /// <param name="profile">Data to add in table</param>
         /// <returns>int playerId given by DB</returns>
         Task<int> InsertPlayerProfileAsync(
-            PlayerProfileDataModel profile, [CallerMemberName] string methodName = ""
+            PlayerProfileDto profile, [CallerMemberName] string methodName = ""
         );
         /// <summary>
         /// Updates Player table entry for the player through API or MySQL.
         /// </summary>
         /// <param name="profile">Data to update in table</param>
         Task UpdatePlayerProfileAsync(
-            PlayerProfileDataModel profile, [CallerMemberName] string methodName = ""
+            PlayerProfileDto profile, int playerId, [CallerMemberName] string methodName = ""
         );
 
 
@@ -112,8 +114,8 @@ namespace SurfTimer.Data
         /// </summary>
         /// <param name="playerId">ID from DB</param>
         /// <param name="mapId">ID from DB</param>
-        /// <returns>List[PlayerMapTimeDataModel] data</returns>
-        Task<List<PlayerMapTimeDataModel>> GetPlayerMapTimesAsync(
+        /// <returns>List[MapTimeRunDataEntity] data</returns>
+        Task<List<MapTimeRunDataEntity>> GetPlayerMapTimesAsync(
             int playerId, int mapId, [CallerMemberName] string methodName = ""
         );
 
@@ -125,7 +127,7 @@ namespace SurfTimer.Data
         /// <param name="mapTime">Data to insert/update in table</param>
         /// <returns>int mapTimeId given by DB</returns>
         Task<int> InsertMapTimeAsync(
-            MapTimeDataModel mapTime, [CallerMemberName] string methodName = ""
+            MapTimeRunDataDto mapTime, [CallerMemberName] string methodName = ""
         );
         /// <summary>
         /// Updates a MapTime table entry through API or MySQL. Deals with checkpoints for map runs of type 0
@@ -133,7 +135,7 @@ namespace SurfTimer.Data
         /// <param name="mapTime">Data to update in table</param>
         /// <returns>int mapTimeId that was updated</returns>
         Task<int> UpdateMapTimeAsync(
-            MapTimeDataModel mapTime, int mapTimeId, [CallerMemberName] string methodName = ""
+            MapTimeRunDataDto mapTime, int mapTimeId, [CallerMemberName] string methodName = ""
         );
     }
 }
