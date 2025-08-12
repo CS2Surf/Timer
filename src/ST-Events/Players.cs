@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Utils;
 using MaxMind.GeoIP2;
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +26,8 @@ public partial class SurfTimer
             CurrentMap.ReplayManager.MapWR.SetController(controller, -1);
             CurrentMap.ReplayManager.MapWR.LoadReplayData();
 
+            controller.SwitchTeam(CsTeam.Terrorist);
+
             AddTimer(1.5f, () =>
             {
                 CurrentMap.ReplayManager.MapWR.Controller!.RemoveWeapons();
@@ -41,6 +44,8 @@ public partial class SurfTimer
             CurrentMap.ReplayManager.StageWR.SetController(controller, 3);
             CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
 
+            controller.SwitchTeam(CsTeam.Terrorist);
+
             AddTimer(1.5f, () =>
             {
                 CurrentMap.ReplayManager.StageWR.Controller!.RemoveWeapons();
@@ -56,6 +61,8 @@ public partial class SurfTimer
         {
             CurrentMap.ReplayManager.BonusWR.SetController(controller, 3);
             CurrentMap.ReplayManager.BonusWR.LoadReplayData();
+
+            controller.SwitchTeam(CsTeam.Terrorist);
 
             AddTimer(1.5f, () =>
             {
@@ -177,7 +184,8 @@ public partial class SurfTimer
             if (DB == null)
             {
                 _logger.LogCritical("OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
-                throw new Exception("CS2 Surf ERROR >> OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
+                Exception ex = new("CS2 Surf ERROR >> OnPlayerDisconnect -> DB object is null, this shouldnt happen.");
+                throw ex;
             }
 
             if (!playerList.ContainsKey(player.UserId ?? 0))

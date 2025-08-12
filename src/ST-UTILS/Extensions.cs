@@ -9,7 +9,7 @@ namespace SurfTimer;
 
 unsafe static class Extensions
 {
-    public static void Teleport(this CBaseEntity entity, Vector_t? position = null, QAngle_t? angles = null, Vector_t? velocity = null)
+    public static void Teleport(this CBaseEntity entity, VectorT? position = null, QAngleT? angles = null, VectorT? velocity = null)
     {
         Guard.IsValidEntity(entity);
 
@@ -39,11 +39,11 @@ unsafe static class Extensions
             (nint)pAng, (nint)pVel);
     }
 
-    public static (Vector_t fwd, Vector_t right, Vector_t up) AngleVectors(this QAngle vec) => vec.ToQAngle_t().AngleVectors();
-    public static void AngleVectors(this QAngle vec, out Vector_t fwd, out Vector_t right, out Vector_t up) => vec.ToQAngle_t().AngleVectors(out fwd, out right, out up);
+    public static (VectorT fwd, VectorT right, VectorT up) AngleVectors(this QAngle vec) => vec.ToQAngle_t().AngleVectors();
+    public static void AngleVectors(this QAngle vec, out VectorT fwd, out VectorT right, out VectorT up) => vec.ToQAngle_t().AngleVectors(out fwd, out right, out up);
 
-    public static Vector_t ToVector_t(this Vector vec) => new(vec.Handle);
-    public static QAngle_t ToQAngle_t(this QAngle vec) => new(vec.Handle);
+    public static VectorT ToVector_t(this Vector vec) => new(vec.Handle);
+    public static QAngleT ToQAngle_t(this QAngle vec) => new(vec.Handle);
 
     public static void SetCollisionGroup(this CCSPlayerController controller, CollisionGroup collisionGroup)
     {

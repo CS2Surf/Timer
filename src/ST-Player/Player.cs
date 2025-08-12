@@ -10,7 +10,7 @@ public class Player
     // Timer-related properties
     public PlayerTimer Timer {get; set;}
     public PlayerStats Stats {get; set;}
-    public PlayerHUD HUD {get; set;}
+    public PlayerHud HUD {get; set;}
     public ReplayRecorder ReplayRecorder { get; set; }
     public List<SavelocFrame> SavedLocations { get; set; }
     public int CurrentSavedLocation { get; set; }
@@ -32,7 +32,7 @@ public class Player
         this.SavedLocations = new List<SavelocFrame>();
         CurrentSavedLocation = 0;
 
-        this.HUD = new PlayerHUD(this);
+        this.HUD = new PlayerHud(this);
     }
 
     /// <summary>

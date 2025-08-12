@@ -27,9 +27,9 @@ internal static class JsonSelp
     }
 }
 
-internal class Vector_tConverter : JsonConverter<Vector_t>
+internal class VectorTConverter : JsonConverter<VectorT>
 {
-    public override Vector_t Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override VectorT Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Ensure that the reader is positioned at the start of an object
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -62,10 +62,10 @@ internal class Vector_tConverter : JsonConverter<Vector_t>
             }
         }
 
-        return new Vector_t { X = x, Y = y, Z = z };
+        return new VectorT { X = x, Y = y, Z = z };
     }
 
-    public override void Write(Utf8JsonWriter writer, Vector_t value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, VectorT value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
         writer.WriteNumber("X", value.X);
@@ -75,9 +75,9 @@ internal class Vector_tConverter : JsonConverter<Vector_t>
     }
 }
 
-internal class QAngle_tConverter : JsonConverter<QAngle_t>
+internal class QAngleTConverter : JsonConverter<QAngleT>
 {
-    public override QAngle_t Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override QAngleT Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Ensure that the reader is positioned at the start of an object
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -110,10 +110,10 @@ internal class QAngle_tConverter : JsonConverter<QAngle_t>
             }
         }
 
-        return new QAngle_t { X = X, Y = Y, Z = Z };
+        return new QAngleT { X = X, Y = Y, Z = Z };
     }
 
-    public override void Write(Utf8JsonWriter writer, QAngle_t value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, QAngleT value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
         writer.WriteNumber("X", value.X);
@@ -125,41 +125,6 @@ internal class QAngle_tConverter : JsonConverter<QAngle_t>
 
 internal static class Compressor
 {
-    public static string Decompress(string input)
-    {
-        byte[] compressed = Convert.FromBase64String(input);
-        byte[] decompressed = Decompress(compressed);
-        return Encoding.UTF8.GetString(decompressed);
-    }
-
-    public static string Compress(string input)
-    {
-        byte[] encoded = Encoding.UTF8.GetBytes(input);
-        byte[] compressed = Compress(encoded);
-        return Convert.ToBase64String(compressed);
-    }
-
-    public static byte[] Decompress(byte[] input)
-    {
-        using (var source = new MemoryStream(input))
-        {
-            byte[] lengthBytes = new byte[4];
-            source.Read(lengthBytes, 0, 4);
-
-            var length = BitConverter.ToInt32(lengthBytes, 0);
-            using (var decompressionStream = new GZipStream(source, CompressionMode.Decompress))
-            {
-                var result = new byte[length];
-                int totalRead = 0, bytesRead;
-                while ((bytesRead = decompressionStream.Read(result, totalRead, length - totalRead)) > 0)
-                {
-                    totalRead += bytesRead;
-                }
-                return result;
-            }
-        }
-    }
-
     public static byte[] Compress(byte[] input)
     {
         using (var result = new MemoryStream())
@@ -178,8 +143,40 @@ internal static class Compressor
         }
     }
 
-    internal static string Decompress(byte v)
+    public static string Compress(string input)
     {
-        throw new NotImplementedException();
+        byte[] encoded = Encoding.UTF8.GetBytes(input);
+        byte[] compressed = Compress(encoded);
+        return Convert.ToBase64String(compressed);
+    }
+
+    public static byte[] Decompress(byte[] input)
+    {
+        using (var source = new MemoryStream(input))
+        {
+            byte[] lengthBytes = new byte[4];
+            int bytesRead = source.Read(lengthBytes, 0, 4);
+            if (bytesRead != 4)
+                throw new InvalidDataException("Failed to read the expected length prefix.");
+
+            var length = BitConverter.ToInt32(lengthBytes, 0);
+            using (var decompressionStream = new GZipStream(source, CompressionMode.Decompress))
+            {
+                var result = new byte[length];
+                int totalRead = 0, read;
+                while ((read = decompressionStream.Read(result, totalRead, length - totalRead)) > 0)
+                {
+                    totalRead += read;
+                }
+                return result;
+            }
+        }
+    }
+
+    public static string Decompress(string input)
+    {
+        byte[] compressed = Convert.FromBase64String(input);
+        byte[] decompressed = Decompress(compressed);
+        return Encoding.UTF8.GetString(decompressed);
     }
 }

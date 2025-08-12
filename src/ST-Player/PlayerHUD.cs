@@ -2,16 +2,16 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SurfTimer;
 
-public class PlayerHUD
+public class PlayerHud
 {
-    private Player _player;
+    private readonly Player _player;
 
-    internal PlayerHUD(Player Player)
+    internal PlayerHud(Player Player)
     {
         _player = Player;
     }
 
-    private string FormatHUDElementHTML(string title, string body, string color, string size = "m")
+    private static string FormatHUDElementHTML(string title, string body, string color, string size = "m")
     {
         if (title != "")
         {
@@ -174,8 +174,6 @@ public class PlayerHUD
         int style = _player.Timer.Style;
         int playerCheckpoint = _player.Timer.Checkpoint;
 
-        // _player.Controller.PrintToChat($"{ChatColors.Blue}-> PlayerHUD{ChatColors.Default} => Style {ChatColors.Yellow}{style}{ChatColors.Default} | Checkpoint {playerCheckpoint} | WR Time Ticks {SurfTimer.CurrentMap.WR[style].Ticks} | Player Stage {_player.Timer.Stage} (CP {_player.Timer.Checkpoint}) | Player Ticks {_player.Timer.Ticks}");
-
         int currentTime = _player.Timer.Ticks;
         float currentSpeed = (float)Math.Sqrt(_player.Controller.PlayerPawn.Value!.AbsVelocity.X * _player.Controller.PlayerPawn.Value!.AbsVelocity.X
                                         + _player.Controller.PlayerPawn.Value!.AbsVelocity.Y * _player.Controller.PlayerPawn.Value!.AbsVelocity.Y
@@ -189,10 +187,10 @@ public class PlayerHUD
         // Can check checkpoints count instead of try/catch
         try
         {
-            pbTime = _player.Stats.PB[style].Checkpoints[playerCheckpoint].RunTime;
-            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelX * _player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelX
-                                        + _player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelY * _player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelY
-                                        + _player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelZ * _player.Stats.PB[style].Checkpoints[playerCheckpoint].StartVelZ);
+            pbTime = _player.Stats.PB[style].Checkpoints![playerCheckpoint].RunTime;
+            pbSpeed = (float)Math.Sqrt(_player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelX * _player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelX
+                                        + _player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelY * _player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelY
+                                        + _player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelZ * _player.Stats.PB[style].Checkpoints![playerCheckpoint].StartVelZ);
 
 #if DEBUG
             Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> [TIME]  Got pbTime from _player.Stats.PB[{style}].Checkpoint[{playerCheckpoint} = {pbTime}]");
@@ -255,10 +253,10 @@ public class PlayerHUD
             Console.WriteLine($"CS2 Surf DEBUG >> DisplayCheckpointMessages -> Starting WR difference calculation... (SurfTimer.CurrentMap.WR[{style}].Ticks > 0)");
 #endif
 
-            wrTime = SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].RunTime;
-            wrSpeed = (float)Math.Sqrt(SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelX * SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelX
-                                        + SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelY * SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelY
-                                        + SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelZ * SurfTimer.CurrentMap.WR[style].Checkpoints[playerCheckpoint].StartVelZ);
+            wrTime = SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].RunTime;
+            wrSpeed = (float)Math.Sqrt(SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelX * SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelX
+                                        + SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelY * SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelY
+                                        + SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelZ * SurfTimer.CurrentMap.WR[style].Checkpoints![playerCheckpoint].StartVelZ);
             // Reset the string
             strWrDifference = "";
 

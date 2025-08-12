@@ -1,9 +1,9 @@
-using System.Runtime.CompilerServices;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
 
@@ -184,7 +184,7 @@ public class ReplayPlayer
 
         bool is_on_ground = (current_frame.Flags & (uint)PlayerFlags.FL_ONGROUND) != 0;
 
-        Vector_t velocity = (current_frame_pos - current_pos) * 64;
+        VectorT velocity = (current_frame_pos - current_pos) * 64;
 
         if (is_on_ground)
             this.Controller.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_WALK;
@@ -206,8 +206,6 @@ public class ReplayPlayer
 
         if (this.CurrentFrameTick >= this.Frames.Count)
             this.ResetReplay();
-        // if(RepeatCount != -1)    // Spam City 
-        //     Console.WriteLine($"CS2 Surf DEBUG >> internal class ReplayPlayer -> Tick -> ====================> {this.RepeatCount} <====================");
     }
 
     internal void LoadReplayData(int repeat_count = -1, [CallerMemberName] string methodName = "")
@@ -215,16 +213,33 @@ public class ReplayPlayer
         if (!this.IsPlayable || !this.IsEnabled)
             return;
 
+        string replayType;
+        switch (this.Type)
+        {
+            case 1:
+                replayType = "Bonus Replay";
+                break;
+            case 2:
+                replayType = "Stage Replay";
+                break;
+            case 0:
+                replayType = "Map Replay";
+                break;
+            default:
+                replayType = "Unknown Type";
+                break;
+        }
+
         if (this.MapID == -1)
         {
             _logger.LogWarning("[{ClassName}] {MethodName} -> [{Type}] No replay data found for Player. MapID {MapID} | MapTimeID {MapTimeID} | RecordPlayerName {RecordPlayerName}",
-                nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : this.Type == 0 ? "Map Replay" : "Unknown Type"), this.MapID, this.MapTimeID, RecordPlayerName
+                nameof(ReplayPlayer), methodName, replayType, this.MapID, this.MapTimeID, RecordPlayerName
             );
             return;
         }
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> [{Type}] Loaded replay data for Player '{RecordPlayerName}' | MapTime ID: {MapTimeID} | Repeat {Repeat} | Frames {TotalFrames} | Ticks {RecordTicks}",
-            nameof(ReplayPlayer), methodName, (this.Type == 2 ? "Stage Replay" : this.Type == 1 ? "Bonus Replay" : this.Type == 0 ? "Map Replay" : "Unknown Type"), this.RecordPlayerName, this.MapTimeID, repeat_count, this.Frames.Count, this.RecordRunTime
+            nameof(ReplayPlayer), methodName, replayType, this.RecordPlayerName, this.MapTimeID, repeat_count, this.Frames.Count, this.RecordRunTime
         );
 
         this.ResetReplay();
@@ -253,7 +268,7 @@ public class ReplayPlayer
 
         SchemaString<CBasePlayerController> bot_name = new SchemaString<CBasePlayerController>(this.Controller!, "m_iszPlayerName");
 
-        string replay_name = $"[{prefix}] {this.RecordPlayerName} | {PlayerHUD.FormatTime(this.RecordRunTime)}";
+        string replay_name = $"[{prefix}] {this.RecordPlayerName} | {PlayerHud.FormatTime(this.RecordRunTime)}";
         if (this.RecordRunTime <= 0)
             replay_name = $"[{prefix}] {this.RecordPlayerName}";
 
@@ -261,9 +276,10 @@ public class ReplayPlayer
         Server.NextFrame(() =>
             Utilities.SetStateChanged(this.Controller!, "CBasePlayerController", "m_iszPlayerName")
         );
-
+#if DEBUG
         // _logger.LogTrace("[{ClassName}] {MethodName} -> Changed replay bot name from '{OldName}' to '{NewName}'",
         //     nameof(ReplayPlayer), methodName, bot_name, replay_name
         // );
+#endif
     }
 }

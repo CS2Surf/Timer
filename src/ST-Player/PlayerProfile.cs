@@ -43,7 +43,7 @@ public class PlayerProfile : PlayerProfileEntity
         await GetPlayerProfile();
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> InitializeAsync -> [{ConnType}] We got ProfileID {ProfileID} ({PlayerName})",
-            nameof(PlayerProfile), methodName, Config.API.GetApiOnly() ? "API" : "DB", this.ID, this.Name
+            nameof(PlayerProfile), methodName, Config.Api.GetApiOnly() ? "API" : "DB", this.ID, this.Name
         );
     }
 

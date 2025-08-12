@@ -26,9 +26,9 @@ public partial class SurfTimer
         string rankedStatus = CurrentMap.Ranked ? "Yes" : "No";
 
         string msg = $"{Config.PluginPrefix} " + LocalizationService.LocalizerNonNull["map_info",
-            CurrentMap.Name,
+            CurrentMap.Name!,
             $"{Extensions.GetTierColor(CurrentMap.Tier)}{CurrentMap.Tier}",
-            CurrentMap.Author,
+            CurrentMap.Author!,
             $"{rankedColor}{rankedStatus}",
             DateTimeOffset.FromUnixTimeSeconds(CurrentMap.DateAdded).DateTime.ToString("dd.MM.yyyy HH:mm")
         ];
@@ -202,9 +202,9 @@ public partial class SurfTimer
         player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZone} -> Angles {CurrentMap.StartZoneAngles}");
         player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZone}");
         int i = 1;
-        foreach (Vector_t stage in CurrentMap.StageStartZone)
+        foreach (VectorT stage in CurrentMap.StageStartZone)
         {
-            if (stage.X == 0 && stage.Y == 0 && stage.Z == 0)
+            if (stage.IsZero())
                 continue;
             else
             {
@@ -214,9 +214,9 @@ public partial class SurfTimer
         }
 
         i = 1;
-        foreach (Vector_t bonus in CurrentMap.BonusStartZone)
+        foreach (VectorT bonus in CurrentMap.BonusStartZone)
         {
-            if (bonus.X == 0 && bonus.Y == 0 && bonus.Z == 0)
+            if (bonus.IsZero())
                 continue;
             else
             {

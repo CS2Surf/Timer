@@ -11,16 +11,6 @@ internal class TimerDatabase
         _connString = connectionString;
     }
 
-    public void Dispose()
-    {
-        Close();
-    }
-
-    public void Close()
-    {
-        // Not needed
-    }
-
     /// <summary>
     /// Spawns a new connection to the database.
     /// </summary>
@@ -35,9 +25,9 @@ internal class TimerDatabase
         catch (MySqlException mysqlEx)  // Specifically catch MySQL-related exceptions
         {
             Console.WriteLine($"[CS2 Surf] MySQL error when connecting: {mysqlEx.Message}");
-            throw new InvalidOperationException("Could not establish a connection to the database.", mysqlEx); // Wrap the original exception with additional context
+            throw;
         }
-        catch (System.Exception ex)  // Catch all other exceptions
+        catch (Exception ex)  // Catch all other exceptions
         {
             Console.WriteLine($"[CS2 Surf] General error when connecting to the database: {ex.Message}");
             throw;  // Re-throw the exception without wrapping it

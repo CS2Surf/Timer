@@ -38,7 +38,6 @@ public partial class SurfTimer
             return;
         }
 
-        // oPlayer.ReplayRecorder.Reset();
         playerList[player.UserId ?? 0].Timer.Reset();
         if (!CurrentMap.StartZone.IsZero())
             Server.NextFrame(() =>
@@ -102,10 +101,10 @@ public partial class SurfTimer
         if (player == null)
             return;
 
-        int stage;
+        short stage;
         try
         {
-            stage = Int32.Parse(command.ArgByIndex(1));
+            stage = short.Parse(command.ArgByIndex(1));
         }
         catch (System.Exception)
         {
@@ -252,7 +251,7 @@ public partial class SurfTimer
         int pRank = playerList[player.UserId ?? 0].Stats.PB[playerList[player.UserId ?? 0].Timer.Style].Rank;
         int tRank = CurrentMap.MapCompletions[playerList[player.UserId ?? 0].Timer.Style];
         player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["rank",
-            CurrentMap.Name, pRank, tRank]}"
+            CurrentMap.Name!, pRank, tRank]}"
         );
     }
 
@@ -390,9 +389,9 @@ public partial class SurfTimer
 
         p.SavedLocations.Add(new SavelocFrame
         {
-            Pos = new Vector_t(player_pos.X, player_pos.Y, player_pos.Z),
-            Ang = new QAngle_t(player_angle.X, player_angle.Y, player_angle.Z),
-            Vel = new Vector_t(player_velocity.X, player_velocity.Y, player_velocity.Z),
+            Pos = new VectorT(player_pos.X, player_pos.Y, player_pos.Z),
+            Ang = new QAngleT(player_angle.X, player_angle.Y, player_angle.Z),
+            Vel = new VectorT(player_velocity.X, player_velocity.Y, player_velocity.Z),
             Tick = p.Timer.Ticks
         });
         p.CurrentSavedLocation = p.SavedLocations.Count - 1;
@@ -547,69 +546,8 @@ public partial class SurfTimer
             return;
 
         Player oPlayer = playerList[player.UserId ?? 0];
-        int style = oPlayer.Timer.Style;
 
-        oPlayer.Stats.ThisRun.PrintSituations(oPlayer);
-    }
-
-    [ConsoleCommand("css_setpb", "xxxxx")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    [RequiresPermissions("@css/root")]
-    public async void TestSetPb(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-            return;
-
-        Player oPlayer = playerList[player.UserId ?? 0];
-        int style = oPlayer.Timer.Style;
-
-        await oPlayer.Stats.ThisRun.SaveMapTime(oPlayer, 0, 0, 6666, "TestSetPb");
-        // oPlayer.Stats.ThisRun.PrintSituations(oPlayer);
-
-        /* Test Time Saving *//*
-        if (methodName == "TestSetPb")
-        {
-            // 1. Dummy Checkpoint
-            var dummyCheckpoint = new Checkpoint
-            {
-                CP = 1,
-                Ticks = 1234,
-                EndTouch = 1,
-                StartVelX = 111.1f,
-                StartVelY = 222.2f,
-                StartVelZ = 333.3f,
-                EndVelX = 444.4f,
-                EndVelY = 555.5f,
-                EndVelZ = 666.6f,
-                Attempts = 2
-            };
-
-            // 2. Dummy Dictionary за mapTime.Checkpoints
-            var dummyCheckpointsDict = new Dictionary<int, Checkpoint>
-            {
-                { dummyCheckpoint.CP, dummyCheckpoint }
-            };
-
-            mapTime = new MapTimeDataModel
-            {
-                PlayerId = player.Profile.ID,
-                MapId = player.CurrMap.ID,
-                Style = player.Timer.Style,
-                Type = 0,
-                Stage = stage != 0 ? stage : bonus,
-                Ticks = 666,
-                StartVelX = this.StartVelX,
-                StartVelY = this.StartVelY,
-                StartVelZ = this.StartVelZ,
-                EndVelX = this.EndVelX,
-                EndVelY = this.EndVelY,
-                EndVelZ = this.EndVelZ,
-                ReplayFramesBase64 = replay_frames,
-                Checkpoints = dummyCheckpointsDict
-            };
-        }
-        /* END Test Time Saving */
-
+        CurrentRun.PrintSituations(oPlayer);
     }
 
     [ConsoleCommand("css_testx", "x")]
@@ -623,19 +561,17 @@ public partial class SurfTimer
         Player oPlayer = playerList[player.UserId ?? 0];
         int style = oPlayer.Timer.Style;
 
-        // player.PrintToChat($"{Config.PluginPrefix} {ChatColors.Red}Testing 'PB_LoadMapTimeData'");
         player.PrintToChat($"{Config.PluginPrefix}{ChatColors.Lime}====== PLAYER ======");
         player.PrintToChat($"{Config.PluginPrefix} Profile ID: {ChatColors.Green}{oPlayer.Profile.ID}");
         player.PrintToChat($"{Config.PluginPrefix} Steam ID: {ChatColors.Green}{oPlayer.Profile.SteamID}");
-        player.PrintToChat($"{Config.PluginPrefix} MapTime ID: {ChatColors.Green}{oPlayer.Stats.PB[style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.PB[style].RunTime)}");
+        player.PrintToChat($"{Config.PluginPrefix} MapTime ID: {ChatColors.Green}{oPlayer.Stats.PB[style].ID} - {PlayerHud.FormatTime(oPlayer.Stats.PB[style].RunTime)}");
         player.PrintToChat($"{Config.PluginPrefix} Stage: {ChatColors.Green}{oPlayer.Timer.Stage}");
         player.PrintToChat($"{Config.PluginPrefix} IsStageMode: {ChatColors.Green}{oPlayer.Timer.IsStageMode}");
         player.PrintToChat($"{Config.PluginPrefix} IsRunning: {ChatColors.Green}{oPlayer.Timer.IsRunning}");
         player.PrintToChat($"{Config.PluginPrefix} Checkpoint: {ChatColors.Green}{oPlayer.Timer.Checkpoint}");
         player.PrintToChat($"{Config.PluginPrefix} Bonus: {ChatColors.Green}{oPlayer.Timer.Bonus}");
         player.PrintToChat($"{Config.PluginPrefix} Ticks: {ChatColors.Green}{oPlayer.Timer.Ticks}");
-        player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[1][style].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.StagePB[1][style].RunTime)}");
-        // player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[style][1].ID} - {PlayerHUD.FormatTime(oPlayer.Stats.StagePB[style][1].Ticks)}");
+        player.PrintToChat($"{Config.PluginPrefix} StagePB ID: {ChatColors.Green}{oPlayer.Stats.StagePB[1][style].ID} - {PlayerHud.FormatTime(oPlayer.Stats.StagePB[1][style].RunTime)}");
 
 
         player.PrintToChat($"{Config.PluginPrefix}{ChatColors.Orange}====== MAP ======");
@@ -644,8 +580,8 @@ public partial class SurfTimer
         player.PrintToChat($"{Config.PluginPrefix} Map Stages: {ChatColors.Green}{CurrentMap.Stages}");
         player.PrintToChat($"{Config.PluginPrefix} Map Bonuses: {ChatColors.Green}{CurrentMap.Bonuses}");
         player.PrintToChat($"{Config.PluginPrefix} Map Completions (Style: {ChatColors.Green}{style}{ChatColors.Default}): {ChatColors.Green}{CurrentMap.MapCompletions[style]}");
-        player.PrintToChat($"{Config.PluginPrefix} .CurrentMap.WR[].Ticks: {ChatColors.Green}{CurrentMap.WR[style].RunTime}");
-        player.PrintToChat($"{Config.PluginPrefix} .CurrentMap.WR[].Checkpoints.Count: {ChatColors.Green}{CurrentMap.WR[style].Checkpoints.Count}");
+        player.PrintToChat($"{Config.PluginPrefix} CurrentMap.WR[{style}].Ticks: {ChatColors.Green}{CurrentMap.WR[style].RunTime}");
+        player.PrintToChat($"{Config.PluginPrefix} CurrentMap.WR[{style}].Checkpoints.Count: {ChatColors.Green}{CurrentMap.WR[style].Checkpoints!.Count}");
 
 
         player.PrintToChat($"{Config.PluginPrefix}{ChatColors.Purple}====== REPLAYS ======");
@@ -662,89 +598,6 @@ public partial class SurfTimer
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.Frames.Count: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.Frames.Count}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.IsPlayable}");
         player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.BonusWR.IsPlaying: {ChatColors.Green}{CurrentMap.ReplayManager.BonusWR?.IsPlaying}");
-
-        /*
-                for (int i = 1; i < SurfTimer.CurrentMap.Stages; i++)
-                {
-                    player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.AllStageWR[{i}][0].RecordRunTime: {ChatColors.Green}{CurrentMap.ReplayManager.AllStageWR[i][0].RecordRunTime}");
-                    player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.AllStageWR[{i}][0].Frames.Count: {ChatColors.Green}{CurrentMap.ReplayManager.AllStageWR[i][0].Frames.Count}");
-                    player.PrintToChat($"{Config.PluginPrefix} .ReplayManager.AllStageWR[{i}][0].IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.AllStageWR[i][0].IsPlayable}");
-                }
-        */
-
-        /*
-                for (int i = 0; i < CurrentMap.ReplayManager.MapWR.Frames.Count; i++)
-                {
-                    ReplayFrame x = CurrentMap.ReplayManager.MapWR.Frames[i];
-
-                    switch (x.Situation)
-                    {
-                        case ReplayFrameSituation.START_ZONE_ENTER:
-                            player.PrintToChat($"Start Enter: {i} | Situation {x.Situation}");
-                            break;
-                        case ReplayFrameSituation.START_ZONE_EXIT:
-                            player.PrintToChat($"Start Exit: {i} | Situation {x.Situation}");
-                            break;
-                        case ReplayFrameSituation.STAGE_ZONE_ENTER:
-                            player.PrintToChat($"Stage Enter: {i} | Situation {x.Situation}");
-                            break;
-                        case ReplayFrameSituation.STAGE_ZONE_EXIT:
-                            player.PrintToChat($"Stage Exit: {i} | Situation {x.Situation}");
-                            break;
-                        case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER:
-                            player.PrintToChat($"Checkpoint Enter: {i} | Situation {x.Situation}");
-                            break;
-                        case ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
-                            player.PrintToChat($"Checkpoint Exit: {i} | Situation {x.Situation}");
-                            break;
-                    }
-                }
-        */
-        // for (int i = 0; i < CurrentMap.ReplayManager.MapWR.MapSituations.Count; i++)
-        // {
-        //     ReplayFrame x = CurrentMap.ReplayManager.MapWR.Frames[i];
-        //     switch (x.Situation)
-        //     {
-        //         case ReplayFrameSituation.START_ZONE_ENTER:
-        //             player.PrintToChat($"START_ZONE_ENTER: {i} | Situation {x.Situation}");
-        //             break;
-        //         case ReplayFrameSituation.START_ZONE_EXIT:
-        //             player.PrintToChat($"START_ZONE_EXIT: {i} | Situation {x.Situation}");
-        //             break;
-        //         case ReplayFrameSituation.STAGE_ZONE_ENTER:
-        //             player.PrintToChat($"STAGE_ZONE_ENTER: {i} | Situation {x.Situation}");
-        //             break;
-        //         case ReplayFrameSituation.STAGE_ZONE_EXIT:
-        //             player.PrintToChat($"STAGE_ZONE_EXIT: {i} | Situation {x.Situation}");
-        //             break;
-        //         case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER:
-        //             player.PrintToChat($"CHECKPOINT_ZONE_ENTER: {i} | Situation {x.Situation}");
-        //             break;
-        //         case ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
-        //             player.PrintToChat($"CHECKPOINT_ZONE_EXIT: {i} | Situation {x.Situation}");
-        //             break;
-        //     }
-        // }
-
-        // player.PrintToChat($"{Config.PluginPrefix} IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.IsPlayable}");
-        // player.PrintToChat($"{Config.PluginPrefix} IsPlaying: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.IsPlaying}");
-        // player.PrintToChat($"{Config.PluginPrefix} Player.IsSpectating: {ChatColors.Green}{oPlayer.IsSpectating(CurrentMap.ReplayManager.MapWR.Controller!)}");
-        // player.PrintToChat($"{Config.PluginPrefix} Name & MapTimeID: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.RecordPlayerName} {CurrentMap.ReplayManager.MapWR.MapTimeID}");
-        // player.PrintToChat($"{Config.PluginPrefix} ReplayCurrentRunTime: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.ReplayCurrentRunTime}");
-        // player.PrintToChat($"{Config.PluginPrefix} RepeatCount: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.RepeatCount}");
-        // player.PrintToChat($"{Config.PluginPrefix} IsReplayOutsideZone: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.IsReplayOutsideZone}");
-        // player.PrintToChat($"{Config.PluginPrefix} CurrentFrameTick: {ChatColors.Green}{CurrentMap.ReplayManager.MapWR.CurrentFrameTick}");
-        // player.PrintToChat($"{Config.PluginPrefix} ReplayRecorder.Frames.Length: {ChatColors.Green}{oPlayer.ReplayRecorder.Frames.Count}");
-
-        // if (CurrentMap.ReplayManager.StageWR != null)
-        // {
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.MapTimeID - Stage: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.MapTimeID} - {CurrentMap.ReplayManager.StageWR.Stage}");
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.IsPlayable: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.IsPlayable}");
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.IsEnabled: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.IsEnabled}");
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.IsPaused: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.IsPaused}");
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.IsPlaying: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.IsPlaying}");
-        //     player.PrintToChat($"{Config.PluginPrefix} ReplayManager.StageWR.Controller Null?: {ChatColors.Green}{CurrentMap.ReplayManager.StageWR.Controller == null}");
-        // }
     }
 
     [ConsoleCommand("css_ctest", "x")]
@@ -752,6 +605,7 @@ public partial class SurfTimer
     [RequiresPermissions("@css/root")]
     public void ConsoleTestCmd(CCSPlayerController? player, CommandInfo command)
     {
+        Console.WriteLine("====== MAP INFO ======");
         Console.WriteLine($"Map ID: {CurrentMap.ID}");
         Console.WriteLine($"Map Name: {CurrentMap.Name}");
         Console.WriteLine($"Map Author: {CurrentMap.Author}");
@@ -760,6 +614,7 @@ public partial class SurfTimer
         Console.WriteLine($"Map Bonuses: {CurrentMap.Bonuses}");
         Console.WriteLine($"Map Completions: {CurrentMap.MapCompletions[0]}");
 
+        Console.WriteLine("====== MAP WR INFO ======");
         Console.WriteLine($"Map WR ID: {CurrentMap.WR[0].ID}");
         Console.WriteLine($"Map WR Name: {CurrentMap.WR[0].Name}");
         Console.WriteLine($"Map WR Type: {CurrentMap.WR[0].Type}");
@@ -768,6 +623,7 @@ public partial class SurfTimer
         Console.WriteLine($"Map WR ReplayFramesBase64.Length: {CurrentMap.WR[0].ReplayFrames?.ToString().Length}");
         Console.WriteLine($"Map WR ReplayFrames.Length: {CurrentMap.WR[0].ReplayFrames?.ToString().Length}");
 
+        Console.WriteLine("====== MAP StageWR INFO ======");
         Console.WriteLine($"Map Stage Completions: {CurrentMap.StageCompletions.Length}");
         Console.WriteLine($"Map StageWR ID: {CurrentMap.StageWR[1][0].ID}");
         Console.WriteLine($"Map StageWR Name: {CurrentMap.StageWR[1][0].Name}");
@@ -778,6 +634,4 @@ public partial class SurfTimer
 
         Console.WriteLine($"Map Bonus Completions: {CurrentMap.BonusCompletions.Length}");
     }
-
-
 }

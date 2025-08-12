@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
-using SurfTimer.Shared.Entities;
 using System.Runtime.CompilerServices;
 
 namespace SurfTimer;
@@ -62,114 +61,10 @@ public class PlayerStats
             this.StagePB[i][0].Type = 2;
             initialized++;
         }
-        _logger.LogTrace("[{ClassName}] {MethodName} -> PlayerStats -> Initialized {initialized} Stages and Bonuses",
+        _logger.LogTrace("[{ClassName}] {MethodName} -> PlayerStats -> Initialized {Initialized} Stages and Bonuses",
             nameof(PlayerStats), methodName, initialized
         );
     }
-
-    /// <summary>
-    /// Not used 
-    /// </summary>
-    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    internal async void LoadMapTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
-    {
-        var player_maptime = await ApiMethod.GET<API_MapTime>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=0");
-        if (player_maptime == null)
-        {
-            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadMapTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
-                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
-            );
-            return;
-        }
-
-        PB[style].ID = player_maptime.id;
-        PB[style].RunTime = player_maptime.run_time;
-        PB[style].Type = player_maptime.type;
-        PB[style].StartVelX = player_maptime.start_vel_x;
-        PB[style].StartVelY = player_maptime.start_vel_y;
-        PB[style].StartVelZ = player_maptime.start_vel_z;
-        PB[style].EndVelX = player_maptime.end_vel_x;
-        PB[style].EndVelY = player_maptime.end_vel_y;
-        PB[style].EndVelZ = player_maptime.end_vel_z;
-        // PB[style].RunDate = player_maptime.run_date ?? 0;
-        PB[style].RunDate = player_maptime.run_date;
-
-        if (player_maptime.checkpoints == null)
-        {
-            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadMapTime -> No Checkpoints data found for Player {PlayerName} (ID {PlayerID}).",
-                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
-            );
-            return;
-        }
-
-        foreach (var cp in player_maptime.checkpoints)
-        {
-            PB[style].Checkpoints[cp.cp] = new CheckpointEntity(cp.cp, cp.run_time, cp.start_vel_x, cp.start_vel_y, cp.start_vel_z, cp.end_vel_x, cp.end_vel_y, cp.end_vel_z, cp.end_touch, cp.attempts);
-        }
-    }
-
-    /// <summary>
-    /// Not used 
-    /// </summary>
-    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    internal async void LoadStageTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
-    {
-        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=2");
-        if (player_maptime == null)
-        {
-            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadStageTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
-                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
-            );
-            return;
-        }
-
-        foreach (API_MapTime mt in player_maptime)
-        {
-            StagePB[mt.stage][style].ID = mt.id;
-            StagePB[mt.stage][style].RunTime = mt.run_time;
-            StagePB[mt.stage][style].Type = mt.type;
-            StagePB[mt.stage][style].StartVelX = mt.start_vel_x;
-            StagePB[mt.stage][style].StartVelY = mt.start_vel_y;
-            StagePB[mt.stage][style].StartVelZ = mt.start_vel_z;
-            StagePB[mt.stage][style].EndVelX = mt.end_vel_x;
-            StagePB[mt.stage][style].EndVelY = mt.end_vel_y;
-            StagePB[mt.stage][style].EndVelZ = mt.end_vel_z;
-            // StagePB[mt.stage][style].RunDate = mt.run_date ?? 0;
-            StagePB[mt.stage][style].RunDate = mt.run_date;
-        }
-    }
-
-    /// <summary>
-    /// Not used 
-    /// </summary>
-    // API - Can be replaced with `ENDPOINT_MAP_GET_PB_BY_PLAYER`
-    internal async void LoadBonusTime(Player player, int style = 0, [CallerMemberName] string methodName = "")
-    {
-        var player_maptime = await ApiMethod.GET<API_MapTime[]>($"/surftimer/playerspecificdata?player_id={player.Profile.ID}&map_id={SurfTimer.CurrentMap.ID}&style={style}&type=1");
-        if (player_maptime == null)
-        {
-            _logger.LogTrace("[{ClassName}] {MethodName} -> LoadBonusTime -> No MapTime data found for Player {PlayerName} (ID {PlayerID}).",
-                nameof(PlayerStats), methodName, player.Profile.Name, player.Profile.ID
-            );
-            return;
-        }
-
-        foreach (API_MapTime mt in player_maptime)
-        {
-            BonusPB[mt.stage][style].ID = mt.id;
-            BonusPB[mt.stage][style].RunTime = mt.run_time;
-            BonusPB[mt.stage][style].Type = mt.type;
-            BonusPB[mt.stage][style].StartVelX = mt.start_vel_x;
-            BonusPB[mt.stage][style].StartVelY = mt.start_vel_y;
-            BonusPB[mt.stage][style].StartVelZ = mt.start_vel_z;
-            BonusPB[mt.stage][style].EndVelX = mt.end_vel_x;
-            BonusPB[mt.stage][style].EndVelY = mt.end_vel_y;
-            BonusPB[mt.stage][style].EndVelZ = mt.end_vel_z;
-            // BonusPB[mt.stage][style].RunDate = mt.run_date ?? 0;
-            BonusPB[mt.stage][style].RunDate = mt.run_date;
-        }
-    }
-
 
     /// <summary>
     /// Loads the player's map time data from the database along with their ranks. For all types and styles (may not work correctly for Stages/Bonuses)

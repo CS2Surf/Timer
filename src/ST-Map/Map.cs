@@ -53,18 +53,18 @@ public class Map : MapEntity
 
     // Zone Origin Information
     /* Map Start/End zones */
-    public Vector_t StartZone { get; set; } = new Vector_t(0, 0, 0);
-    public QAngle_t StartZoneAngles { get; set; } = new QAngle_t(0, 0, 0);
-    public Vector_t EndZone { get; set; } = new Vector_t(0, 0, 0);
+    public VectorT StartZone { get; set; } = new VectorT(0, 0, 0);
+    public QAngleT StartZoneAngles { get; set; } = new QAngleT(0, 0, 0);
+    public VectorT EndZone { get; set; } = new VectorT(0, 0, 0);
     /* Map Stage zones */
-    public Vector_t[] StageStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray();
-    public QAngle_t[] StageStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle_t(0, 0, 0)).ToArray();
+    public VectorT[] StageStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new VectorT(0, 0, 0)).ToArray();
+    public QAngleT[] StageStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngleT(0, 0, 0)).ToArray();
     /* Map Bonus zones */
-    public Vector_t[] BonusStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
-    public QAngle_t[] BonusStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngle_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
-    public Vector_t[] BonusEndZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public VectorT[] BonusStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new VectorT(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public QAngleT[] BonusStartZoneAngles { get; } = Enumerable.Repeat(0, 99).Select(x => new QAngleT(0, 0, 0)).ToArray(); // To-do: Implement bonuses
+    public VectorT[] BonusEndZone { get; } = Enumerable.Repeat(0, 99).Select(x => new VectorT(0, 0, 0)).ToArray(); // To-do: Implement bonuses
     /* Map Checkpoint zones */
-    public Vector_t[] CheckpointStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new Vector_t(0, 0, 0)).ToArray();
+    public VectorT[] CheckpointStartZone { get; } = Enumerable.Repeat(0, 99).Select(x => new VectorT(0, 0, 0)).ToArray();
 
     public ReplayManager ReplayManager { get; set; } = null!;
 
@@ -126,7 +126,7 @@ public class Map : MapEntity
         stopwatch.Stop();
 
         _logger.LogInformation("[{ClassName}] {MethodName} -> We got MapID = {ID} ({Name}) in {ElapsedMilliseconds}ms | API = {API}",
-            nameof(Map), methodName, ID, Name, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+            nameof(Map), methodName, ID, Name, stopwatch.ElapsedMilliseconds, Config.Api.GetApiOnly()
         );
     }
 
@@ -160,8 +160,8 @@ public class Map : MapEntity
                             teleport.Entity!.Name.Contains("spawn_stage1_start") ||
                             teleport.Entity!.Name.Contains("spawn_s1_start")))
                         {
-                            this.StartZone = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.StartZoneAngles = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.StartZone = new VectorT(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.StartZoneAngles = new QAngleT(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             foundPlayerSpawn = true;
                             break;
                         }
@@ -169,14 +169,14 @@ public class Map : MapEntity
 
                     if (!foundPlayerSpawn)
                     {
-                        this.StartZone = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.StartZone = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                     }
                 }
 
                 // Map end zone
                 else if (trigger.Entity!.Name.Contains("map_end"))
                 {
-                    this.EndZone = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.EndZone = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 }
 
                 // Stage start zones
@@ -191,8 +191,8 @@ public class Map : MapEntity
                         if (teleport.Entity!.Name != null &&
                             (IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!) || (Regex.Match(teleport.Entity.Name, "^spawn_s([1-9][0-9]?|tage[1-9][0-9]?)_start$").Success && Int32.Parse(Regex.Match(teleport.Entity.Name, "[0-9][0-9]?").Value) == stage)))
                         {
-                            this.StageStartZone[stage] = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.StageStartZoneAngles[stage] = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.StageStartZone[stage] = new VectorT(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.StageStartZoneAngles[stage] = new QAngleT(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             this.Stages++; // Count stage zones for the map to populate DB
                             foundPlayerSpawn = true;
                             break;
@@ -201,7 +201,7 @@ public class Map : MapEntity
 
                     if (!foundPlayerSpawn)
                     {
-                        this.StageStartZone[stage] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.StageStartZone[stage] = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                         this.Stages++;
                     }
                 }
@@ -209,7 +209,7 @@ public class Map : MapEntity
                 // Checkpoint start zones (linear maps)
                 else if (Regex.Match(trigger.Entity.Name, "^map_c(p[1-9][0-9]?|heckpoint[1-9][0-9]?)$").Success)
                 {
-                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.CheckpointStartZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                     this.TotalCheckpoints++; // Might be useful to have this in DB entry
                 }
 
@@ -225,8 +225,8 @@ public class Map : MapEntity
                         if (teleport.Entity!.Name != null &&
                             (IsInZone(trigger.AbsOrigin!, trigger.Collision.BoundingRadius, teleport.AbsOrigin!) || (Regex.Match(teleport.Entity.Name, "^spawn_b([1-9][0-9]?|onus[1-9][0-9]?)_start$").Success && Int32.Parse(Regex.Match(teleport.Entity.Name, "[0-9][0-9]?").Value) == bonus)))
                         {
-                            this.BonusStartZone[bonus] = new Vector_t(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
-                            this.BonusStartZoneAngles[bonus] = new QAngle_t(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
+                            this.BonusStartZone[bonus] = new VectorT(teleport.AbsOrigin!.X, teleport.AbsOrigin!.Y, teleport.AbsOrigin!.Z);
+                            this.BonusStartZoneAngles[bonus] = new QAngleT(teleport.AbsRotation!.X, teleport.AbsRotation!.Y, teleport.AbsRotation!.Z);
                             this.Bonuses++; // Count bonus zones for the map to populate DB
                             foundPlayerSpawn = true;
                             break;
@@ -235,14 +235,14 @@ public class Map : MapEntity
 
                     if (!foundPlayerSpawn)
                     {
-                        this.BonusStartZone[bonus] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                        this.BonusStartZone[bonus] = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                         this.Bonuses++;
                     }
                 }
 
                 else if (Regex.Match(trigger.Entity.Name, "^b([1-9][0-9]?|onus[1-9][0-9]?)_end$").Success)
                 {
-                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new Vector_t(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
+                    this.BonusEndZone[Int32.Parse(Regex.Match(trigger.Entity.Name, "[0-9][0-9]?").Value)] = new VectorT(trigger.AbsOrigin!.X, trigger.AbsOrigin!.Y, trigger.AbsOrigin!.Z);
                 }
             }
         }
@@ -282,10 +282,10 @@ public class Map : MapEntity
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(ex, "[{ClassName}] {MethodName} -> Failed to insert map '{Map}'.",
-                nameof(Map), methodName, this.Name
+            _logger.LogCritical(ex, "[{ClassName}] {MethodName} -> Failed to insert map '{Map}'. Exception: {ExceptionMessage}",
+                nameof(Map), methodName, this.Name, ex.Message
             );
-            throw;
+            throw new InvalidOperationException($"Failed to insert map '{Name}'. See inner exception for details.", ex);
         }
     }
 
@@ -317,10 +317,10 @@ public class Map : MapEntity
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(ex, "[{ClassName}] {MethodName} -> Failed to update map '{Map}'.",
-                nameof(Map), methodName, this.Name
+            _logger.LogCritical(ex, "[{ClassName}] {MethodName} -> Failed to update map '{Map}'. Exception Message: {ExceptionMessage}",
+                nameof(Map), methodName, this.Name, ex.Message
             );
-            throw;
+            throw new InvalidOperationException($"Failed to update map '{Name}'. See inner exception for details.", ex);
         }
     }
 
@@ -453,7 +453,7 @@ public class Map : MapEntity
                 stopwatch.Stop();
 
                 _logger.LogInformation("[{ClassName}] {MethodName} -> Finished WR.[{Style}].LoadCheckpoints() in {ElapsedMilliseconds}ms | API = {API}",
-                    nameof(Map), methodName, style, stopwatch.ElapsedMilliseconds, Config.API.GetApiOnly()
+                    nameof(Map), methodName, style, stopwatch.ElapsedMilliseconds, Config.Api.GetApiOnly()
                 );
             }
         }
@@ -469,7 +469,7 @@ public class Map : MapEntity
     /// <param name="replayFramesBase64">Base64 encoded string for the replay_frames</param>
     internal void SetReplayData(int type, int style, int stage, ReplayFramesString replayFramesBase64, [CallerMemberName] string methodName = "")
     {
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new Vector_tConverter(), new QAngle_tConverter() } };
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = false, Converters = { new VectorTConverter(), new QAngleTConverter() } };
 
         // Decompress the Base64 string
         string json = Compressor.Decompress(replayFramesBase64.ToString());
@@ -481,12 +481,12 @@ public class Map : MapEntity
         {
             case 0: // Map Replays
                 _logger.LogTrace("[{ClassName}] {MethodName} -> SetReplayData -> [MapWR] Setting run {RunID} {RunTime} (Ticks = {RunTicks}; Frames = {TotalFrames})",
-                    nameof(Map), methodName, this.WR[style].ID, PlayerHUD.FormatTime(this.WR[style].RunTime), this.WR[style].RunTime, frames.Count
+                    nameof(Map), methodName, this.WR[style].ID, PlayerHud.FormatTime(this.WR[style].RunTime), this.WR[style].RunTime, frames.Count
                 );
                 if (this.ReplayManager.MapWR.IsPlaying)
                     this.ReplayManager.MapWR.Stop();
 
-                this.ReplayManager.MapWR.RecordPlayerName = this.WR[style].Name;
+                this.ReplayManager.MapWR.RecordPlayerName = this.WR[style].Name!;
                 this.ReplayManager.MapWR.RecordRunTime = this.WR[style].RunTime;
                 this.ReplayManager.MapWR.Frames = frames;
                 this.ReplayManager.MapWR.MapTimeID = this.WR[style].ID;
@@ -497,35 +497,20 @@ public class Map : MapEntity
                     ReplayFrame f = frames[i];
                     switch (f.Situation)
                     {
-                        case ReplayFrameSituation.START_ZONE_ENTER:
+                        case ReplayFrameSituation.START_ZONE_ENTER or ReplayFrameSituation.START_ZONE_EXIT:
                             this.ReplayManager.MapWR.MapSituations.Add(i);
                             /// Console.WriteLine($"START_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
-                        case ReplayFrameSituation.START_ZONE_EXIT:
-                            this.ReplayManager.MapWR.MapSituations.Add(i);
-                            /// Console.WriteLine($"START_ZONE_EXIT: {i} | Situation {f.Situation}");
-                            break;
-                        case ReplayFrameSituation.STAGE_ZONE_ENTER:
+                        case ReplayFrameSituation.STAGE_ZONE_ENTER or ReplayFrameSituation.STAGE_ZONE_EXIT:
                             this.ReplayManager.MapWR.StageEnterSituations.Add(i);
                             /// Console.WriteLine($"STAGE_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
-                        case ReplayFrameSituation.STAGE_ZONE_EXIT:
-                            this.ReplayManager.MapWR.StageExitSituations.Add(i);
-                            /// Console.WriteLine($"STAGE_ZONE_EXIT: {i} | Situation {f.Situation}");
-                            break;
-                        case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER:
+                        case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER or ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
                             this.ReplayManager.MapWR.CheckpointEnterSituations.Add(i);
                             /// Console.WriteLine($"CHECKPOINT_ZONE_ENTER: {i} | Situation {f.Situation}");
                             break;
-                        case ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
-                            this.ReplayManager.MapWR.CheckpointExitSituations.Add(i);
-                            /// Console.WriteLine($"CHECKPOINT_ZONE_EXIT: {i} | Situation {f.Situation}");
-                            break;
-                        case ReplayFrameSituation.END_ZONE_ENTER:
+                        case ReplayFrameSituation.END_ZONE_ENTER or ReplayFrameSituation.END_ZONE_EXIT:
                             /// Console.WriteLine($"END_ZONE_ENTER: {i} | Situation {f.Situation}");
-                            break;
-                        case ReplayFrameSituation.END_ZONE_EXIT:
-                            /// Console.WriteLine($"END_ZONE_EXIT: {i} | Situation {f.Situation}");
                             break;
                     }
                 }
@@ -544,7 +529,7 @@ public class Map : MapEntity
                 this.ReplayManager.AllBonusWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllBonusWR[stage][style].Frames = frames;
                 this.ReplayManager.AllBonusWR[stage][style].RecordRunTime = this.BonusWR[stage][style].RunTime;
-                this.ReplayManager.AllBonusWR[stage][style].RecordPlayerName = this.BonusWR[stage][style].Name;
+                this.ReplayManager.AllBonusWR[stage][style].RecordPlayerName = this.BonusWR[stage][style].Name!;
                 this.ReplayManager.AllBonusWR[stage][style].MapTimeID = this.BonusWR[stage][style].ID;
                 this.ReplayManager.AllBonusWR[stage][style].Stage = stage;
                 this.ReplayManager.AllBonusWR[stage][style].Type = 1;
@@ -555,10 +540,7 @@ public class Map : MapEntity
                     ReplayFrame f = frames[i];
                     switch (f.Situation)
                     {
-                        case ReplayFrameSituation.START_ZONE_ENTER:
-                            this.ReplayManager.AllBonusWR[stage][style].BonusSituations.Add(i);
-                            break;
-                        case ReplayFrameSituation.END_ZONE_EXIT:
+                        case ReplayFrameSituation.START_ZONE_ENTER or ReplayFrameSituation.END_ZONE_EXIT:
                             this.ReplayManager.AllBonusWR[stage][style].BonusSituations.Add(i);
                             break;
                     }
@@ -576,7 +558,7 @@ public class Map : MapEntity
                     this.ReplayManager.BonusWR.MapID = this.ID;
                     this.ReplayManager.BonusWR.Frames = frames;
                     this.ReplayManager.BonusWR.RecordRunTime = this.BonusWR[stage][style].RunTime;
-                    this.ReplayManager.BonusWR.RecordPlayerName = this.BonusWR[stage][style].Name;
+                    this.ReplayManager.BonusWR.RecordPlayerName = this.BonusWR[stage][style].Name!;
                     this.ReplayManager.BonusWR.MapTimeID = this.BonusWR[stage][style].ID;
                     this.ReplayManager.BonusWR.Stage = stage;
                     this.ReplayManager.BonusWR.Type = 1;
@@ -597,7 +579,7 @@ public class Map : MapEntity
                 this.ReplayManager.AllStageWR[stage][style].MapID = this.ID;
                 this.ReplayManager.AllStageWR[stage][style].Frames = frames;
                 this.ReplayManager.AllStageWR[stage][style].RecordRunTime = this.StageWR[stage][style].RunTime;
-                this.ReplayManager.AllStageWR[stage][style].RecordPlayerName = this.StageWR[stage][style].Name;
+                this.ReplayManager.AllStageWR[stage][style].RecordPlayerName = this.StageWR[stage][style].Name!;
                 this.ReplayManager.AllStageWR[stage][style].MapTimeID = this.StageWR[stage][style].ID;
                 this.ReplayManager.AllStageWR[stage][style].Stage = stage;
                 this.ReplayManager.AllStageWR[stage][style].Type = 2;
@@ -630,7 +612,7 @@ public class Map : MapEntity
                     this.ReplayManager.StageWR.MapID = this.ID;
                     this.ReplayManager.StageWR.Frames = frames;
                     this.ReplayManager.StageWR.RecordRunTime = this.StageWR[stage][style].RunTime;
-                    this.ReplayManager.StageWR.RecordPlayerName = this.StageWR[stage][style].Name;
+                    this.ReplayManager.StageWR.RecordPlayerName = this.StageWR[stage][style].Name!;
                     this.ReplayManager.StageWR.MapTimeID = this.StageWR[stage][style].ID;
                     this.ReplayManager.StageWR.Stage = stage;
                     this.ReplayManager.StageWR.Type = 2;

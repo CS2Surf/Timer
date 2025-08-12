@@ -22,7 +22,7 @@ public partial class SurfTimer
 
         // Need to disable maps from executing their cfgs. Currently idk how (But seriusly it a security issue)
         ConVar? bot_quota = ConVar.Find("bot_quota");
-        // Console.WriteLine($"======== public void OnTick -> bot_quota not null? {bot_quota != null}");
+
         if (bot_quota != null)
         {
             int cbq = bot_quota.GetPrimitiveValue<int>();
@@ -36,8 +36,6 @@ public partial class SurfTimer
             {
                 bot_quota.SetValue(replaybot_count);
             }
-
-            // _logger.LogInformation("public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}", cbq, replaybot_count);
         }
 
         CurrentMap.ReplayManager.MapWR.Tick();
@@ -60,7 +58,6 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllStageWR[next_stage][0].Controller = CurrentMap.ReplayManager.StageWR.Controller;
 
-            // _logger.LogInformation("public void OnTick() -> Finished replay cycle for stage {Stage}, changing to stage {next_stage}", CurrentMap.ReplayManager.StageWR.Stage, next_stage);
             CurrentMap.ReplayManager.StageWR = CurrentMap.ReplayManager.AllStageWR[next_stage][0];
             CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.StageWR.FormatBotName();
@@ -77,7 +74,6 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllBonusWR[next_bonus][0].Controller = CurrentMap.ReplayManager.BonusWR.Controller;
 
-            // _logger.LogInformation("public void OnTick() -> Finished replay cycle for bonus {Bonus}, changing to bonus {next_bonus}", CurrentMap.ReplayManager.BonusWR.Stage, next_bonus);
             CurrentMap.ReplayManager.BonusWR = CurrentMap.ReplayManager.AllBonusWR[next_bonus][0];
             CurrentMap.ReplayManager.BonusWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.BonusWR.FormatBotName();

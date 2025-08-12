@@ -1,10 +1,10 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Localization;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
-using CounterStrikeSharp.API;
 using SurfTimer.Data;
 
 namespace SurfTimer;
@@ -51,7 +51,7 @@ public class Injection : IPluginServiceCollection<SurfTimer>
         services.AddSingleton<Map>(); // Single instance for 1 Map object
 
         services.AddScoped<IDataAccessService>(provider =>
-            Config.API.GetApiOnly()
+            Config.Api.GetApiOnly()
                 ? new ApiDataAccessService()
                 : new MySqlDataAccessService()
         );

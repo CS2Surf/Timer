@@ -93,32 +93,10 @@ public class ReplayRecorder
 
         var player_pos = player.Controller.Pawn.Value!.AbsOrigin!;
         var player_angle = player.Controller.PlayerPawn.Value!.EyeAngles;
-        var player_button = player.Controller.Pawn.Value.MovementServices!.Buttons.ButtonStates[0];
         var player_flags = player.Controller.Pawn.Value.Flags;
-        var player_move_type = player.Controller.Pawn.Value.MoveType;
-        /*
-                switch (this.CurrentSituation)
-                {
-                    case ReplayFrameSituation.START_ZONE_ENTER:
-                        player.Controller.PrintToChat($"Start Enter: {this.Frames.Count}        | Situation {this.CurrentSituation}");
-                        break;
-                    case ReplayFrameSituation.START_ZONE_EXIT:
-                        player.Controller.PrintToChat($"Start Exit: {this.Frames.Count}         | Situation {this.CurrentSituation}");
-                        break;
-                    case ReplayFrameSituation.STAGE_ZONE_ENTER:
-                        player.Controller.PrintToChat($"Stage Enter: {this.Frames.Count}        | Situation {this.CurrentSituation}");
-                        break;
-                    case ReplayFrameSituation.STAGE_ZONE_EXIT:
-                        player.Controller.PrintToChat($"Stage Exit: {this.Frames.Count}         | Situation {this.CurrentSituation}");
-                        break;
-                    case ReplayFrameSituation.CHECKPOINT_ZONE_ENTER:
-                        player.Controller.PrintToChat($"Checkpoint Enter: {this.Frames.Count}   | Situation {this.CurrentSituation}");
-                        break;
-                    case ReplayFrameSituation.CHECKPOINT_ZONE_EXIT:
-                        player.Controller.PrintToChat($"Checkpoint Exit: {this.Frames.Count}    | Situation {this.CurrentSituation}");
-                        break;
-                }
-        */
+        /// var player_button = player.Controller.Pawn.Value.MovementServices!.Buttons.ButtonStates[0];
+        /// var player_move_type = player.Controller.Pawn.Value.MoveType;
+
         var frame = new ReplayFrame
         {
             pos = [player_pos.X, player_pos.Y, player_pos.Z],
@@ -133,37 +111,13 @@ public class ReplayRecorder
         this.CurrentSituation = ReplayFrameSituation.NONE;
     }
 
-    internal string SerializeReplay()
-    {
-        // JsonSerializerOptions options = new JsonSerializerOptions {WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() }};
-        // string replay_frames = JsonSerializer.Serialize(Frames, options);
-        string replay_frames = JsonSerializer.Serialize(Frames);
-        return Compressor.Compress(replay_frames);
-    }
-
-    internal string SerializeReplayPortion(int start_idx, int end_idx) // Not used anymore
-    {
-        // JsonSerializerOptions options = new JsonSerializerOptions {WriteIndented = false, Converters = { new VectorConverter(), new QAngleConverter() }};
-        // string replay_frames = JsonSerializer.Serialize(Frames.GetRange(start_idx, end_idx), options);
-        string replay_frames = JsonSerializer.Serialize(Frames.GetRange(start_idx, end_idx));
-        return Compressor.Compress(replay_frames);
-    }
-
-    internal void SetLastTickSituation(ReplayFrameSituation situation)
-    {
-        if (this.Frames.Count == 0)
-            return;
-
-        this.Frames[this.Frames.Count - 2].Situation = situation;
-    }
-
-    internal string TrimReplay(Player player, int type = 0, bool lastStage = false, [CallerMemberName] string methodName = "")
+    internal string TrimReplay(Player player, short type = 0, bool lastStage = false, [CallerMemberName] string methodName = "")
     {
         this.IsSaving = true;
 
         List<ReplayFrame>? trimmed_frames = new List<ReplayFrame>();
 
-        _logger.LogTrace(">>> [{ClassName}] {MethodName} -> Trimming replay for '{PlayerName}' | type = {type} | lastStage = {lastStage} ",
+        _logger.LogTrace(">>> [{ClassName}] {MethodName} -> Trimming replay for '{PlayerName}' | type = {Type} | lastStage = {LastStage} ",
             nameof(ReplayRecorder), methodName, player.Profile.Name, type, lastStage
         );
 
@@ -172,7 +126,7 @@ public class ReplayRecorder
             _logger.LogError("[{ClassName}] {MethodName} -> There are no Frames available for replay trimming for player {Name}",
                  nameof(ReplayRecorder), methodName, player.Profile.Name
              );
-            throw new Exception("There are no Frames available for trimming");
+            throw new InvalidOperationException("There are no Frames available for trimming");
         }
         switch (type)
         {
@@ -209,7 +163,7 @@ public class ReplayRecorder
         var start_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
         var end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
 
-        _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Map Run replay. Last start enter {start_enter_index} | last start exit {start_exit_index} | end enter {end_enter_index}",
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Trimming Map Run replay. Last start enter {StartEnterIndex} | last start exit {StartExitIndex} | end enter {EndEnterIndex}",
         nameof(ReplayRecorder), methodName, start_enter_index, start_exit_index, end_enter_index);
 
         if (start_enter_index == -1)
@@ -218,7 +172,6 @@ public class ReplayRecorder
                 nameof(ReplayRecorder), methodName, player.Profile.Name, player.Timer.IsStageMode, player.Timer.IsBonusMode
             );
             start_enter_index = start_enter_index == -1 ? 0 : start_enter_index;
-            // start_exit_index = start_exit_index == -1 ? 0 : start_exit_index;
         }
 
         if (start_enter_index != -1 && start_exit_index != -1 && end_enter_index != -1)
@@ -234,7 +187,7 @@ public class ReplayRecorder
         }
         else
         {
-            _logger.LogError("[{ClassName}] {MethodName} -> Got a '-1' value while trimming Map replay for '{Name}'. start_enter_index = {start_enter_index} | start_exit_index = {start_exit_index} | end_enter_index = {end_enter_index}",
+            _logger.LogError("[{ClassName}] {MethodName} -> Got a '-1' value while trimming Map replay for '{Name}'. start_enter_index = {StartEnterIndex} | start_exit_index = {StartExitIndex} | end_enter_index = {EndEnterIndex}",
                 nameof(ReplayRecorder), methodName, player.Profile.Name, start_enter_index, start_exit_index, end_enter_index
             );
 
@@ -249,13 +202,13 @@ public class ReplayRecorder
         var bonus_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_ENTER);
         var bonus_exit_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.START_ZONE_EXIT);
         var bonus_end_enter_index = Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER);
-        _logger.LogInformation("[{ClassName}] {MethodName} -> Looking for Bonus Run replay trim indexes. Last start enter {bonus_enter_index}, last start exit {bonus_exit_index}, end enter {bonus_end_enter_index}",
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Looking for Bonus Run replay trim indexes. Last start enter {BonusEnterIndex}, last start exit {BonusExitIndex}, end enter {BonusEndEnterIndex}",
             nameof(ReplayRecorder), methodName, bonus_enter_index, bonus_exit_index, bonus_end_enter_index
         );
 
         if (bonus_enter_index == -1)
         {
-            _logger.LogError("[{ClassName}] {MethodName} -> Player '{Name}' got '-1' for bonus_enter_index during Bonus ({BonusNumber}) replay trimming. Settinng 'bonus_enter_index' to '0'",
+            _logger.LogError("[{ClassName}] {MethodName} -> Player '{Name}' got '-1' for bonus_enter_index during Bonus ({BonusNumber}) replay trimming. Setting 'bonus_enter_index' to '0'",
                 nameof(ReplayRecorder), methodName, player.Profile.Name, player.Timer.Bonus
             );
             bonus_enter_index = 0;
@@ -267,7 +220,7 @@ public class ReplayRecorder
             int endIndex = CalculateEndIndex(bonus_end_enter_index, Frames.Count, Config.ReplaysPre);
             new_frames = GetTrimmedFrames(startIndex, endIndex);
 
-            _logger.LogDebug("<<< [{ClassName}] {MethodName} -> Trimmed Bonus replay from {startIndex} to {endIndex} ({new_frames}) - from total {OldFrames}",
+            _logger.LogDebug("<<< [{ClassName}] {MethodName} -> Trimmed Bonus replay from {StartIndex} to {EndIndex} ({NewFrames}) - from total {OldFrames}",
                 nameof(ReplayRecorder), methodName, startIndex, endIndex, new_frames.Count, this.Frames.Count
             );
 
@@ -275,7 +228,7 @@ public class ReplayRecorder
         }
         else
         {
-            _logger.LogError("[{ClassName}] {MethodName} -> Got a '-1' value while trimming Bonus ({BonusNumber}) replay for '{Name}'. bonus_enter_index = {bonus_enter_index} | bonus_exit_index = {bonus_exit_index} | bonus_end_enter_index = {bonus_end_enter_index}",
+            _logger.LogError("[{ClassName}] {MethodName} -> Got a '-1' value while trimming Bonus ({BonusNumber}) replay for '{Name}'. bonus_enter_index = {BonusEnterIndex} | bonus_exit_index = {BonusExitIndex} | bonus_end_enter_index = {BonusEndEnterIndex}",
                 nameof(ReplayRecorder), methodName, player.Timer.Bonus, player.Profile.Name, bonus_enter_index, bonus_exit_index, bonus_end_enter_index
             );
 
@@ -354,41 +307,7 @@ public class ReplayRecorder
         return new_frames;
     }
 
-    internal int LastEnterTick(int start_idx = 0)
-    {
-        if (start_idx == 0)
-            start_idx = this.Frames.Count - 1;
-        for (int i = start_idx; i > 0; i--)
-        {
-            if (
-                this.Frames[i].Situation == ReplayFrameSituation.START_ZONE_ENTER ||
-                this.Frames[i].Situation == ReplayFrameSituation.STAGE_ZONE_ENTER ||
-                this.Frames[i].Situation == ReplayFrameSituation.CHECKPOINT_ZONE_ENTER ||
-                this.Frames[i].Situation == ReplayFrameSituation.END_ZONE_ENTER
-            )
-                return i;
-        }
-        return 0;
-    }
-
-    internal int LastExitTick(int start_idx = 0)
-    {
-        if (start_idx == 0)
-            start_idx = this.Frames.Count - 1;
-        for (int i = start_idx; i > 0; i--)
-        {
-            if (
-                this.Frames[i].Situation == ReplayFrameSituation.START_ZONE_EXIT ||
-                this.Frames[i].Situation == ReplayFrameSituation.STAGE_ZONE_EXIT ||
-                this.Frames[i].Situation == ReplayFrameSituation.CHECKPOINT_ZONE_EXIT ||
-                this.Frames[i].Situation == ReplayFrameSituation.END_ZONE_EXIT
-            )
-                return i;
-        }
-        return 0;
-    }
-
-    private int CalculateStartIndex(int start_enter, int start_exit, int buffer)
+    private static int CalculateStartIndex(int start_enter, int start_exit, int buffer)
     {
         if (start_exit - (buffer * 2) >= start_enter)
             return start_exit - (buffer * 2);
@@ -400,26 +319,22 @@ public class ReplayRecorder
             return start_enter;
     }
 
-    private int CalculateEndIndex(int end_enter, int totalFrames, int buffer)
+    private static int CalculateEndIndex(int end_enter, int totalFrames, int buffer)
     {
         if (end_enter + (buffer * 2) < totalFrames)
         {
-            // _logger.LogTrace("CalculateEndIndex 1st -> end_enter + (buffer * 2) < totalFrames ({Logic}) -> {Value}", end_enter + (buffer * 2) < totalFrames, end_enter + (buffer * 2));
             return end_enter + (buffer * 2);
         }
         else if (end_enter + buffer < totalFrames)
         {
-            // _logger.LogTrace("CalculateEndIndex 2nd -> end_enter + buffer < totalFrames ({Logic}) -> {Value}", end_enter + buffer < totalFrames, end_enter + buffer);
             return end_enter + buffer;
         }
         else if (end_enter + (buffer / 2) < totalFrames)
         {
-            // _logger.LogTrace("CalculateEndIndex 3rd -> end_enter + (buffer / 2) < totalFrames ({Logic}) -> {Value}", end_enter + (buffer / 2) < totalFrames, end_enter + (buffer / 2));
             return end_enter + (buffer / 2);
         }
         else
         {
-            // _logger.LogTrace("CalculateEndIndex 4th -> Last -> {Value}", end_enter);
             return end_enter;
         }
     }

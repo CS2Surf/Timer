@@ -23,7 +23,7 @@ namespace SurfTimer.Data
             try
             {
                 var response = await ApiMethod.GET<Dictionary<string, double>>(
-                    string.Format(Config.API.Endpoints.ENDPOINT_PING, (double)DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    string.Format(Config.Api.Endpoints.ENDPOINT_PING, (double)DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 );
 
                 if (response != null && response.ContainsKey("clientUnix"))
@@ -53,7 +53,7 @@ namespace SurfTimer.Data
         {
             var checkpoints = await ApiMethod
                 .GET<Dictionary<int, CheckpointEntity>>(
-                    string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_RUN_CPS, runId)
+                    string.Format(Config.Api.Endpoints.ENDPOINT_MAP_GET_RUN_CPS, runId)
                 );
             if (checkpoints == null || checkpoints.Count == 0)
                 return new Dictionary<int, CheckpointEntity>();
@@ -68,9 +68,9 @@ namespace SurfTimer.Data
         public async Task<MapTimeRunDataEntity?> LoadPersonalBestRunAsync(int? pbId, int playerId, int mapId, int type, int style, [CallerMemberName] string methodName = "")
         {
             string url = pbId == null || pbId == -1
-                ? string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_PB_BY_PLAYER,
+                ? string.Format(Config.Api.Endpoints.ENDPOINT_MAP_GET_PB_BY_PLAYER,
                                 playerId, mapId, type, style)
-                : string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_PB_BY_ID,
+                : string.Format(Config.Api.Endpoints.ENDPOINT_MAP_GET_PB_BY_ID,
                                 pbId.Value);
 
             var apiResult = await ApiMethod.GET<MapTimeRunDataEntity>(url);
@@ -89,7 +89,7 @@ namespace SurfTimer.Data
         public async Task<MapEntity?> GetMapInfoAsync(string mapName, [CallerMemberName] string methodName = "")
         {
             var mapInfo = await ApiMethod.GET<MapEntity>(
-                string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_INFO, mapName));
+                string.Format(Config.Api.Endpoints.ENDPOINT_MAP_GET_INFO, mapName));
 
             if (mapInfo != null)
             {
@@ -109,11 +109,12 @@ namespace SurfTimer.Data
 
         public async Task<int> InsertMapInfoAsync(MapDto mapInfo, [CallerMemberName] string methodName = "")
         {
-            var postResponse = await ApiMethod.POST(Config.API.Endpoints.ENDPOINT_MAP_INSERT_INFO, mapInfo);
+            var postResponse = await ApiMethod.POST(Config.Api.Endpoints.ENDPOINT_MAP_INSERT_INFO, mapInfo);
 
             if (postResponse == null || postResponse.Id <= 0)
             {
-                throw new Exception($"API failed to insert map '{mapInfo.Name}'.");
+                Exception ex = new Exception($"API failed to insert map '{mapInfo.Name}'.");
+                throw ex;
             }
 
             return postResponse.Id;
@@ -122,18 +123,19 @@ namespace SurfTimer.Data
         public async Task UpdateMapInfoAsync(MapDto mapInfo, int mapId, [CallerMemberName] string methodName = "")
         {
             var response = await ApiMethod.PUT(
-                string.Format(Config.API.Endpoints.ENDPOINT_MAP_UPDATE_INFO, mapId), mapInfo
+                string.Format(Config.Api.Endpoints.ENDPOINT_MAP_UPDATE_INFO, mapId), mapInfo
             );
             if (response == null)
             {
-                throw new Exception($"API failed to update map '{mapInfo.Name}' (ID {mapId}).");
+                Exception ex = new Exception($"API failed to update map '{mapInfo.Name}' (ID {mapId}).");
+                throw ex;
             }
         }
 
         public async Task<List<MapTimeRunDataEntity>> GetMapRecordRunsAsync(int mapId, [CallerMemberName] string methodName = "")
         {
             var apiRuns = await ApiMethod.GET<List<MapTimeRunDataEntity>>(
-                string.Format(string.Format(Config.API.Endpoints.ENDPOINT_MAP_GET_RUNS, mapId)));
+                string.Format(string.Format(Config.Api.Endpoints.ENDPOINT_MAP_GET_RUNS, mapId)));
 
             return apiRuns!;
         }
@@ -143,7 +145,7 @@ namespace SurfTimer.Data
         public async Task<PlayerProfileEntity?> GetPlayerProfileAsync(ulong steamId, [CallerMemberName] string methodName = "")
         {
             var player = await ApiMethod.GET<PlayerProfileEntity>(
-                string.Format(Config.API.Endpoints.ENDPOINT_PP_GET_PROFILE, steamId));
+                string.Format(Config.Api.Endpoints.ENDPOINT_PP_GET_PROFILE, steamId));
 
             if (player != null)
             {
@@ -162,11 +164,12 @@ namespace SurfTimer.Data
 
         public async Task<int> InsertPlayerProfileAsync(PlayerProfileDto profile, [CallerMemberName] string methodName = "")
         {
-            var postResponse = await ApiMethod.POST(Config.API.Endpoints.ENDPOINT_PP_INSERT_PROFILE, profile);
+            var postResponse = await ApiMethod.POST(Config.Api.Endpoints.ENDPOINT_PP_INSERT_PROFILE, profile);
 
             if (postResponse == null || postResponse.Id <= 0)
             {
-                throw new Exception($"API failed to insert Player Profile for '{profile.Name}'.");
+                Exception ex = new Exception($"API failed to insert Player Profile for '{profile.Name}'.");
+                throw ex;
             }
 
             return postResponse.Id;
@@ -175,12 +178,13 @@ namespace SurfTimer.Data
         public async Task UpdatePlayerProfileAsync(PlayerProfileDto profile, int playerId, [CallerMemberName] string methodName = "")
         {
             var response = await ApiMethod.PUT(
-                string.Format(Config.API.Endpoints.ENDPOINT_PP_UPDATE_PROFILE, playerId), profile
+                string.Format(Config.Api.Endpoints.ENDPOINT_PP_UPDATE_PROFILE, playerId), profile
             );
 
             if (response == null)
             {
-                throw new Exception($"API failed to update Player Profile for '{profile.Name}' (ID {playerId}).");
+                Exception ex = new Exception($"API failed to update Player Profile for '{profile.Name}' (ID {playerId}).");
+                throw ex;
             }
         }
 
@@ -189,12 +193,13 @@ namespace SurfTimer.Data
         public async Task<List<MapTimeRunDataEntity>> GetPlayerMapTimesAsync(int playerId, int mapId, [CallerMemberName] string methodName = "")
         {
             var apiResponse = await ApiMethod.GET<List<MapTimeRunDataEntity>>(
-                string.Format(Config.API.Endpoints.ENDPOINT_PS_GET_PLAYER_MAP_DATA, playerId, mapId)
+                string.Format(Config.Api.Endpoints.ENDPOINT_PS_GET_PLAYER_MAP_DATA, playerId, mapId)
             );
 
             if (apiResponse == null)
             {
-                throw new Exception($"API failed to GET MapTime entries for PlayerID = {playerId} and MapID = {mapId}.");
+                Exception ex = new Exception($"API failed to GET MapTime entries for PlayerID '{playerId}' and MapID '{mapId}'.");
+                throw ex;
             }
 
             _logger.LogInformation("[{ClassName}] {MethodName} -> GetPlayerMapTimesAsync -> Found maptime data for PlayerID {PlayerID} and MapID {MapID}",
@@ -252,13 +257,14 @@ namespace SurfTimer.Data
             */
 
             var postResponse = await ApiMethod.POST(
-                Config.API.Endpoints.ENDPOINT_CR_SAVE_MAP_TIME,
+                Config.Api.Endpoints.ENDPOINT_CR_SAVE_MAP_TIME,
                 mapTime
             );
 
             if (postResponse == null || postResponse.Inserted <= 0)
             {
-                throw new Exception($"API failed to insert MapTime for Player ID '{mapTime.PlayerID}' on Map ID '{mapTime.MapID}.");
+                Exception ex = new Exception($"API failed to insert MapTime for Player ID '{mapTime.PlayerID}' on Map ID '{mapTime.MapID}'.");
+                throw ex;
             }
 
             _logger.LogDebug(
@@ -315,13 +321,14 @@ namespace SurfTimer.Data
             */
 
             var postResponse = await ApiMethod.PUT(
-                string.Format(Config.API.Endpoints.ENDPOINT_CR_UPDATE_MAP_TIME, mapTimeId),
+                string.Format(Config.Api.Endpoints.ENDPOINT_CR_UPDATE_MAP_TIME, mapTimeId),
                 mapTime
             );
 
             if (postResponse == null || postResponse.Inserted <= 0)
             {
-                throw new Exception($"API failed to update MapTime {mapTimeId} for Player ID '{mapTime.PlayerID}' on Map ID '{mapTime.MapID}'.");
+                Exception ex = new Exception($"API failed to update MapTime {mapTimeId} for Player ID '{mapTime.PlayerID}' on Map ID '{mapTime.MapID}'.");
+                throw ex;
             }
 
             _logger.LogDebug(

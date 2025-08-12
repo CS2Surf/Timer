@@ -1,25 +1,26 @@
+using CounterStrikeSharp.API;
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
-using CounterStrikeSharp.API;
 
 namespace SurfTimer;
 
 public static class Config
 {
     public static string PluginName => Assembly.GetExecutingAssembly().GetName().Name ?? "";
-    public static string PluginPrefix = LocalizationService.LocalizerNonNull["prefix"];
+    public static readonly string PluginPrefix = LocalizationService.LocalizerNonNull["prefix"];
     public static string PluginPath => $"{Server.GameDirectory}/csgo/addons/counterstrikesharp/plugins/{PluginName}/";
-    public static string PluginSurfConfig = $"{Server.GameDirectory}/csgo/cfg/{PluginName}/{PluginName}.json";
-    public static string ApiUrl => API.GetApiUrl();
-    public static string DbConnectionString => MySQL.GetConnectionString();
+    public static readonly string PluginSurfConfig = $"{Server.GameDirectory}/csgo/cfg/{PluginName}/{PluginName}.json";
+    public static string ApiUrl => Api.GetApiUrl();
+    public static string DbConnectionString => MySql.GetConnectionString();
 
     /// <summary>
     /// Placeholder for amount of styles
     /// </summary>
-    public static List<int> Styles = new List<int> { 0 }; // Add all supported style IDs
+    public static readonly ImmutableList<int> Styles = [0]; // Add all supported style IDs
 
-    public static bool ReplaysEnabled => true;
-    public static int ReplaysPre => 64;
+    public static readonly bool ReplaysEnabled = TimerSettings.GetReplaysEnabled();
+    public static readonly int ReplaysPre = TimerSettings.GetReplaysPre();
 
     // Helper class/methods for configuration loading
     private static class ConfigLoader
@@ -45,13 +46,17 @@ public static class Config
         private const string TIMER_CONFIG_PATH = "/csgo/cfg/SurfTimer/timer_settings.json";
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(TIMER_CONFIG_PATH);
 
-        public static string GetPrefix()
+        public static bool GetReplaysEnabled()
         {
-            return ConfigDocument.RootElement.GetProperty("prefix").GetString()!;
+            return ConfigDocument.RootElement.GetProperty("replays_enabled").GetBoolean();
+        }
+        public static int GetReplaysPre()
+        {
+            return ConfigDocument.RootElement.GetProperty("replays_pre").GetInt32();
         }
     }
 
-    public static class API
+    public static class Api
     {
         private const string API_CONFIG_PATH = "/csgo/cfg/SurfTimer/api_config.json";
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(API_CONFIG_PATH);
@@ -108,7 +113,7 @@ public static class Config
         }
     }
 
-    public static class MySQL
+    public static class MySql
     {
         private const string DB_CONFIG_PATH = "/csgo/cfg/SurfTimer/database.json";
         private static JsonDocument ConfigDocument => ConfigLoader.GetConfigDocument(DB_CONFIG_PATH);
@@ -127,8 +132,6 @@ public static class Config
             int timeout = ConfigDocument.RootElement.GetProperty("timeout").GetInt32()!;
 
             string connString = $"server={host};user={user};password={password};database={database};port={port};connect timeout={timeout};";
-
-            // Console.WriteLine($"============= [CS2 Surf] Extracted connection string: {connString}");
 
             return connString;
         }

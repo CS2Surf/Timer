@@ -21,10 +21,10 @@ public partial class SurfTimer
         {
             client = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
         }
-        catch (System.Exception)
+        catch (Exception ex)
         {
-            _logger.LogError("[{ClassName}] OnTriggerEndTouch -> Could not assign `client` (name: {Name})",
-                nameof(SurfTimer), name
+            _logger.LogError(ex, "[{ClassName}] OnTriggerEndTouch -> Could not assign `client` (name: {Name}). Exception: {Exception}",
+                nameof(SurfTimer), name, ex.Message
             );
         }
 

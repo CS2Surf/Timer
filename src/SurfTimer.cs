@@ -68,14 +68,14 @@ public partial class SurfTimer : BasePlugin
 
     // Globals
     private ConcurrentDictionary<int, Player> playerList = new();
-    internal static TimerDatabase DB = new(Config.MySQL.GetConnectionString()); // Initiate it with the correct connection string
+    internal static TimerDatabase DB = new(Config.MySql.GetConnectionString()); // Initiate it with the correct connection string
     internal static Map CurrentMap = null!;
 
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
     {
         // Initialise Map Object
-        if ((CurrentMap == null || CurrentMap.Name.Equals(mapName)) && mapName.Contains("surf_"))
+        if ((CurrentMap == null || CurrentMap.Name!.Equals(mapName)) && mapName.Contains("surf_"))
         {
             Server.NextWorldUpdate(() => Console.WriteLine(String.Format("  ____________    ____         ___\n"
                                     + " / ___/ __/_  |  / __/_ ______/ _/\n"
@@ -134,16 +134,16 @@ public partial class SurfTimer : BasePlugin
         if (accessService)
         {
             _logger.LogInformation("[{Prefix}] {AccessService} connection established.",
-                Config.PluginName, Config.API.GetApiOnly() ? "API" : "DB"
+                Config.PluginName, Config.Api.GetApiOnly() ? "API" : "DB"
             );
         }
         else
         {
             _logger.LogCritical("[{Prefix}] Error connecting to the {AccessService}.",
-                Config.PluginName, Config.API.GetApiOnly() ? "API" : "DB"
+                Config.PluginName, Config.Api.GetApiOnly() ? "API" : "DB"
             );
 
-            Exception exception = new Exception($"[{Config.PluginName}] Error connecting to the {(Config.API.GetApiOnly() ? "API" : "DB")}");
+            Exception exception = new Exception($"[{Config.PluginName}] Error connecting to the {(Config.Api.GetApiOnly() ? "API" : "DB")}");
             throw exception;
         }
 

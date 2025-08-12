@@ -34,12 +34,12 @@ public class ReplayFrame
         public ReplayFrameSituation Situation { get; set; } = ReplayFrameSituation.NONE;
         public uint Flags { get; set; }
 
-        public Vector_t GetPos()
+        public VectorT GetPos()
         {
-                return new Vector_t(this.pos[0], this.pos[1], this.pos[2]);
+                return new VectorT(this.pos[0], this.pos[1], this.pos[2]);
         }
-        public QAngle_t GetAng()
+        public QAngleT GetAng()
         {
-                return new QAngle_t(this.ang[0], this.ang[1], this.ang[2]);
+                return new QAngleT(this.ang[0], this.ang[1], this.ang[2]);
         }
 }
