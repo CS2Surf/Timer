@@ -624,7 +624,7 @@ public partial class SurfTimer
         Console.WriteLine($"Map WR ReplayFrames.Length: {CurrentMap.WR[0].ReplayFrames?.ToString().Length}");
 
         Console.WriteLine("====== MAP StageWR INFO ======");
-        Console.WriteLine($"Map Stage Completions: {CurrentMap.StageCompletions.Length}");
+        Console.WriteLine($"Map Stage Completions ({CurrentMap.Stages} + 1): {CurrentMap.StageCompletions.Length}");
         Console.WriteLine($"Map StageWR ID: {CurrentMap.StageWR[1][0].ID}");
         Console.WriteLine($"Map StageWR Name: {CurrentMap.StageWR[1][0].Name}");
         Console.WriteLine($"Map StageWR Type: {CurrentMap.StageWR[1][0].Type}");
@@ -632,6 +632,20 @@ public partial class SurfTimer
         Console.WriteLine($"Map StageWR ReplayFramesBase64.Length: {CurrentMap.StageWR[1][0].ReplayFrames?.ToString().Length}");
         Console.WriteLine($"Map StageWR ReplayFrames.Length: {CurrentMap.StageWR[1][0].ReplayFrames?.ToString().Length}");
 
-        Console.WriteLine($"Map Bonus Completions: {CurrentMap.BonusCompletions.Length}");
+        Console.WriteLine($"Map Bonus Completions ({CurrentMap.Bonuses} + 1): {CurrentMap.BonusCompletions.Length}");
+
+        if (CurrentMap.Stages > 0)
+        {
+            for (int i = 1; i <= CurrentMap.Stages; i++)
+            {
+                Console.WriteLine($"========== Stage {i} ==========");
+                Console.WriteLine($"ID: {CurrentMap.StageWR[i][0].ID}");
+                Console.WriteLine($"Name: {CurrentMap.StageWR[i][0].Name}");
+                Console.WriteLine($"RunTime: {CurrentMap.StageWR[i][0].RunTime}");
+                Console.WriteLine($"Type: {CurrentMap.StageWR[i][0].Type}");
+                Console.WriteLine($"Rank: {CurrentMap.StageWR[i][0].Rank}");
+                Console.WriteLine($"Stage Completions: {CurrentMap.StageCompletions[i][0]}");
+            }
+        }
     }
 }

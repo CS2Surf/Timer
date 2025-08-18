@@ -7,6 +7,9 @@ public partial class SurfTimer
 {
     public void OnTick()
     {
+        if (CurrentMap == null)
+            return;
+
         foreach (var player in playerList.Values)
         {
             player.Timer.Tick();
@@ -16,9 +19,6 @@ public partial class SurfTimer
             if ((CollisionGroup)player.Controller.Collision.CollisionGroup == CollisionGroup.COLLISION_GROUP_DEBRIS) continue;
             player.Controller.SetCollisionGroup(CollisionGroup.COLLISION_GROUP_DEBRIS);
         }
-
-        if (CurrentMap == null)
-            return;
 
         // Need to disable maps from executing their cfgs. Currently idk how (But seriusly it a security issue)
         ConVar? bot_quota = ConVar.Find("bot_quota");

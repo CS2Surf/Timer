@@ -61,7 +61,7 @@ public class Injection : IPluginServiceCollection<SurfTimer>
 /// <summary>
 /// Handles translation files 
 /// </summary>
-public class LocalizationService
+public static class LocalizationService
 {
     // Localizer as a Singleton
     public static IStringLocalizer? Localizer { get; private set; }

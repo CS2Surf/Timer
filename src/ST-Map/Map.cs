@@ -25,11 +25,11 @@ public class Map : MapEntity
     /// <summary>
     /// Bonus Completion Count - Refer to as BonusCompletions[bonus#][style]
     /// </summary>
-    public Dictionary<int, int>[] BonusCompletions { get; set; } = new Dictionary<int, int>[32];
+    public Dictionary<int, int>[] BonusCompletions { get; set; } = Array.Empty<Dictionary<int, int>>();
     /// <summary>
     /// Stage Completion Count - Refer to as StageCompletions[stage#][style]
     /// </summary>
-    public Dictionary<int, int>[] StageCompletions { get; set; } = new Dictionary<int, int>[32];
+    public Dictionary<int, int>[] StageCompletions { get; set; } = Array.Empty<Dictionary<int, int>>();
     /// <summary>
     /// Map World Record - Refer to as WR[style]
     /// </summary>
@@ -37,11 +37,11 @@ public class Map : MapEntity
     /// <summary>
     /// Bonus World Record - Refer to as BonusWR[bonus#][style]
     /// </summary>
-    public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = new Dictionary<int, PersonalBest>[32];
+    public Dictionary<int, PersonalBest>[] BonusWR { get; set; } = Array.Empty<Dictionary<int, PersonalBest>>();
     /// <summary>
     /// Stage World Record - Refer to as StageWR[stage#][style]
     /// </summary>
-    public Dictionary<int, PersonalBest>[] StageWR { get; set; } = new Dictionary<int, PersonalBest>[32];
+    public Dictionary<int, PersonalBest>[] StageWR { get; set; } = Array.Empty<Dictionary<int, PersonalBest>>();
 
     /// <summary>
     /// Not sure what this is for.
@@ -81,53 +81,55 @@ public class Map : MapEntity
         // Set map name
         this.Name = name;
 
-        // Initialize WR variables
-        foreach (int style in Config.Styles)
-        {
-            this.WR[style] = new PersonalBest();
-            this.MapCompletions[style] = -1;
-        }
-
-        for (int i = 0; i < 32; i++)
-        {
-            this.BonusWR[i] = new Dictionary<int, PersonalBest>();
-            this.BonusWR[i][0] = new PersonalBest();
-            this.BonusWR[i][0].Type = 1;
-            this.BonusCompletions[i] = new Dictionary<int, int>();
-
-            this.StageWR[i] = new Dictionary<int, PersonalBest>();
-            this.StageWR[i][0] = new PersonalBest();
-            this.StageWR[i][0].Type = 2;
-            this.StageCompletions[i] = new Dictionary<int, int>();
-        }
-    }
-
-    internal static async Task<Map> CreateAsync(string name)
-    {
-        var map = new Map(name);
-        await map.InitializeAsync();
-        return map;
+        // Load zones
+        MapLoadZones();
+        _logger.LogInformation("[{ClassName}] -> Zones have been loaded. | Bonuses: {Bonuses} | Stages: {Stages} | Checkpoints: {Checkpoints}",
+            nameof(Map), this.Bonuses, this.Stages, this.TotalCheckpoints
+        );
     }
 
     internal async Task InitializeAsync([CallerMemberName] string methodName = "")
     {
-        // Load zones
-        MapLoadZones();
-        _logger.LogInformation("[{ClassName}] {MethodName} -> Zones have been loaded. | Bonuses: {Bonuses} | Stages: {Stages} | Checkpoints: {Checkpoints}",
-            nameof(Map), methodName, this.Bonuses, this.Stages, this.TotalCheckpoints
-        );
-
         // Initialize ReplayManager with placeholder values
-        this.ReplayManager = new ReplayManager(-1, this.Stages > 0, this.Bonuses > 0, null!); // Adjust values as needed
+        this.ReplayManager = new ReplayManager(-1, this.Stages > 0, this.Bonuses > 0, null!);
 
-        // Start timing
-        var stopwatch = Stopwatch.StartNew();
-        await LoadMapInfo();
-        stopwatch.Stop();
+        // Initialize WR variables
+        this.StageWR = new Dictionary<int, PersonalBest>[this.Stages + 1]; // We do + 1 cause stages and bonuses start from 1, not from 0
+        this.StageCompletions = new Dictionary<int, int>[this.Stages + 1];
+        this.BonusWR = new Dictionary<int, PersonalBest>[this.Bonuses + 1];
+        this.BonusCompletions = new Dictionary<int, int>[this.Bonuses + 1];
+        int initStages = 0;
+        int initBonuses = 0;
 
-        _logger.LogInformation("[{ClassName}] {MethodName} -> We got MapID = {ID} ({Name}) in {ElapsedMilliseconds}ms | API = {API}",
-            nameof(Map), methodName, ID, Name, stopwatch.ElapsedMilliseconds, Config.Api.GetApiOnly()
+        foreach (int style in Config.Styles)
+        {
+            this.WR[style] = new PersonalBest { Type = 0 };
+            this.MapCompletions[style] = 0;
+
+            for (int i = 1; i <= this.Stages; i++)
+            {
+                this.StageWR[i] = new Dictionary<int, PersonalBest>();
+                this.StageWR[i][style] = new PersonalBest { Type = 2 };
+                this.StageCompletions[i] = new Dictionary<int, int>();
+                this.StageCompletions[i][style] = 0;
+                initStages++;
+            }
+
+            for (int i = 1; i <= this.Bonuses; i++)
+            {
+                this.BonusWR[i] = new Dictionary<int, PersonalBest>();
+                this.BonusWR[i][style] = new PersonalBest { Type = 1 };
+                this.BonusCompletions[i] = new Dictionary<int, int>();
+                this.BonusCompletions[i][style] = 0;
+                initBonuses++;
+            }
+        }
+
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Initialized WR variables. | Bonuses: {Bonuses} | Stages: {Stages}",
+            nameof(Map), methodName, initBonuses, initStages
         );
+
+        await LoadMapInfo();
     }
 
     /// <summary>
@@ -248,7 +250,10 @@ public class Map : MapEntity
         }
 
         if (this.Stages > 0) // Account for stage 1, not counted above
+        {
+            this.TotalCheckpoints = this.Stages; // Stages are counted as Checkpoints on Staged maps during MAP runs
             this.Stages += 1;
+        }
 
         _logger.LogTrace("[{ClassName}] {MethodName} -> Start zone: {StartZoneX}, {StartZoneY}, {StartZoneZ} | End zone: {EndZoneX}, {EndZoneY}, {EndZoneZ}",
             nameof(Map), methodName, this.StartZone.X, this.StartZone.Y, this.StartZone.Z, this.EndZone.X, this.EndZone.Y, this.EndZone.Z
@@ -379,7 +384,7 @@ public class Map : MapEntity
 
         var runs = await _dataService.GetMapRecordRunsAsync(this.ID);
 
-        _logger.LogInformation("[{ClassName}] {MethodName} -> Received {Length} of runs from `GetMapRecordRunsAsync`",
+        _logger.LogInformation("[{ClassName}] {MethodName} -> Received {Length} runs from `GetMapRecordRunsAsync`",
             nameof(Map), methodName, runs.Count
         );
 

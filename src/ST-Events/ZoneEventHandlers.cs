@@ -123,7 +123,7 @@ public partial class SurfTimer
                 // Should we also save a last stage run?
                 if (CurrentMap.Stages > 0)
                 {
-                    AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                    AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                     {
                         // This calculation is wrong unless we wait for a bit in order for the `END_ZONE_ENTER` to be available in the `Frames` object
                         int stage_run_time = player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER) - player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);

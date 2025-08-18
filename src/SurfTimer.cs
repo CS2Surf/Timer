@@ -67,9 +67,9 @@ public partial class SurfTimer : BasePlugin
     public override string ModuleAuthor => "The CS2 Surf Initiative - github.com/cs2surf";
 
     // Globals
-    private ConcurrentDictionary<int, Player> playerList = new();
-    internal static TimerDatabase DB = new(Config.MySql.GetConnectionString()); // Initiate it with the correct connection string
-    internal static Map CurrentMap = null!;
+    private readonly ConcurrentDictionary<int, Player> playerList = new();
+    internal readonly static TimerDatabase DB = new(Config.MySql.GetConnectionString()); // Initiate it with the correct connection string
+    public static Map CurrentMap { get; private set; } = null!;
 
     /* ========== MAP START HOOKS ========== */
     public void OnMapStart(string mapName)
@@ -86,8 +86,11 @@ public partial class SurfTimer : BasePlugin
                                     + $"[{Config.PluginName}] ---> Source Code: https://github.com/CS2Surf/Timer\n"
                                     + $"[{Config.PluginName}] ---> License Agreement: https://github.com/CS2Surf/Timer/blob/main/LICENSE\n"
             )));
-
-            Server.NextWorldUpdate(async () => CurrentMap = await Map.CreateAsync(mapName)); // NextWorldUpdate runs even during server hibernation
+            Server.NextWorldUpdate(async () =>
+            {
+                CurrentMap = new Map(mapName);
+                await CurrentMap.InitializeAsync();
+            }); // NextWorldUpdate runs even during server hibernation
         }
     }
 

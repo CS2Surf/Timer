@@ -7,62 +7,61 @@ namespace SurfTimer;
 
 public class PlayerStats
 {
-    // To-Do: Each stat should be a class of its own, with its own methods and properties - easier to work with. 
-    //        Temporarily, we store ticks + basic info so we can experiment
-    // These account for future style support and a relevant index.
-
     /// <summary>
     /// Map Personal Best - Refer to as PB[style]
     /// </summary>
     public Dictionary<int, PersonalBest> PB { get; set; } = new Dictionary<int, PersonalBest>();
     /// <summary>
     /// Bonus Personal Best - Refer to as BonusPB[bonus#][style]
-    /// Need to figure out a way to NOT hardcode to `32` but to total amount of bonuses
     /// </summary>
-    public Dictionary<int, PersonalBest>[] BonusPB { get; set; } = new Dictionary<int, PersonalBest>[32];
+    public Dictionary<int, PersonalBest>[] BonusPB { get; set; }
     /// <summary>
     /// Stage Personal Best - Refer to as StagePB[stage#][style]
-    /// Need to figure out a way to NOT hardcode to `32` but to total amount of stages
     /// </summary>
-    public Dictionary<int, PersonalBest>[] StagePB { get; set; } = new Dictionary<int, PersonalBest>[32];
+    public Dictionary<int, PersonalBest>[] StagePB { get; set; }
     /// <summary>
     /// This object tracks data for the Player's current run.
     /// </summary>
     public CurrentRun ThisRun { get; set; } = new CurrentRun();
+
     private readonly ILogger<PlayerStats> _logger;
     private readonly IDataAccessService _dataService;
 
 
-
-    // Initialize PersonalBest for each `style` (e.g., 0 for normal)
-    // Here we can loop through all available styles at some point and initialize them
     internal PlayerStats([CallerMemberName] string methodName = "")
     {
         // Resolve the logger instance from the DI container
         _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<PlayerStats>>();
         _dataService = SurfTimer.ServiceProvider.GetRequiredService<IDataAccessService>();
 
-        // Initialize MapPB for each style
+        // Initialize PB variables
+        this.StagePB = new Dictionary<int, PersonalBest>[SurfTimer.CurrentMap.Stages + 1];
+        this.BonusPB = new Dictionary<int, PersonalBest>[SurfTimer.CurrentMap.Bonuses + 1];
+        int initStage = 0;
+        int initBonus = 0;
+
         foreach (int style in Config.Styles)
         {
-            PB[style] = new PersonalBest();
-            PB[style].Type = 0;
+            PB[style] = new PersonalBest { Type = 0 };
+
+            for (int i = 1; i <= SurfTimer.CurrentMap.Stages; i++)
+            {
+                this.StagePB[i] = new Dictionary<int, PersonalBest>();
+                this.StagePB[i][style] = new PersonalBest { Type = 2 };
+                initStage++;
+            }
+
+            for (int i = 1; i <= SurfTimer.CurrentMap.Bonuses; i++)
+            {
+                this.BonusPB[i] = new Dictionary<int, PersonalBest>();
+                this.BonusPB[i][style] = new PersonalBest { Type = 1 };
+                initBonus++;
+            }
         }
 
-        int initialized = 0;
-        for (int i = 0; i < 32; i++)
-        {
-            this.BonusPB[i] = new Dictionary<int, PersonalBest>();
-            this.BonusPB[i][0] = new PersonalBest();
-            this.BonusPB[i][0].Type = 1;
 
-            this.StagePB[i] = new Dictionary<int, PersonalBest>();
-            this.StagePB[i][0] = new PersonalBest();
-            this.StagePB[i][0].Type = 2;
-            initialized++;
-        }
-        _logger.LogTrace("[{ClassName}] {MethodName} -> PlayerStats -> Initialized {Initialized} Stages and Bonuses",
-            nameof(PlayerStats), methodName, initialized
+        _logger.LogTrace("[{ClassName}] {MethodName} -> PlayerStats -> Initialized {StagesInitialized} Stages and {BonusesInitialized} Bonuses",
+            nameof(PlayerStats), methodName, initStage, initBonus
         );
     }
 
