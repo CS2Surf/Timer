@@ -7,6 +7,13 @@ namespace SurfTimer;
 
 public static class Config
 {
+    public static readonly string PluginLogo = """
+                                            
+          ____________    ____         ___
+         / ___/ __/_  |  / __/_ ______/ _/
+        / /___\ \/ __/  _\ \/ // / __/ _/ 
+        \___/___/____/ /___/\_,_/_/ /_/   
+    """;
     public static string PluginName => Assembly.GetExecutingAssembly().GetName().Name ?? "";
     public static readonly string PluginPrefix = LocalizationService.LocalizerNonNull["prefix"];
     public static string PluginPath => $"{Server.GameDirectory}/csgo/addons/counterstrikesharp/plugins/{PluginName}/";

@@ -163,6 +163,15 @@ public class ReplayPlayer
             {
                 this.IsReplayOutsideZone = false;
             }
+            else if (current_frame.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT && this.Type == 2)
+            {
+                IsReplayOutsideZone = true;
+                ReplayCurrentRunTime = 0;
+            }
+            else if (current_frame.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER && this.Type == 2)
+            {
+                IsReplayOutsideZone = false;
+            }
         }
         else
         {
@@ -173,7 +182,16 @@ public class ReplayPlayer
             else if (current_frame.Situation == ReplayFrameSituation.END_ZONE_ENTER)
             {
                 this.IsReplayOutsideZone = true;
-                this.ReplayCurrentRunTime = this.CurrentFrameTick - (64 * 2); // (64*2) counts for the 2 seconds before run actually starts
+                this.ReplayCurrentRunTime = this.CurrentFrameTick - (Config.ReplaysPre * 2); // (64*2) counts for the 2 seconds before run actually starts
+            }
+            else if (current_frame.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT && this.Type == 2)
+            {
+                this.IsReplayOutsideZone = false;
+            }
+            else if (current_frame.Situation == ReplayFrameSituation.STAGE_ZONE_ENTER && this.Type == 2)
+            {
+                IsReplayOutsideZone = true;
+                this.ReplayCurrentRunTime = this.CurrentFrameTick - (Config.ReplaysPre * 2); // (64*2) counts for the 2 seconds before run actually starts
             }
         }
         // END OF BLASPHEMY

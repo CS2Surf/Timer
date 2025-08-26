@@ -75,4 +75,44 @@ unsafe static class Extensions
             _ => ChatColors.White
         };
     }
+
+    /// <summary>
+    /// Color gradient for speed, based on a range of velocities.
+    /// </summary>
+    /// <param name="velocity">Velocity to determine color for</param>
+    /// <param name="minSpeed">Minimum velocity</param>
+    /// <param name="maxSpeed">Maximum velocity</param>
+    /// <returns>HEX value as string</returns>
+    public static string GetSpeedColorGradient(float velocity, float minSpeed = 240f, float maxSpeed = 4000f)
+    {
+        // Key colors (HEX -> RGB)
+        (int R, int G, int B)[] gradient = new (int, int, int)[]
+        {
+            (79, 195, 247), // blue #4FC3F7
+            (46, 159, 101), // green #2E9F65
+            (255, 255, 0),  // yellow #FFFF00
+            (255, 165, 0),  // orange #FFA500
+            (255, 0, 0)     // red #FF0000
+        };
+
+        // Limit velocity
+        velocity = Math.Clamp(velocity, minSpeed, maxSpeed);
+
+        // Normalize velocity to 0..1
+        float t = (velocity - minSpeed) / (maxSpeed - minSpeed);
+
+        // Calculate which part of the gradient we are in
+        float scaledT = t * (gradient.Length - 1);
+        int index1 = (int)Math.Floor(scaledT);
+        int index2 = Math.Min(index1 + 1, gradient.Length - 1);
+
+        float localT = scaledT - index1;
+
+        // Linear interpolation between the two color points
+        int r = (int)(gradient[index1].R + (gradient[index2].R - gradient[index1].R) * localT);
+        int g = (int)(gradient[index1].G + (gradient[index2].G - gradient[index1].G) * localT);
+        int b = (int)(gradient[index1].B + (gradient[index2].B - gradient[index1].B) * localT);
+
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
 }

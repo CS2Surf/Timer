@@ -108,7 +108,7 @@ public partial class SurfTimer
                 );
             }
 
-            if (saveMapTime)
+            if (saveMapTime && !player.Timer.IsPracticeMode)
             {
                 player.ReplayRecorder.IsSaving = true;
                 AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
@@ -152,7 +152,7 @@ public partial class SurfTimer
 
             if (!player.Timer.IsPracticeMode)
             {
-                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     // This calculation is wrong unless we wait for a bit in order for the `END_ZONE_ENTER` to be available in the `Frames` object
                     int stage_run_time = player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.END_ZONE_ENTER) - player.ReplayRecorder.Frames.FindLastIndex(f => f.Situation == ReplayFrameSituation.STAGE_ZONE_EXIT);
@@ -214,7 +214,7 @@ public partial class SurfTimer
             if (stage > 1 && !failed_stage && !player.Timer.IsPracticeMode)
             {
                 int stage_run_time = player.Timer.Ticks;
-                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     await CurrentRun.SaveStageTime(player, (short)(stage - 1), stage_run_time);
                 });
@@ -239,7 +239,7 @@ public partial class SurfTimer
             {
                 int stage_run_time = player.Timer.Ticks - player.Stats.ThisRun.RunTime; // player.Stats.ThisRun.RunTime should be the Tick we left the previous Stage zone
                                                                                         // player.Controller.PrintToChat($"{Config.PluginPrefix} [StageWR (Map RUN)] Sending to SaveStageTime: {player.Profile.Name}, {stage - 1}, {stage_run_time}");
-                AddTimer(0.5f, async () => // This determines whether we will have frames for AFTER touch the endZone 
+                AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     await CurrentRun.SaveStageTime(player, (short)(stage - 1), stage_run_time);
                 });
