@@ -107,8 +107,8 @@ public partial class SurfTimer : BasePlugin
     {
         _logger.LogInformation(
             "[{Prefix}] Map ({MapName}) ended. Cleaning up resources...",
-            CurrentMap.Name,
-            Config.PluginName
+            Config.PluginName, 
+            CurrentMap.Name
         );
 
         // Clear/reset stuff here
