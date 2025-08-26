@@ -113,7 +113,7 @@ public class PlayerHud
     /// <returns>string velocityModule</returns>
     internal string BuildVelocityModule()
     {
-        float velocity = GetVelocityFromController(_player.Controller);
+        float velocity = Extensions.GetVelocityFromController(_player.Controller);
         string velocityModule =
             FormatHUDElementHTML(
                 "Speed",
@@ -349,7 +349,7 @@ public class PlayerHud
     /// <param name="specReplay">Replay data to use</param>
     private string BuildMapWrModule(ReplayPlayer specReplay)
     {
-        float velocity = GetVelocityFromController(specReplay.Controller!);
+        float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
 
         string replayModule = FormatHUDElementHTML("", "Map WR Replay", SpectatorColor, "m");
@@ -381,7 +381,7 @@ public class PlayerHud
     /// <param name="specReplay">Replay data to use</param>
     private string BuildStageWrModule(ReplayPlayer specReplay)
     {
-        float velocity = GetVelocityFromController(specReplay.Controller!);
+        float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
 
         string replayModule = FormatHUDElementHTML(
@@ -418,7 +418,7 @@ public class PlayerHud
     /// <param name="specReplay">Replay data to use<</param>
     private string BuildBonusWrModule(ReplayPlayer specReplay)
     {
-        float velocity = GetVelocityFromController(specReplay.Controller!);
+        float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
 
         string replayModule = FormatHUDElementHTML(
@@ -455,7 +455,7 @@ public class PlayerHud
     /// <param name="specReplay">Replay data to use<</param>
     private string BuildCustomReplayModule(ReplayPlayer specReplay)
     {
-        float velocity = GetVelocityFromController(specReplay.Controller!);
+        float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
 
         string replayType;
@@ -498,21 +498,6 @@ public class PlayerHud
     }
 
     /// <summary>
-    /// Calculates the velocity of a given player controller
-    /// </summary>
-    /// <param name="controller">Controller to calculate velocity for</param>
-    /// <returns>float velocity</returns>
-    private static float GetVelocityFromController(CCSPlayerController controller)
-    {
-        var pawn = controller.PlayerPawn?.Value;
-        if (pawn == null)
-            return 0.0f;
-
-        var vel = pawn.AbsVelocity;
-        return (float)Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y + vel.Z * vel.Z);
-    }
-
-    /// <summary>
     /// Displays checkpoints comparison messages in player chat.
     /// Only calculates if the player has a PB, otherwise it will display N/A
     /// </summary>
@@ -525,7 +510,7 @@ public class PlayerHud
         int style = _player.Timer.Style;
         int playerCurrentCheckpoint = _player.Timer.Checkpoint;
         int currentTime = _player.Timer.Ticks;
-        float currentSpeed = GetVelocityFromController(_player.Controller!);
+        float currentSpeed = Extensions.GetVelocityFromController(_player.Controller!);
 
         // Default values for the PB and WR differences in case no calculations can be made
         string strPbDifference =

@@ -115,4 +115,20 @@ unsafe static class Extensions
 
         return $"#{r:X2}{g:X2}{b:X2}";
     }
+
+    /// <summary>
+    /// Calculates the velocity of a given player controller
+    /// </summary>
+    /// <param name="controller">Controller to calculate velocity for</param>
+    /// <returns>float velocity</returns>
+    public static float GetVelocityFromController(CCSPlayerController controller)
+    {
+        var pawn = controller.PlayerPawn?.Value;
+        if (pawn == null)
+            return 0.0f;
+
+        var vel = pawn.AbsVelocity;
+        return (float)Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y + vel.Z * vel.Z);
+    }
+
 }
