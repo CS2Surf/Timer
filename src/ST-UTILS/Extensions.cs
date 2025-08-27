@@ -55,6 +55,34 @@ unsafe static class Extensions
         Utilities.SetStateChanged(controller, "CCollisionProperty", "m_collisionAttribute");
     }
 
+
+    /// <summary>
+    /// Checks whether an IP is a local one. Allows testing the plugin in a local environment setup for GeoIP
+    /// </summary>
+    /// <param name="ip">IP to check</param>
+    /// <returns>True for Private IP</returns>
+    public static bool IsPrivateIP(string ip)
+    {
+        var ipParts = ip.Split('.');
+        int firstOctet = int.Parse(ipParts[0]);
+        int secondOctet = int.Parse(ipParts[1]);
+
+        // 10.x.x.x range
+        if (firstOctet == 10)
+            return true;
+
+        // 172.16.x.x to 172.31.x.x range
+        if (firstOctet == 172 && (secondOctet >= 16 && secondOctet <= 31))
+            return true;
+
+        // 192.168.x.x range
+        if (firstOctet == 192 && secondOctet == 168)
+            return true;
+
+        return false;
+    }
+
+
     /// <summary>
     /// Asssigns a ChatColor to the given Tier value
     /// </summary>

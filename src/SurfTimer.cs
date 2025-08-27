@@ -83,7 +83,7 @@ public partial class SurfTimer : BasePlugin
                 mapName
             );
 
-            Server.NextWorldUpdate(async () => // NextWorldUpdate runs even during server hibernation
+            Server.NextWorldUpdateAsync(async () => // NextWorldUpdate runs even during server hibernation
             {
                 _logger.LogInformation(
                     "{PluginLogo}\n"

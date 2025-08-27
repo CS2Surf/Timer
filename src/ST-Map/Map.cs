@@ -380,7 +380,7 @@ public class Map : MapEntity
     /// </summary>
     internal async Task LoadMapRecordRuns([CallerMemberName] string methodName = "")
     {
-        this.ConnectedMapTimes.Clear();
+        //this.ConnectedMapTimes.Clear(); // This is for Custom Replays (PB replays?) - T
 
         var runs = await _dataService.GetMapRecordRunsAsync(this.ID);
 
@@ -403,7 +403,7 @@ public class Map : MapEntity
                     WR[run.Style].EndVelZ = run.EndVelZ;
                     WR[run.Style].RunDate = run.RunDate;
                     WR[run.Style].Name = run.Name;
-                    ConnectedMapTimes.Add(run.ID);
+                    //ConnectedMapTimes.Add(run.ID);
                     MapCompletions[run.Style] = run.TotalCount;
 
                     SetReplayData(run.Type, run.Style, run.Stage, run.ReplayFrames!);

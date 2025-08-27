@@ -106,7 +106,7 @@ public partial class SurfTimer
         // GeoIP
         // Check if the IP is private before attempting GeoIP lookup
         string ipAddress = player.IpAddress!.Split(":")[0];
-        if (!IsPrivateIP(ipAddress))
+        if (!Extensions.IsPrivateIP(ipAddress))
         {
             DatabaseReader geoipDB = new(Config.PluginPath + "data/GeoIP/GeoLite2-Country.mmdb");
             country = geoipDB.Country(ipAddress).Country.IsoCode ?? "XX";
@@ -208,29 +208,4 @@ public partial class SurfTimer
         }
     }
 
-    /// <summary>
-    /// Checks whether an IP is a local one. Allows testing the plugin in a local environment setup for GeoIP
-    /// </summary>
-    /// <param name="ip">IP to check</param>
-    /// <returns>True for Private IP</returns>
-    static bool IsPrivateIP(string ip)
-    {
-        var ipParts = ip.Split('.');
-        int firstOctet = int.Parse(ipParts[0]);
-        int secondOctet = int.Parse(ipParts[1]);
-
-        // 10.x.x.x range
-        if (firstOctet == 10)
-            return true;
-
-        // 172.16.x.x to 172.31.x.x range
-        if (firstOctet == 172 && (secondOctet >= 16 && secondOctet <= 31))
-            return true;
-
-        // 192.168.x.x range
-        if (firstOctet == 192 && secondOctet == 168)
-            return true;
-
-        return false;
-    }
 }

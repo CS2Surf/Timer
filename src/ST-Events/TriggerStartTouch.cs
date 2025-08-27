@@ -8,8 +8,6 @@ public partial class SurfTimer
     /// <summary>
     /// Handler for trigger start touch hook - CBaseTrigger_StartTouchFunc
     /// </summary>
-    /// <returns>CounterStrikeSharp.API.Core.HookResult</returns>
-    /// <exception cref="Exception"></exception>
     internal HookResult OnTriggerStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         CBaseTrigger trigger = new CBaseTrigger(caller.Handle);

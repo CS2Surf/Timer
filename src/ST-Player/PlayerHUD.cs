@@ -347,7 +347,7 @@ public class PlayerHud
     /// Build the Map WR module for the spectator HUD
     /// </summary>
     /// <param name="specReplay">Replay data to use</param>
-    private string BuildMapWrModule(ReplayPlayer specReplay)
+    internal string BuildMapWrModule(ReplayPlayer specReplay)
     {
         float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
@@ -379,7 +379,7 @@ public class PlayerHud
     /// Build the Stage WR module for the spectator HUD
     /// </summary>
     /// <param name="specReplay">Replay data to use</param>
-    private string BuildStageWrModule(ReplayPlayer specReplay)
+    internal string BuildStageWrModule(ReplayPlayer specReplay)
     {
         float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
@@ -416,7 +416,7 @@ public class PlayerHud
     /// Build the Bonus WR module for the spectator HUD
     /// </summary>
     /// <param name="specReplay">Replay data to use<</param>
-    private string BuildBonusWrModule(ReplayPlayer specReplay)
+    internal string BuildBonusWrModule(ReplayPlayer specReplay)
     {
         float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;
@@ -453,7 +453,7 @@ public class PlayerHud
     /// Build the Custom Replay module for the spectator HUD
     /// </summary>
     /// <param name="specReplay">Replay data to use<</param>
-    private string BuildCustomReplayModule(ReplayPlayer specReplay)
+    internal string BuildCustomReplayModule(ReplayPlayer specReplay)
     {
         float velocity = Extensions.GetVelocityFromController(specReplay.Controller!);
         string timerColor = specReplay.ReplayCurrentRunTime > 0 ? TimerColorActive : RankColorWr;

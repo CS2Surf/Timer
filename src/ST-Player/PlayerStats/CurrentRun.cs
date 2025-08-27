@@ -183,9 +183,6 @@ public class CurrentRun : RunStatsEntity
             player.ReplayRecorder.IsSaving = true;
 
             // Save stage run
-#if DEBUG
-            Console.WriteLine($"==== OnTriggerStartTouch -> SaveStageTime -> [StageWR (IsStageMode? {player.Timer.IsStageMode} | Last? {saveLastStage})] Saving Stage {stage} ({stage}) time of {PlayerHud.FormatTime(stage_run_time)} ({stage_run_time})");
-#endif
             await player.Stats.ThisRun.SaveMapTime(player, stage: stage, run_ticks: stage_run_time); // Save the Stage MapTime PB data
         }
         else if (stage_run_time > SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime && player.Timer.IsStageMode) // Player is behind the Stage WR for the map

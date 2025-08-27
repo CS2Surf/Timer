@@ -135,6 +135,7 @@ public class PlayerStats
                     PB[style].EndVelY = mapTime.EndVelY;
                     PB[style].EndVelZ = mapTime.EndVelZ;
                     PB[style].RunDate = mapTime.RunDate;
+                    //SurfTimer.CurrentMap.ConnectedMapTimes.Add(mapTime.ID); // Needed for PB replays? 
 
                     await PB[style].LoadCheckpoints();
                     break;

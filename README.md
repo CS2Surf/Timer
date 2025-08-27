@@ -164,7 +164,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve. Subject to change.*
 Bold & Italics = being worked on.
 - [ ] Database
-  - [X] MySQL database schema ([Design Diagram](https://dbdiagram.io/d/CS2Surf-Timer-DB-Schema-6560b76b3be1495787ace4d2))
+  - [X] MySQL database schema ([Design Diagram](https://dbdiagram.io/d/Copy-of-CS2Surf-Timer-DB-Schema-6582e6e456d8064ca06328b9))
   - [ ] Plugin auto-create tables for easier setup? 
   - [X] Base database class implementation
 - [X] Maps
@@ -205,8 +205,8 @@ Bold & Italics = being worked on.
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [X] Base player class
-  - [ ] Player stat classes
-  - [ ] Profile implementation (DB)
+  - [X] Player stat classes
+  - [X] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
 - [x] Replays
