@@ -3,7 +3,7 @@ name: Release SurfTimer.Plugin
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*.*.*"            # auto trigger on tags vX.Y.Z
   workflow_dispatch:
     inputs:
       tag:
@@ -35,143 +35,108 @@ jobs:
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Checkout Timer (SurfTimer.Plugin) repo
+      # Repository of the plugin (Timer) – we want the specific tag
+      - name: Checkout Plugin repository (Timer)
         uses: actions/checkout@v4
         with:
-          # In this workflow the file is in the Timer repo
-          ref: ${{ env.RELEASE_TAG }}
           path: Timer
+          ref: ${{ env.RELEASE_TAG }}
 
-      - name: Checkout SurfTimer.Shared
+      # Separate repository for SurfTimer.Shared in the same workspace root
+      - name: Checkout Shared repository
         uses: actions/checkout@v4
         with:
           repository: tslashd/SurfTimer.Shared
           path: SurfTimer.Shared
-          # If the repo is private:
+          # If it is private:
           # token: ${{ secrets.SHARED_REPO_PAT }}
-          # Optionally pin a version:
-          # ref: v1.2.3
+          # ref: vX.Y.Z 
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore (Shared + Plugin)
-        shell: bash
-        run: |
-          dotnet restore "SurfTimer.Shared/SurfTimer.Shared.csproj"
-          # Find .csproj of the plugin automatically
-          PLUGIN_CSPROJ="$(cd Timer && git ls-files '**/SurfTimer.Plugin.csproj' | head -n1)"
-          if [ -z "$PLUGIN_CSPROJ" ]; then
-            echo "SurfTimer.Plugin.csproj not found in Timer repo"
-            exit 1
-          fi
-          echo "PLUGIN_CSPROJ=Timer/$PLUGIN_CSPROJ" >> $GITHUB_ENV
-          dotnet restore "$PLUGIN_CSPROJ"
+      # Restore + Build the plugin; ProjectReference points to ../../SurfTimer.Shared
+      - name: Restore
+        run: dotnet restore Timer/src/SurfTimer.Plugin.csproj
 
-      - name: Build SurfTimer.Shared
-        run: dotnet build SurfTimer.Shared/SurfTimer.Shared.csproj -c Release --no-restore
-
-      - name: Build & Publish SurfTimer.Plugin
-        env:
-          OUT_DIR: out/publish
-        shell: bash
-        run: |
-          # Publish aclass library, to copy dependencies to out/publish
-          dotnet publish "$PLUGIN_CSPROJ" \
-            -c Release \
-            -o "$OUT_DIR" \
-            /p:CopyLocalLockFileAssemblies=true \
-            /p:IncludeBuildOutput=true \
-            /p:PublishSingleFile=false \
-            /p:PublishTrimmed=false
-
-          echo "Publish output:"
-          ls -la "$OUT_DIR"
+      - name: Build (Release)
+        run: dotnet build Timer/src/SurfTimer.Plugin.csproj -c Release --no-restore
 
       - name: Prepare package layout
-        env:
-          OUT_DIR: out/publish
-          PKG_ROOT: package
+        id: prep
         shell: bash
+        env:
+          OUT_ROOT: out/package
         run: |
           set -euo pipefail
 
-          # Paths
-          ADDONS_DIR="$PKG_ROOT/addons/SurfTimer.Plugin"
-          CFG_DST="$PKG_ROOT/cfg"
+          BIN="Timer/src/bin/Release/net8.0"
+          PKG="$OUT_ROOT"
+          ADDONS="$PKG/addons/SurfTimer.Plugin"
+          CFGDST="$PKG/cfg/SurfTimer"
 
-          mkdir -p "$ADDONS_DIR" "$ADDONS_DIR/data/GeoIP" "$ADDONS_DIR/lang" "$CFG_DST"
+          # Create directories
+          mkdir -p "$ADDONS/data/GeoIP" "$ADDONS/lang" "$CFGDST"
 
-          # Copy main DLLs from publish
-          cp -v "$OUT_DIR/SurfTimer.Plugin.dll" "$ADDONS_DIR/"
+          # Validate artifacts
+          test -f "$BIN/SurfTimer.Plugin.dll" || (echo "Missing SurfTimer.Plugin.dll in $BIN" && exit 1)
+          test -f "$BIN/SurfTimer.Shared.dll" || (echo "Missing SurfTimer.Shared.dll in $BIN (check ProjectReference path)" && exit 1)
 
-          # Copy SurfTimer.Shared.dll from the built Shared
-          SHARED_DLL="SurfTimer.Shared/bin/Release/net8.0/SurfTimer.Shared.dll"
-          test -f "$SHARED_DLL" || { echo "Missing $SHARED_DLL"; exit 1; }
-          cp -v "$SHARED_DLL" "$ADDONS_DIR/"
+          # Copy the required DLLs to addons/SurfTimer.Plugin
+          # (Dapper, MaxMind.Db, MaxMind.GeoIP2, MySqlConnector, SurfTimer.Plugin, SurfTimer.Shared)
+          cp -v "$BIN"/Dapper.dll "$ADDONS/" || true
+          cp -v "$BIN"/MaxMind.Db.dll "$ADDONS/" || true
+          cp -v "$BIN"/MaxMind.GeoIP2.dll "$ADDONS/" || true
+          cp -v "$BIN"/MySqlConnector.dll "$ADDONS/" || true
+          cp -v "$BIN"/SurfTimer.Plugin.dll "$ADDONS/"
+          cp -v "$BIN"/SurfTimer.Shared.dll "$ADDONS/"
 
-          # Copy dependencies (try from publish; if missing, fallback from Timer/src/bin)
-          need() { test -f "$1" || { echo "Missing $1"; exit 1; }; }
+          # data/GeoIP (only the mmdb file)
+          SRC_MMDB="Timer/data/GeoIP/GeoLite2-Country.mmdb"
+          test -f "$SRC_MMDB" || (echo "Missing $SRC_MMDB" && exit 1)
+          cp -v "$SRC_MMDB" "$ADDONS/data/GeoIP/"
 
-          copy_dep() {
-            local NAME="$1"
-            if [ -f "$OUT_DIR/$NAME" ]; then
-              cp -v "$OUT_DIR/$NAME" "$ADDONS_DIR/"
-            elif [ -f "Timer/src/bin/$NAME" ]; then
-              cp -v "Timer/src/bin/$NAME" "$ADDONS_DIR/"
-            else
-              echo "Dependency $NAME not found in publish or Timer/src/bin"
-              exit 1
-            fi
-          }
+          # lang/en.json
+          SRC_LANG="Timer/lang/en.json"
+          test -f "$SRC_LANG" || (echo "Missing $SRC_LANG" && exit 1)
+          cp -v "$SRC_LANG" "$ADDONS/lang/"
 
-          copy_dep "Dapper.dll"
-          copy_dep "MaxMind.Db.dll"
-          copy_dep "MaxMind.GeoIP2.dll"
-          copy_dep "MySqlConnector.dll"
+          # cfg/SurfTimer (copy the entire SurfTimer folder from repo ./cfg)
+          test -d "Timer/cfg/SurfTimer" || (echo "Missing Timer/cfg/SurfTimer" && exit 1)
+          cp -vr "Timer/cfg/SurfTimer/." "$CFGDST/"
 
-          # Copy data and lang
-          need "Timer/data/GeoIP/GeoLite2-Country.mmdb"
-          cp -v "Timer/data/GeoIP/GeoLite2-Country.mmdb" "$ADDONS_DIR/data/GeoIP/"
+          echo "PKG_PATH=$PKG" >> $GITHUB_OUTPUT
 
-          need "Timer/lang/en.json"
-          cp -v "Timer/lang/en.json" "$ADDONS_DIR/lang/"
-
-          # Copy the whole cfg/ folder
-          if [ -d "Timer/cfg" ]; then
-            cp -av "Timer/cfg/." "$CFG_DST/"
-          else
-            echo "Timer/cfg not found"
-            exit 1
-          fi
-
-          echo "Final package tree:"
-          tree -a "$PKG_ROOT" || true
-
-      - name: Zip & checksum
-        env:
-          PKG_ROOT: package
+      - name: Create ZIP
         shell: bash
+        env:
+          PKG_NAME: SurfTimer.Plugin-${{ env.RELEASE_TAG }}
         run: |
-          ZIP="SurfTimer.Plugin-${RELEASE_TAG}.zip"
-          (cd "$PKG_ROOT" && zip -r "../$ZIP" .)
-          sha256sum "$ZIP" > "$ZIP.sha256"
-          echo "Built $ZIP and $ZIP.sha256"
+          cd out
+          zip -r "${PKG_NAME}.zip" "package"
+          sha256sum "${PKG_NAME}.zip" > "${PKG_NAME}.zip.sha256"
+          echo "Created archive: out/${PKG_NAME}.zip"
+          ls -la
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SurfTimer.Plugin-${{ env.RELEASE_TAG }}
           path: |
-            SurfTimer.Plugin-${{ env.RELEASE_TAG }}.zip
-            SurfTimer.Plugin-${{ env.RELEASE_TAG }}.zip.sha256
+            out/SurfTimer.Plugin-${{ env.RELEASE_TAG }}.zip
+            out/SurfTimer.Plugin-${{ env.RELEASE_TAG }}.zip.sha256
 
   release:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
       - name: Determine tag
         id: vars
         shell: bash
@@ -184,15 +149,10 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./artifacts
-
       - name: List artifacts
         run: ls -R ./artifacts
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
