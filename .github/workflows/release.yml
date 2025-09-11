@@ -35,14 +35,14 @@ jobs:
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      # Plugin repository (Timer) at the specific tag
+      # Checkout plugin repo at the tag
       - name: Checkout plugin repository (Timer)
         uses: actions/checkout@v4
         with:
           path: Timer
           ref: ${{ env.RELEASE_TAG }}
 
-      # Shared repository as a sibling folder in the workspace root
+      # Checkout SurfTimer.Shared as sibling folder (ProjectReference resolves via ../../SurfTimer.Shared)
       - name: Checkout SurfTimer.Shared
         uses: actions/checkout@v4
         with:
@@ -50,7 +50,7 @@ jobs:
           path: SurfTimer.Shared
           # If private:
           # token: ${{ secrets.SHARED_REPO_PAT }}
-          # Optionally pin a version:
+          # Optionally pin to a tag/commit:
           # ref: vX.Y.Z
 
       - name: Setup .NET 8
@@ -58,8 +58,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # --- IMPORTANT ---
-      # From Timer/src, the ProjectReference ../../SurfTimer.Shared/SurfTimer.Shared.csproj resolves correctly
+      # From Timer/src, ProjectReference ../../SurfTimer.Shared/... resolves correctly
       - name: Restore (plugin)
         working-directory: Timer/src
         run: dotnet restore SurfTimer.Plugin.csproj
@@ -72,7 +71,7 @@ jobs:
         id: prep
         shell: bash
         env:
-          OUT_ROOT: out/package
+          OUT_ROOT: out
         run: |
           set -euo pipefail
 
@@ -83,30 +82,29 @@ jobs:
 
           mkdir -p "$ADDONS/data/GeoIP" "$ADDONS/lang" "$CFGDST"
 
-          # Validate main artifacts
-          test -f "$BIN/SurfTimer.Plugin.dll" || (echo "Missing SurfTimer.Plugin.dll in $BIN" && exit 1)
-          test -f "$BIN/SurfTimer.Shared.dll" || (echo "Missing SurfTimer.Shared.dll in $BIN (check ProjectReference path)" && exit 1)
+          echo "Build output listing (should contain only selected DLLs):"
+          ls -la "$BIN"
 
-          # Copy required DLLs
-          cp -v "$BIN"/Dapper.dll "$ADDONS/" || true
-          cp -v "$BIN"/MaxMind.Db.dll "$ADDONS/" || true
-          cp -v "$BIN"/MaxMind.GeoIP2.dll "$ADDONS/" || true
-          cp -v "$BIN"/MySqlConnector.dll "$ADDONS/" || true
-          cp -v "$BIN"/SurfTimer.Plugin.dll "$ADDONS/"
-          cp -v "$BIN"/SurfTimer.Shared.dll "$ADDONS/"
+          # Required artifacts (these should exist thanks to your KeepOnlySelectedDlls target)
+          for f in SurfTimer.Plugin.dll SurfTimer.Shared.dll Dapper.dll MaxMind.Db.dll MaxMind.GeoIP2.dll MySqlConnector.dll; do
+            test -f "$BIN/$f" || { echo "Missing $f in $BIN"; exit 1; }
+          done
+
+          # Copy all dlls that remain after your KeepOnlySelectedDlls pruning
+          cp -v "$BIN"/*.dll "$ADDONS/"
 
           # data/GeoIP
           SRC_MMDB="Timer/data/GeoIP/GeoLite2-Country.mmdb"
-          test -f "$SRC_MMDB" || (echo "Missing $SRC_MMDB" && exit 1)
+          test -f "$SRC_MMDB" || { echo "Missing $SRC_MMDB"; exit 1; }
           cp -v "$SRC_MMDB" "$ADDONS/data/GeoIP/"
 
           # lang/en.json
           SRC_LANG="Timer/lang/en.json"
-          test -f "$SRC_LANG" || (echo "Missing $SRC_LANG" && exit 1)
+          test -f "$SRC_LANG" || { echo "Missing $SRC_LANG"; exit 1; }
           cp -v "$SRC_LANG" "$ADDONS/lang/"
 
-          # cfg/SurfTimer
-          test -d "Timer/cfg/SurfTimer" || (echo "Missing Timer/cfg/SurfTimer" && exit 1)
+          # cfg/SurfTimer (copy entire folder)
+          test -d "Timer/cfg/SurfTimer" || { echo "Missing Timer/cfg/SurfTimer"; exit 1; }
           cp -vr "Timer/cfg/SurfTimer/." "$CFGDST/"
 
           echo "PKG_PATH=$PKG" >> $GITHUB_OUTPUT
@@ -117,7 +115,8 @@ jobs:
           PKG_NAME: SurfTimer.Plugin-${{ env.RELEASE_TAG }}
         run: |
           cd out
-          zip -r "${PKG_NAME}.zip" "package"
+          # zip the *contents* so archive root is addons/ and cfg/
+          zip -r "${PKG_NAME}.zip" addons cfg
           sha256sum "${PKG_NAME}.zip" > "${PKG_NAME}.zip.sha256"
           ls -la
 
