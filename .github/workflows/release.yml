@@ -58,11 +58,13 @@ jobs:
           dotnet-version: 8.0.x
 
       # Restore + Build the plugin; ProjectReference points to ../../SurfTimer.Shared
-      - name: Restore
-        run: dotnet restore Timer/src/SurfTimer.Plugin.csproj
+      - name: Restore (Plugin)
+        working-directory: Timer/src
+        run: dotnet restore SurfTimer.Plugin.csproj
 
       - name: Build (Release)
-        run: dotnet build Timer/src/SurfTimer.Plugin.csproj -c Release --no-restore
+        working-directory: Timer/src
+        run: dotnet build SurfTimer.Plugin.csproj -c Release --no-restore
 
       - name: Prepare package layout
         id: prep
