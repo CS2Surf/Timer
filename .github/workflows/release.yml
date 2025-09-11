@@ -3,7 +3,7 @@ name: Release SurfTimer.Plugin
 on:
   push:
     tags:
-      - "v*.*.*"            # auto trigger on tags vX.Y.Z
+      - "v*.*.*"           # auto trigger on tags like v1.2.3
   workflow_dispatch:
     inputs:
       tag:
@@ -35,30 +35,32 @@ jobs:
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      # Repository of the plugin (Timer) – we want the specific tag
-      - name: Checkout Plugin repository (Timer)
+      # Plugin repository (Timer) at the specific tag
+      - name: Checkout plugin repository (Timer)
         uses: actions/checkout@v4
         with:
           path: Timer
           ref: ${{ env.RELEASE_TAG }}
 
-      # Separate repository for SurfTimer.Shared in the same workspace root
-      - name: Checkout Shared repository
+      # Shared repository as a sibling folder in the workspace root
+      - name: Checkout SurfTimer.Shared
         uses: actions/checkout@v4
         with:
           repository: tslashd/SurfTimer.Shared
           path: SurfTimer.Shared
-          # If it is private:
+          # If private:
           # token: ${{ secrets.SHARED_REPO_PAT }}
-          # ref: vX.Y.Z 
+          # Optionally pin a version:
+          # ref: vX.Y.Z
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      # Restore + Build the plugin; ProjectReference points to ../../SurfTimer.Shared
-      - name: Restore (Plugin)
+      # --- IMPORTANT ---
+      # From Timer/src, the ProjectReference ../../SurfTimer.Shared/SurfTimer.Shared.csproj resolves correctly
+      - name: Restore (plugin)
         working-directory: Timer/src
         run: dotnet restore SurfTimer.Plugin.csproj
 
@@ -79,15 +81,13 @@ jobs:
           ADDONS="$PKG/addons/SurfTimer.Plugin"
           CFGDST="$PKG/cfg/SurfTimer"
 
-          # Create directories
           mkdir -p "$ADDONS/data/GeoIP" "$ADDONS/lang" "$CFGDST"
 
-          # Validate artifacts
+          # Validate main artifacts
           test -f "$BIN/SurfTimer.Plugin.dll" || (echo "Missing SurfTimer.Plugin.dll in $BIN" && exit 1)
           test -f "$BIN/SurfTimer.Shared.dll" || (echo "Missing SurfTimer.Shared.dll in $BIN (check ProjectReference path)" && exit 1)
 
-          # Copy the required DLLs to addons/SurfTimer.Plugin
-          # (Dapper, MaxMind.Db, MaxMind.GeoIP2, MySqlConnector, SurfTimer.Plugin, SurfTimer.Shared)
+          # Copy required DLLs
           cp -v "$BIN"/Dapper.dll "$ADDONS/" || true
           cp -v "$BIN"/MaxMind.Db.dll "$ADDONS/" || true
           cp -v "$BIN"/MaxMind.GeoIP2.dll "$ADDONS/" || true
@@ -95,7 +95,7 @@ jobs:
           cp -v "$BIN"/SurfTimer.Plugin.dll "$ADDONS/"
           cp -v "$BIN"/SurfTimer.Shared.dll "$ADDONS/"
 
-          # data/GeoIP (only the mmdb file)
+          # data/GeoIP
           SRC_MMDB="Timer/data/GeoIP/GeoLite2-Country.mmdb"
           test -f "$SRC_MMDB" || (echo "Missing $SRC_MMDB" && exit 1)
           cp -v "$SRC_MMDB" "$ADDONS/data/GeoIP/"
@@ -105,7 +105,7 @@ jobs:
           test -f "$SRC_LANG" || (echo "Missing $SRC_LANG" && exit 1)
           cp -v "$SRC_LANG" "$ADDONS/lang/"
 
-          # cfg/SurfTimer (copy the entire SurfTimer folder from repo ./cfg)
+          # cfg/SurfTimer
           test -d "Timer/cfg/SurfTimer" || (echo "Missing Timer/cfg/SurfTimer" && exit 1)
           cp -vr "Timer/cfg/SurfTimer/." "$CFGDST/"
 
@@ -119,7 +119,6 @@ jobs:
           cd out
           zip -r "${PKG_NAME}.zip" "package"
           sha256sum "${PKG_NAME}.zip" > "${PKG_NAME}.zip.sha256"
-          echo "Created archive: out/${PKG_NAME}.zip"
           ls -la
 
       - name: Upload artifact
