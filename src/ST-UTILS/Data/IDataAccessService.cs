@@ -1,6 +1,6 @@
+using System.Runtime.CompilerServices;
 using SurfTimer.Shared.DTO;
 using SurfTimer.Shared.Entities;
-using System.Runtime.CompilerServices;
 
 namespace SurfTimer.Data
 {
@@ -47,40 +47,40 @@ namespace SurfTimer.Data
             [CallerMemberName] string methodName = ""
         );
 
-
         /* Map.cs */
         /// <summary>
         /// Retrieves Map table entry for map through API or MySQL.
         /// </summary>
         /// <param name="mapName">Name of map</param>
         /// <returns>MapEntity data</returns>
-        Task<MapEntity?> GetMapInfoAsync(
-            string mapName, [CallerMemberName] string methodName = ""
-        );
+        Task<MapEntity?> GetMapInfoAsync(string mapName, [CallerMemberName] string methodName = "");
+
         /// <summary>
         /// Adds Map table entry for map through API or MySQL.
         /// </summary>
         /// <param name="mapInfo">Data to add in table</param>
         /// <returns>int mapId</returns>
-        Task<int> InsertMapInfoAsync(
-            MapDto mapInfo, [CallerMemberName] string methodName = ""
-        );
+        Task<int> InsertMapInfoAsync(MapDto mapInfo, [CallerMemberName] string methodName = "");
+
         /// <summary>
         /// Updates Map table entry for map through API or MySQL.
         /// </summary>
         /// <param name="mapInfo">Data to update in table</param>
         Task UpdateMapInfoAsync(
-            MapDto mapInfo, int mapId, [CallerMemberName] string methodName = ""
+            MapDto mapInfo,
+            int mapId,
+            [CallerMemberName] string methodName = ""
         );
+
         /// <summary>
         /// Retrieves MapTime table record runs for given mapId through API or MySQL.
         /// </summary>
         /// <param name="mapId">ID from DB</param>
         /// <returns>List[MapTimeRunDataEntity] data</returns>
         Task<List<MapTimeRunDataEntity>> GetMapRecordRunsAsync(
-            int mapId, [CallerMemberName] string methodName = ""
+            int mapId,
+            [CallerMemberName] string methodName = ""
         );
-
 
         /* PlayerProfile.cs */
         /// <summary>
@@ -89,24 +89,29 @@ namespace SurfTimer.Data
         /// <param name="steamId">SteamID for the player</param>
         /// <returns>PlayerProfileEntity data</returns>
         Task<PlayerProfileEntity?> GetPlayerProfileAsync(
-            ulong steamId, [CallerMemberName] string methodName = ""
+            ulong steamId,
+            [CallerMemberName] string methodName = ""
         );
+
         /// <summary>
         /// Adds Player table entry for the player through API or MySQL.
         /// </summary>
         /// <param name="profile">Data to add in table</param>
         /// <returns>int playerId given by DB</returns>
         Task<int> InsertPlayerProfileAsync(
-            PlayerProfileDto profile, [CallerMemberName] string methodName = ""
+            PlayerProfileDto profile,
+            [CallerMemberName] string methodName = ""
         );
+
         /// <summary>
         /// Updates Player table entry for the player through API or MySQL.
         /// </summary>
         /// <param name="profile">Data to update in table</param>
         Task UpdatePlayerProfileAsync(
-            PlayerProfileDto profile, int playerId, [CallerMemberName] string methodName = ""
+            PlayerProfileDto profile,
+            int playerId,
+            [CallerMemberName] string methodName = ""
         );
-
 
         /* PlayerStats.cs */
         /// <summary>
@@ -116,9 +121,10 @@ namespace SurfTimer.Data
         /// <param name="mapId">ID from DB</param>
         /// <returns>List[MapTimeRunDataEntity] data</returns>
         Task<List<MapTimeRunDataEntity>> GetPlayerMapTimesAsync(
-            int playerId, int mapId, [CallerMemberName] string methodName = ""
+            int playerId,
+            int mapId,
+            [CallerMemberName] string methodName = ""
         );
-
 
         /* CurrentRun.cs */
         /// <summary>
@@ -127,15 +133,19 @@ namespace SurfTimer.Data
         /// <param name="mapTime">Data to insert/update in table</param>
         /// <returns>int mapTimeId given by DB</returns>
         Task<int> InsertMapTimeAsync(
-            MapTimeRunDataDto mapTime, [CallerMemberName] string methodName = ""
+            MapTimeRunDataDto mapTime,
+            [CallerMemberName] string methodName = ""
         );
+
         /// <summary>
         /// Updates a MapTime table entry through API or MySQL. Deals with checkpoints for map runs of type 0
         /// </summary>
         /// <param name="mapTime">Data to update in table</param>
         /// <returns>int mapTimeId that was updated</returns>
         Task<int> UpdateMapTimeAsync(
-            MapTimeRunDataDto mapTime, int mapTimeId, [CallerMemberName] string methodName = ""
+            MapTimeRunDataDto mapTime,
+            int mapTimeId,
+            [CallerMemberName] string methodName = ""
         );
     }
 }

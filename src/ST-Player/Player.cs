@@ -1,5 +1,6 @@
-namespace SurfTimer;
 using CounterStrikeSharp.API.Core;
+
+namespace SurfTimer;
 
 public class Player 
 {

@@ -82,7 +82,6 @@ unsafe static class Extensions
         return false;
     }
 
-
     /// <summary>
     /// Asssigns a ChatColor to the given Tier value
     /// </summary>

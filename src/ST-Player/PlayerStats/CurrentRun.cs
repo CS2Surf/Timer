@@ -97,7 +97,7 @@ public class CurrentRun : RunStatsEntity
         if (mapTimeId <= 0)
             mapTimeId = await _dataService.InsertMapTimeAsync(mapTime);
         else
-            mapTimeId = await _dataService.UpdateMapTimeAsync(mapTime, mapTimeId);
+            _ = await _dataService.UpdateMapTimeAsync(mapTime, mapTimeId);
 
 
         // Reload the times for the map

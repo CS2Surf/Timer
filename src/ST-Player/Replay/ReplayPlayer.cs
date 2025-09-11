@@ -231,22 +231,13 @@ public class ReplayPlayer
         if (!this.IsPlayable || !this.IsEnabled)
             return;
 
-        string replayType;
-        switch (this.Type)
+        string replayType = this.Type switch
         {
-            case 1:
-                replayType = "Bonus Replay";
-                break;
-            case 2:
-                replayType = "Stage Replay";
-                break;
-            case 0:
-                replayType = "Map Replay";
-                break;
-            default:
-                replayType = "Unknown Type";
-                break;
-        }
+            1 => "Bonus Replay",
+            2 => "Stage Replay",
+            0 => "Map Replay",
+            _ => "Unknown Type",
+        };
 
         if (this.MapID == -1)
         {

@@ -238,7 +238,7 @@ public partial class SurfTimer
             if (stage > 1 && !failed_stage && !player.Timer.IsPracticeMode)
             {
                 int stage_run_time = player.Timer.Ticks - player.Stats.ThisRun.RunTime; // player.Stats.ThisRun.RunTime should be the Tick we left the previous Stage zone
-                                                                                        // player.Controller.PrintToChat($"{Config.PluginPrefix} [StageWR (Map RUN)] Sending to SaveStageTime: {player.Profile.Name}, {stage - 1}, {stage_run_time}");
+
                 AddTimer(1.0f, async () => // This determines whether we will have frames for AFTER touch the endZone 
                 {
                     await CurrentRun.SaveStageTime(player, (short)(stage - 1), stage_run_time);
@@ -551,7 +551,7 @@ public partial class SurfTimer
         if (player.ReplayRecorder.IsRecording)
         {
             // Saving 2 seconds before leaving the start zone
-            player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (64 * 2))); // Todo make a plugin convar for the time saved before start of run 
+            player.ReplayRecorder.Frames.RemoveRange(0, Math.Max(0, player.ReplayRecorder.Frames.Count - (Config.ReplaysPre * 2)));
         }
 
         // BONUS START ZONE

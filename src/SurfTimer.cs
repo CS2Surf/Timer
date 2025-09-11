@@ -41,6 +41,8 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurfTimer.Data;
+using SurfTimer.Shared.Data;
+using SurfTimer.Shared.Data.MySql;
 
 namespace SurfTimer;
 
@@ -68,7 +70,7 @@ public partial class SurfTimer : BasePlugin
 
     // Globals
     private readonly ConcurrentDictionary<int, Player> playerList = new();
-    internal static readonly TimerDatabase DB = new(Config.MySql.GetConnectionString()); // Initiate it with the correct connection string
+    internal static IDatabaseService DB { get; private set; } = null!;
     public static Map CurrentMap { get; private set; } = null!;
 
     /* ========== MAP START HOOKS ========== */
@@ -107,7 +109,7 @@ public partial class SurfTimer : BasePlugin
     {
         _logger.LogInformation(
             "[{Prefix}] Map ({MapName}) ended. Cleaning up resources...",
-            Config.PluginName, 
+            Config.PluginName,
             CurrentMap.Name
         );
 
@@ -138,6 +140,12 @@ public partial class SurfTimer : BasePlugin
     public override void Load(bool hotReload)
     {
         LocalizationService.Init(Localizer);
+
+        // === Dapper bootstrap (snake_case mapping + type handlers) + DB init ===
+        DapperBootstrapper.Init();
+        var connString = Config.MySql.GetConnectionString();
+        var factory = new MySqlConnectionStringFactory(connString);
+        DB = new DapperDatabaseService(factory);
 
         bool accessService = false;
 
@@ -172,7 +180,7 @@ public partial class SurfTimer : BasePlugin
                 Config.Api.GetApiOnly() ? "API" : "DB"
             );
 
-            Exception exception = new Exception(
+            Exception exception = new(
                 $"[{Config.PluginName}] Error connecting to the {(Config.Api.GetApiOnly() ? "API" : "DB")}"
             );
             throw exception;

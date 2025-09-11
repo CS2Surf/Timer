@@ -11,7 +11,7 @@ namespace SurfTimer;
 internal class ApiMethod
 {
     private static readonly HttpClient _client = new();
-    private static readonly string base_addr = Config.ApiUrl;
+    private static readonly string BaseAddress = Config.ApiUrl;
 
     // Custom Converter for ReplayFramesString
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -32,7 +32,7 @@ internal class ApiMethod
     /// <returns>Deserialized T or null</returns>
     public static async Task<T?> GET<T>(string url, [CallerMemberName] string methodName = "")
     {
-        var uri = new Uri(base_addr + url);
+        var uri = new Uri(BaseAddress + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
         using var response = await _client.GetAsync(uri);
@@ -101,7 +101,7 @@ internal class ApiMethod
         [CallerMemberName] string methodName = ""
     )
     {
-        var uri = new Uri(base_addr + url);
+        var uri = new Uri(BaseAddress + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
         try
@@ -171,7 +171,7 @@ internal class ApiMethod
         [CallerMemberName] string methodName = ""
     )
     {
-        var uri = new Uri(base_addr + url);
+        var uri = new Uri(BaseAddress + url);
         var _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<ApiMethod>>();
 
         try

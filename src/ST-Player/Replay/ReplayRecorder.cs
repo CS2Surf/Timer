@@ -80,7 +80,6 @@ public class ReplayRecorder
             return;
 
         // Disabling Recording if timer disabled
-        // if (!player.Timer.IsEnabled)
         if (!player.Timer.IsEnabled && !player.ReplayRecorder.IsSaving)
         {
             this.Stop();
