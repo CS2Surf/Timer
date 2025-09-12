@@ -47,7 +47,7 @@ using SurfTimer.Shared.Data.MySql;
 namespace SurfTimer;
 
 // Gameplan: https://github.com/CS2Surf/Timer/tree/dev/README.md
-[MinimumApiVersion(333)]
+[MinimumApiVersion(337)]
 public partial class SurfTimer : BasePlugin
 {
     private readonly ILogger<SurfTimer> _logger;
