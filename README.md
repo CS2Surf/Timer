@@ -161,7 +161,7 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 </br>
 
 ## 🔗 Dependencies
-- [`CounterStrikeSharp`](https://github.com/roflmuffin/CounterStrikeSharp) - **required** minimum version [v1.0.339](https://github.com/roflmuffin/CounterStrikeSharp/releases/tag/v1.0.337).
+- [`CounterStrikeSharp`](https://github.com/roflmuffin/CounterStrikeSharp) - **required** minimum version [v1.0.337](https://github.com/roflmuffin/CounterStrikeSharp/releases/tag/v1.0.337).
 - [`SurfTimer.Shared`](https://github.com/tslashd/SurfTimer.Shared) – **required** shared library for DTOs, entities, and database integration.  
 - [`SurfTimer.Api`](https://github.com/tslashd/SurfTimer.Api) – *optional* REST API for faster, centralized communication with the database.
 
