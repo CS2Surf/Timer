@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+		<!-- Copy all NuGet runtime dependencies to $(OutDir) on Build -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
+		<DefineConstants>DEBUG</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CounterStrikeSharp.API" Version="1.0.339" />
+		<PackageReference Include="MaxMind.GeoIP2" Version="5.2.0" />
+		<PackageReference Include="MySqlConnector" Version="2.4.0" />
+		<PackageReference Include="Serilog" Version="4.3.0" />
+		<PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+		<!-- Add Dapper, to ensure Dapper.dll is included in the output -->
+		<PackageReference Include="Dapper" Version="2.1.66" />
+		<ProjectReference Include="..\..\SurfTimer.Shared\SurfTimer.Shared.csproj" />
+	</ItemGroup>
+
+	<!-- After Build, keep only the necessary files -->
+	<Target Name="KeepOnlySelectedDlls" AfterTargets="Build">
+		<ItemGroup>
+			<Keep Include="$(OutDir)SurfTimer.Plugin.dll;
+					  $(OutDir)SurfTimer.Plugin.pdb;
+					  $(OutDir)SurfTimer.Shared.dll;
+					  $(OutDir)Dapper.dll;
+					  $(OutDir)MaxMind.Db.dll;
+					  $(OutDir)MaxMind.GeoIP2.dll;
+					  $(OutDir)MySqlConnector.dll" />
+			<AllDlls Include="$(OutDir)*.dll" />
+			<ToDelete Include="@(AllDlls)" Exclude="@(Keep)" />
+		</ItemGroup>
+
+		<Delete Files="@(ToDelete)" />
+	</Target>
+</Project>

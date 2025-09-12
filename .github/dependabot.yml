@@ -1,0 +1,43 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+# .github/dependabot.yml
+# Keep GitHub Actions up to date and open a SINGLE PR that aggregates all updates.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"  # manage versions of actions used in .github/workflows
+    directory: "/"                       # repo root (covers .github/workflows)
+    schedule:
+      interval: "weekly"                 # run once a week
+      day: "monday"                      # every Monday
+      time: "04:00"                      # at 04:00 local time
+      timezone: "Europe/Sofia"
+    target-branch: "main"                # PRs will target this branch
+    open-pull-requests-limit: 10         # safety cap (not really needed with grouping)
+    commit-message:
+      prefix: "chore"                    # e.g., "chore: bump actions/*"
+      include: "scope"
+    groups:
+      all-actions:                       # SINGLE PR with everything inside
+        patterns: ["*"]                  # match all actions
+        update-types: ["major", "minor", "patch"]  # include all types of bumps
+
+  - package-ecosystem: "nuget"           # manage NuGet packages in .csproj/.sln files
+    directory: "/"                       # Dependabot discovers projects recursively
+    schedule:
+      interval: "weekly"                 # run once a week
+      day: "monday"                      # every Monday
+      time: "04:00"                      # at 04:00 local time
+      timezone: "Europe/Sofia"
+    target-branch: "main"                # PRs will target this branch
+    open-pull-requests-limit: 10         # safety cap (not really needed with grouping)
+    commit-message:
+      prefix: "chore"                    # e.g., "chore: bump MySqlConnector"
+      include: "scope"
+    groups:
+      all-nuget:                         # SINGLE PR with everything inside
+        patterns: ["*"]                  # match all packages
+        update-types: ["major", "minor", "patch"]  # include all types of bumps

@@ -1,85 +1,201 @@
+using CounterStrikeSharp.API;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SurfTimer.Data;
+using SurfTimer.Shared.DTO;
+using SurfTimer.Shared.Entities;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace SurfTimer;
 
 /// <summary>
 /// This class stores data for the current run.
 /// </summary>
-internal class CurrentRun
+public class CurrentRun : RunStatsEntity
 {
-    public Dictionary<int, Checkpoint> Checkpoints { get; set; } // Current RUN checkpoints tracker
-    public int Ticks { get; set; } // To-do: will be the last (any) zone end touch time
-    public float StartVelX { get; set; } // This will store MAP START VELOCITY X
-    public float StartVelY { get; set; } // This will store MAP START VELOCITY Y
-    public float StartVelZ { get; set; } // This will store MAP START VELOCITY Z
-    public float EndVelX { get; set; } // This will store MAP END VELOCITY X
-    public float EndVelY { get; set; } // This will store MAP END VELOCITY Y
-    public float EndVelZ { get; set; } // This will store MAP END VELOCITY Z
-    public int RunDate { get; set; }
-    // Add other properties as needed
+    private readonly ILogger<CurrentRun> _logger;
+    private readonly IDataAccessService _dataService;
 
-    // Constructor
-    public CurrentRun()
-    {
-        Checkpoints = new Dictionary<int, Checkpoint>();
-        Ticks = 0;
-        StartVelX = 0.0f;
-        StartVelY = 0.0f;
-        StartVelZ = 0.0f;
-        EndVelX = 0.0f;
-        EndVelY = 0.0f;
-        EndVelZ = 0.0f;
-        RunDate = 0;
-    }
+    public Dictionary<int, CheckpointEntity> Checkpoints { get; set; }
 
-    public void Reset()
+    internal CurrentRun()
     {
-        Checkpoints.Clear();
-        Ticks = 0;
-        StartVelX = 0.0f;
-        StartVelY = 0.0f;
-        StartVelZ = 0.0f;
-        EndVelX = 0.0f;
-        EndVelY = 0.0f;
-        EndVelZ = 0.0f;
-        RunDate = 0;
-        // Reset other properties as needed
+        _logger = SurfTimer.ServiceProvider.GetRequiredService<ILogger<CurrentRun>>();
+        _dataService = SurfTimer.ServiceProvider.GetRequiredService<IDataAccessService>();
+
+        Checkpoints = new Dictionary<int, CheckpointEntity>();
     }
 
     /// <summary>
-    /// Saves the player's run to the database. 
+    /// Saves the player's run to the database.
+    /// Supports all types of runs Map/Bonus/Stage. 
     /// </summary>
     /// <param name="player">Player object</param>
     /// <param name="bonus">Bonus number</param>
     /// <param name="stage">Stage number</param>
     /// <param name="run_ticks">Ticks for the run - used for Stage and Bonus entries</param>
-    public async Task SaveMapTime(Player player, int bonus = 0, int stage = 0, int run_ticks = -1)
+    internal async Task SaveMapTime(Player player, short bonus = 0, short stage = 0, int run_ticks = -1, [CallerMemberName] string methodName = "")
     {
-        // Add entry in DB for the run
-        // PrintSituations(player);
-        string replay_frames = player.ReplayRecorder.TrimReplay(player, stage != 0 ? 2 : bonus != 0 ? 1 : 0, stage == SurfTimer.CurrentMap.Stages);
+        string replay_frames = "";
+        int style = player.Timer.Style;
+        int mapTimeId = 0;
+        short recType;
 
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task SaveMapTime -> Sending total of {replay_frames.Length} replay frames");
-        if (Config.API.GetApiOnly())
+        if (stage != 0)
         {
-            return;
+            recType = 2; // Stage run
+        }
+        else if (bonus != 0)
+        {
+            recType = 1; // Bonus run
         }
         else
         {
-            await InsertMapTime(player, bonus, stage, run_ticks, replay_frames, true);
+            recType = 0; // Map run
+        }
 
-            if (stage != 0 || bonus != 0)
+        /// Test Time Saving: if (methodName != "TestSetPb")
+        replay_frames = player.ReplayRecorder.TrimReplay(player, recType, stage == SurfTimer.CurrentMap.Stages);
+
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Sending total of {Frames} serialized and compressed replay frames.",
+            nameof(CurrentRun), methodName, replay_frames.Length
+        );
+
+        var stopwatch = Stopwatch.StartNew();
+        var mapTime = new MapTimeRunDataDto
+        {
+            PlayerID = player.Profile.ID,
+            MapID = SurfTimer.CurrentMap.ID,
+            Style = player.Timer.Style,
+            Type = recType,
+            Stage = stage != 0 ? stage : bonus,
+            RunTime = run_ticks == -1 ? this.RunTime : run_ticks,
+            StartVelX = this.StartVelX,
+            StartVelY = this.StartVelY,
+            StartVelZ = this.StartVelZ,
+            EndVelX = this.EndVelX,
+            EndVelY = this.EndVelY,
+            EndVelZ = this.EndVelZ,
+            ReplayFrames = replay_frames,
+            Checkpoints = this.Checkpoints
+        };
+
+        switch (recType)
+        {
+            case 0:
+                mapTimeId = player.Stats.PB[style].ID;
+                break;
+            case 1:
+                mapTimeId = player.Stats.BonusPB[bonus][style].ID;
+                break;
+            case 2:
+                mapTimeId = player.Stats.StagePB[stage][style].ID;
+                break;
+        }
+
+        if (mapTimeId <= 0)
+            mapTimeId = await _dataService.InsertMapTimeAsync(mapTime);
+        else
+            _ = await _dataService.UpdateMapTimeAsync(mapTime, mapTimeId);
+
+
+        // Reload the times for the map
+        await SurfTimer.CurrentMap.LoadMapRecordRuns();
+
+        _logger.LogTrace("[{ClassName}] {MethodName} -> Loading data for run {ID} with type {Type}.",
+            nameof(CurrentRun), methodName, mapTimeId, recType
+        );
+
+        // Reload the player PB time (could possibly be skipped as we have mapTimeId after inserting)
+        switch (recType)
+        {
+            case 0:
+                player.Stats.PB[player.Timer.Style].ID = mapTimeId;
+                await player.Stats.PB[player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+            case 1:
+                player.Stats.BonusPB[bonus][player.Timer.Style].ID = mapTimeId;
+                await player.Stats.BonusPB[bonus][player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+            case 2:
+                player.Stats.StagePB[stage][player.Timer.Style].ID = mapTimeId;
+                await player.Stats.StagePB[stage][player.Timer.Style].LoadPlayerSpecificMapTimeData(player);
+                break;
+        }
+
+        stopwatch.Stop();
+        _logger.LogInformation("[{Class}] {Method} -> Finished SaveMapTime for '{Name}' (ID {ID}) in {Elapsed}ms | API = {API}",
+            nameof(CurrentRun), methodName, player.Profile.Name, mapTimeId, stopwatch.ElapsedMilliseconds, Config.Api.GetApiOnly()
+        );
+    }
+
+    /// <summary>
+    /// Deals with saving a Stage MapTime (Type 2) in the Database.
+    /// Should deal with `IsStageMode` runs, Stages during Map Runs and also Last Stage.
+    /// </summary>
+    /// <param name="player">Player object</param>
+    /// <param name="stage">Stage to save</param>
+    /// <param name="saveLastStage">Is it the last stage?</param>
+    /// <param name="stage_run_time">Run Time (Ticks) for the stage run</param>
+    internal static async Task SaveStageTime(Player player, short stage = -1, int stage_run_time = -1, bool saveLastStage = false)
+    {
+#if DEBUG
+        _logger.LogTrace("[{Class}] -> SaveStageTime received: Name = {Name} | Stage = {Stage} | RunTime = {RunTime} | IsLastStage = {IsLastStage}",
+            nameof(CurrentRun), player.Profile.Name, stage, stage_run_time, saveLastStage
+        );
+#endif
+        int pStyle = player.Timer.Style;
+        if (
+            stage_run_time < SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime ||
+            SurfTimer.CurrentMap.StageWR[stage][pStyle].ID == -1 ||
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].RunTime > stage_run_time ||
+            player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1
+        )
+        {
+            if (stage_run_time < SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime) // Player beat the Stage WR
             {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task SaveMapTime -> Inserted an entry for {(stage != 0 ? "Stage" : "Bonus")} {(stage != 0 ? stage : bonus)} - {run_ticks}");
+                int timeImprove = SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime - stage_run_time;
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_improved",
+                    player.Controller.PlayerName, stage, PlayerHud.FormatTime(stage_run_time), PlayerHud.FormatTime(timeImprove), PlayerHud.FormatTime(SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime)]}"
+                );
             }
-            else
+            else if (SurfTimer.CurrentMap.StageWR[stage][pStyle].ID == -1) // No Stage record was set on the map
             {
-                await SaveCurrentRunCheckpoints(player, true); // Save this run's checkpoints
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_set",
+                    player.Controller.PlayerName, stage, PlayerHud.FormatTime(stage_run_time)]}"
+                );
+            }
+            else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].ID == -1) // Player first Stage personal best
+            {
+                player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_set",
+                    stage, PlayerHud.FormatTime(stage_run_time)]}"
+                );
+            }
+            else if (player.Stats.StagePB[stage][pStyle] != null && player.Stats.StagePB[stage][pStyle].RunTime > stage_run_time) // Player beating their existing Stage personal best
+            {
+                int timeImprove = player.Stats.StagePB[stage][pStyle].RunTime - stage_run_time;
+                Server.PrintToChatAll($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagepb_improved",
+                    player.Controller.PlayerName, stage, PlayerHud.FormatTime(stage_run_time), PlayerHud.FormatTime(timeImprove), PlayerHud.FormatTime(player.Stats.StagePB[stage][pStyle].RunTime)]}"
+                );
             }
 
-            await player.CurrMap.Get_Map_Record_Runs(); // Reload the times for the Map
+            player.ReplayRecorder.IsSaving = true;
+
+            // Save stage run
+            await player.Stats.ThisRun.SaveMapTime(player, stage: stage, run_ticks: stage_run_time); // Save the Stage MapTime PB data
+        }
+        else if (stage_run_time > SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime && player.Timer.IsStageMode) // Player is behind the Stage WR for the map
+        {
+            int timeImprove = stage_run_time - SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime;
+            player.Controller.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["stagewr_missed",
+                stage, PlayerHud.FormatTime(stage_run_time), PlayerHud.FormatTime(timeImprove), PlayerHud.FormatTime(SurfTimer.CurrentMap.StageWR[stage][pStyle].RunTime)]}"
+            );
         }
     }
 
-    public void PrintSituations(Player player)
+
+    public static void PrintSituations(Player player)
     {
         Console.WriteLine($"========================== FOUND SITUATIONS ==========================");
         for (int i = 0; i < player.ReplayRecorder.Frames.Count; i++)
@@ -113,119 +229,11 @@ internal class CurrentRun
                     break;
             }
         }
-        Console.WriteLine($"==========================                  ==========================");
+        Console.WriteLine("========================== MapSituations: {0} | START_ZONE_ENTER = {1} | START_ZONE_EXIT = {2} | END_ZONE_ENTER = {3} ==========================",
+            player.ReplayRecorder.MapSituations.Count,
+            player.ReplayRecorder.MapSituations[0], player.ReplayRecorder.MapSituations[1], player.ReplayRecorder.MapSituations[2]);
+        Console.WriteLine("========================== Total Frames: {0} ==========================", player.ReplayRecorder.Frames.Count);
     }
 
-    /// <summary>
-    /// Saves the CurrentRun of the player to the database. Does NOT support Bonus entries yet.
-    /// </summary>
-    /// <param name="player">Player object</param>
-    /// <param name="bonus">Bonus number</param>
-    /// <param name="stage">Stage number</param>
-    /// <param name="run_ticks">Ticks for the run</param>
-    /// <param name="replay_frames">Replay frames</param>
-    /// <param name="reloadData">Whether to reload the PersonalBest data for the Player.</param>
-    /// <returns></returns>
-    public async Task InsertMapTime(Player player, int bonus = 0, int stage = 0, int run_ticks = -1, string replay_frames = "", bool reloadData = false)
-    {
-        int playerId = player.Profile.ID;
-        int mapId = player.CurrMap.ID;
-        int style = player.Timer.Style;
-        int ticks = run_ticks == -1 ? player.Stats.ThisRun.Ticks : run_ticks;
-        // int ticks = player.Stats.ThisRun.Ticks;
-        int type = stage != 0 ? 2 : bonus != 0 ? 1 : 0;
-        float startVelX = player.Stats.ThisRun.StartVelX;
-        float startVelY = player.Stats.ThisRun.StartVelY;
-        float startVelZ = player.Stats.ThisRun.StartVelZ;
-        float endVelX = player.Stats.ThisRun.EndVelX;
-        float endVelY = player.Stats.ThisRun.EndVelY;
-        float endVelZ = player.Stats.ThisRun.EndVelZ;
-
-        if (Config.API.GetApiOnly()) // API Calls
-        {
-            // API Insert map goes here
-        }
-        else // MySQL Queries
-        {
-            int updatePlayerRunTask = await SurfTimer.DB.WriteAsync(
-                string.Format(Config.MySQL.Queries.DB_QUERY_CR_INSERT_TIME, playerId, mapId, style, type, type == 2 ? stage : type == 1 ? bonus : 0, ticks, startVelX, startVelY, startVelZ, endVelX, endVelY, endVelZ, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(), replay_frames));
-            if (updatePlayerRunTask <= 0)
-            {
-                Exception ex = new($"CS2 Surf ERROR >> internal class CurrentRun -> public async Task InsertMapTime -> Failed to insert/update player run in database. Player: {player.Profile.Name} ({player.Profile.SteamID})");
-                throw ex;
-            }
-
-            if (reloadData && type == 0)
-            {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.PB[player.Timer.Style].ID}))");
-                await player.Stats.PB[style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Map MapTime PB data again (will refresh the MapTime ID for the Checkpoints query)
-            }
-            else if (reloadData && type == 1)
-            {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload Bonus MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.BonusPB[bonus][style].ID}))");
-                await player.Stats.BonusPB[bonus][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Bonus MapTime PB data again (will refresh the MapTime ID)
-            }
-            else if (reloadData && type == 2)
-            {
-                Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task InsertMapTime -> Will reload Stage MapTime (Type {type}) data for '{player.Profile.Name}' (ID {player.Stats.StagePB[stage][style].ID}))");
-                await player.Stats.StagePB[stage][style].PB_LoadPlayerSpecificMapTimeData(player); // Load the Stage MapTime PB data again (will refresh the MapTime ID)
-            }
-        }
-    }
-
-    /// <summary>
-    /// Saves the `CurrentRunCheckpoints` dictionary to the database
-    /// </summary>
-    /// <param name="player">Player object</param>
-    /// <param name="reloadData">Whether to reload the PersonalBest Checkpoints data for the Player.</param>
-    public async Task SaveCurrentRunCheckpoints(Player player, bool reloadData = false)
-    {
-        Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> SaveCurrentRunCheckpoints -> Will send {player.Stats.ThisRun.Checkpoints.Count} ({this.Checkpoints.Count}) checkpoints to DB....");
-        int style = player.Timer.Style;
-        int mapTimeId = player.Stats.PB[style].ID;
-        List<string> commands = new List<string>();
-        // Loop through the checkpoints and insert/update them in the database for the run
-        // foreach (var item in player.Stats.ThisRun.Checkpoints)
-        foreach (var item in this.Checkpoints)
-        {
-            int cp = item.Key;
-            int ticks = item.Value!.Ticks;
-            int endTouch = item.Value!.EndTouch;
-            double startVelX = item.Value!.StartVelX;
-            double startVelY = item.Value!.StartVelY;
-            double startVelZ = item.Value!.StartVelZ;
-            double endVelX = item.Value!.EndVelX;
-            double endVelY = item.Value!.EndVelY;
-            double endVelZ = item.Value!.EndVelZ;
-            int attempts = item.Value!.Attempts;
-
-#if DEBUG
-            Console.WriteLine($"CP: {cp} | MapTime ID: {mapTimeId} | Time: {endTouch} | Ticks: {ticks} | startVelX: {startVelX} | startVelY: {startVelY} | startVelZ: {startVelZ} | endVelX: {endVelX} | endVelY: {endVelY} | endVelZ: {endVelZ}");
-            Console.WriteLine($@"CS2 Surf DEBUG >> internal class CurrentRun -> SaveCurrentRunCheckpoints -> 
-                {string.Format(
-                    Config.MySQL.Queries.DB_QUERY_CR_INSERT_CP,
-                    mapTimeId, cp, ticks, startVelX, startVelY, startVelZ, endVelX, endVelY, endVelZ, attempts, endTouch)}
-            ");
-#endif
-
-            // Insert/Update CPs to database
-            // Check if the player has PB object initialized and if the player's character is currently active in the game
-            if (item.Value != null && player.Controller.PlayerPawn.Value != null)
-            {
-                string command = string.Format(
-                    Config.MySQL.Queries.DB_QUERY_CR_INSERT_CP,
-                    mapTimeId, cp, ticks, startVelX, startVelY, startVelZ, endVelX, endVelY, endVelZ, attempts, endTouch
-                );
-                commands.Add(command);
-            }
-        }
-        await SurfTimer.DB.TransactionAsync(commands);
-        player.Stats.ThisRun.Checkpoints.Clear();
-
-        if (reloadData)
-        {
-            Console.WriteLine($"CS2 Surf DEBUG >> internal class CurrentRun -> public async Task SaveCurrentRunCheckpoints -> Will reload Checkpoints data for {player.Profile.Name} (ID {player.Stats.PB[player.Timer.Style].ID})");
-            await player.Stats.PB[player.Timer.Style].PB_LoadCheckpointsData(); // Load the Checkpoints data again
-        }
-    }
 }
+

@@ -1,9 +1,11 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Admin;
+using SurfTimer.Shared.DTO;
+using System.Text.RegularExpressions;
 
 namespace SurfTimer;
 
@@ -13,27 +15,168 @@ public partial class SurfTimer
     [ConsoleCommand("css_tier", "Display the current map tier.")]
     [ConsoleCommand("css_mapinfo", "Display the current map tier.")]
     [ConsoleCommand("css_mi", "Display the current map tier.")]
+    [ConsoleCommand("css_difficulty", "Display the current map tier.")]
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public void MapTier(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null)
             return;
 
-        string msg = $"{Config.PluginPrefix} {CurrentMap.Name} - Tier {ChatColors.Green}{CurrentMap.Tier}{ChatColors.Default} - Author {ChatColors.Yellow}{CurrentMap.Author}{ChatColors.Default} - Added {ChatColors.Yellow}{DateTimeOffset.FromUnixTimeSeconds(CurrentMap.DateAdded).DateTime.ToString("dd.MM.yyyy HH:mm")}{ChatColors.Default}";
+        char rankedColor = CurrentMap.Ranked ? ChatColors.Green : ChatColors.Red;
+        string rankedStatus = CurrentMap.Ranked ? "Yes" : "No";
+
+        string msg = $"{Config.PluginPrefix} " + LocalizationService.LocalizerNonNull["map_info",
+            CurrentMap.Name!,
+            $"{Extensions.GetTierColor(CurrentMap.Tier)}{CurrentMap.Tier}",
+            CurrentMap.Author!,
+            $"{rankedColor}{rankedStatus}",
+            DateTimeOffset.FromUnixTimeSeconds(CurrentMap.DateAdded).DateTime.ToString("dd.MM.yyyy HH:mm")
+        ];
 
         if (CurrentMap.Stages > 1)
         {
-            msg = string.Concat(msg, " - ", $"Stages {ChatColors.Yellow}{CurrentMap.Stages}{ChatColors.Default}");
+            msg += LocalizationService.LocalizerNonNull["map_info_stages", CurrentMap.Stages];
         }
         else
         {
-            msg = string.Concat(msg, " - ", $"Linear {ChatColors.Yellow}{CurrentMap.TotalCheckpoints} Checkpoints{ChatColors.Default}");
+            msg += LocalizationService.LocalizerNonNull["map_info_linear", CurrentMap.TotalCheckpoints];
         }
 
         if (CurrentMap.Bonuses > 0)
         {
-            msg = string.Concat(msg, " - ", $"Bonuses {ChatColors.Yellow}{CurrentMap.Bonuses}");
+            msg += LocalizationService.LocalizerNonNull["map_info_bonuses", CurrentMap.Bonuses];
         }
+
+        player.PrintToChat(msg);
+    }
+
+    [ConsoleCommand("css_amt", "Set the Tier of the map.")]
+    [ConsoleCommand("css_addmaptier", "Set the Tier of the map.")]
+    [RequiresPermissions("@css/root")]
+    [CommandHelper(minArgs: 1, usage: "<Tier Number> [1-8]", whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void AddMapTier(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        short tier;
+        try
+        {
+            tier = short.Parse(command.ArgByIndex(1));
+        }
+        catch (System.Exception)
+        {
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!amt <tier> [1-8]"]}"
+            );
+            return;
+        }
+
+        if (tier > 8)
+        {
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!amt <tier> [1-8]"]}"
+            );
+            return;
+        }
+
+        var mapInfo = new MapDto
+        {
+            Name = CurrentMap.Name!,
+            Author = CurrentMap.Author!,
+            Tier = tier,
+            Stages = CurrentMap.Stages,
+            Bonuses = CurrentMap.Bonuses,
+            Ranked = CurrentMap.Ranked,
+            LastPlayed = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        CurrentMap.Tier = tier;
+
+        Task.Run(async () =>
+        {
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
+        });
+
+        string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Tier to {Extensions.GetTierColor(CurrentMap.Tier)}{CurrentMap.Tier}{ChatColors.Default}.";
+
+        player.PrintToChat(msg);
+    }
+
+    [ConsoleCommand("css_amn", "Set the Name of the map author.")]
+    [ConsoleCommand("css_addmappername", "Set the Name of the map author.")]
+    [RequiresPermissions("@css/root")]
+    [CommandHelper(minArgs: 1, usage: "<Author Name>", whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void AddMapAuthor(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        string author = command.ArgString.Trim();
+
+        // Validate: letters, numbers, intervals, dashes and up to 50 symbols
+        if (string.IsNullOrWhiteSpace(author) || author.Length > 50 || !Regex.IsMatch(author, @"^[\w\s\-\.]+$"))
+        {
+            player.PrintToChat($"{Config.PluginPrefix} {LocalizationService.LocalizerNonNull["invalid_usage",
+                "!amn <author name>"]}"
+            );
+            return;
+        }
+
+        var mapInfo = new MapDto
+        {
+            Name = CurrentMap.Name!,
+            Author = author,
+            Tier = CurrentMap.Tier,
+            Stages = CurrentMap.Stages,
+            Bonuses = CurrentMap.Bonuses,
+            Ranked = CurrentMap.Ranked,
+            LastPlayed = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        CurrentMap.Author = author;
+
+        Task.Run(async () =>
+        {
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
+        });
+
+        string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Author to {ChatColors.Green}{CurrentMap.Author}{ChatColors.Default}.";
+
+        player.PrintToChat(msg);
+    }
+
+    [ConsoleCommand("css_amr", "Set the Ranked option of the map.")]
+    [ConsoleCommand("css_addmapranked", "Set the Ranked option of the map.")]
+    [RequiresPermissions("@css/root")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
+    public void AddMapRanked(CCSPlayerController? player, CommandInfo command)
+    {
+        if (player == null)
+            return;
+
+        if (CurrentMap.Ranked)
+            CurrentMap.Ranked = false;
+        else
+            CurrentMap.Ranked = true;
+
+        var mapInfo = new MapDto
+        {
+            Name = CurrentMap.Name!,
+            Author = CurrentMap.Author!,
+            Tier = CurrentMap.Tier,
+            Stages = CurrentMap.Stages,
+            Bonuses = CurrentMap.Bonuses,
+            Ranked = CurrentMap.Ranked,
+            LastPlayed = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        Task.Run(async () =>
+        {
+            await _dataService!.UpdateMapInfoAsync(mapInfo, CurrentMap.ID);
+        });
+
+        string msg = $"{Config.PluginPrefix} {ChatColors.Yellow}{CurrentMap.Name}{ChatColors.Default} - Set Ranked to {(CurrentMap.Ranked ? ChatColors.Green : ChatColors.Red)}{CurrentMap.Ranked}{ChatColors.Default}.";
 
         player.PrintToChat(msg);
     }
@@ -59,9 +202,9 @@ public partial class SurfTimer
         player.PrintToChat($"Hooked Trigger -> Start -> {CurrentMap.StartZone} -> Angles {CurrentMap.StartZoneAngles}");
         player.PrintToChat($"Hooked Trigger -> End -> {CurrentMap.EndZone}");
         int i = 1;
-        foreach (Vector stage in CurrentMap.StageStartZone)
+        foreach (VectorT stage in CurrentMap.StageStartZone)
         {
-            if (stage.X == 0 && stage.Y == 0 && stage.Z == 0)
+            if (stage.IsZero())
                 continue;
             else
             {
@@ -71,9 +214,9 @@ public partial class SurfTimer
         }
 
         i = 1;
-        foreach (Vector bonus in CurrentMap.BonusStartZone)
+        foreach (VectorT bonus in CurrentMap.BonusStartZone)
         {
-            if (bonus.X == 0 && bonus.Y == 0 && bonus.Z == 0)
+            if (bonus.IsZero())
                 continue;
             else
             {

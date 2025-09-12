@@ -1,6 +1,5 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Modules.Memory;
-
 using System.Runtime.CompilerServices;
 using System.Text;
 

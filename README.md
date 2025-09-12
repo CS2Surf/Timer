@@ -1,6 +1,4 @@
-# DEVELOPMENT IS NOT ACTIVE
-
-## EVERYONE IS WELCOME TO BUILD UP ON THIS PROJECT AND CONTRIBUTE. ISSUES ARE DISABLED FOR THE TIME BEING 
+# EVERYONE IS WELCOME TO BUILD UP ON THIS PROJECT AND CONTRIBUTE. ISSUES ARE DISABLED FOR THE TIME BEING 
 ## Please join the Discord: https://discord.cs.surf
 
 # Timer
@@ -162,11 +160,16 @@ Core plugin for CS2 Surf Servers. This project is aimed to be fully open-source 
 </details>
 </br>
 
+## 🔗 Dependencies
+- [`CounterStrikeSharp`](https://github.com/roflmuffin/CounterStrikeSharp) - **required** minimum version [v1.0.337](https://github.com/roflmuffin/CounterStrikeSharp/releases/tag/v1.0.337).
+- [`SurfTimer.Shared`](https://github.com/tslashd/SurfTimer.Shared) – **required** shared library for DTOs, entities, and database integration.  
+- [`SurfTimer.Api`](https://github.com/tslashd/SurfTimer.Api) – *optional* REST API for faster, centralized communication with the database.
+
 # Main list with tasks (more details can be found [here](https://github.com/CS2Surf/Timer/blob/dev/TODO)):
 *Note: This is not definitive/complete and simply serves as a reference for what we should try to achieve. Subject to change.*
 Bold & Italics = being worked on.
 - [ ] Database
-  - [X] MySQL database schema ([Design Diagram](https://dbdiagram.io/d/CS2Surf-Timer-DB-Schema-6560b76b3be1495787ace4d2))
+  - [X] MySQL database schema ([Design Diagram](https://dbdiagram.io/d/Copy-of-CS2Surf-Timer-DB-Schema-6582e6e456d8064ca06328b9))
   - [ ] Plugin auto-create tables for easier setup? 
   - [X] Base database class implementation
 - [X] Maps
@@ -207,12 +210,12 @@ Bold & Italics = being worked on.
   - [ ] Stretch goal: sub-tick timing
 - [ ] Player Data
   - [X] Base player class
-  - [ ] Player stat classes
-  - [ ] Profile implementation (DB)
+  - [X] Player stat classes
+  - [X] Profile implementation (DB)
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
 - [x] Replays
-   - [x] Personal Best 
+   - [x] Personal Best - Data for the PB replays is saved but no functionality to replay them yet is available
       - [x] Map Record
       - [X] Stage Record
       - [X] Bonus Record
@@ -222,4 +225,4 @@ Bold & Italics = being worked on.
       - [X] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
-- [ ] API Integration (Repo can be found [here](https://github.com/CS2Surf/CS2-Surf-API))
+- [x] API Integration (Repo can be found [here](https://github.com/tslashd/SurfTimer.Api))

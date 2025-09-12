@@ -1,7 +1,8 @@
 namespace SurfTimer;
-using CounterStrikeSharp.API.Modules.Utils;
 
-internal enum ReplayFrameSituation
+using System;
+
+public enum ReplayFrameSituation
 {
         NONE,
 
@@ -26,20 +27,19 @@ internal enum ReplayFrameSituation
 }
 
 [Serializable]
-internal class ReplayFrame
+public class ReplayFrame
 {
         public float[] pos { get; set; } = { 0, 0, 0 };
         public float[] ang { get; set; } = { 0, 0, 0 };
         public ReplayFrameSituation Situation { get; set; } = ReplayFrameSituation.NONE;
         public uint Flags { get; set; }
 
-        public Vector GetPos()
+        public VectorT GetPos()
         {
-                return new Vector(this.pos[0], this.pos[1], this.pos[2]);
+                return new VectorT(this.pos[0], this.pos[1], this.pos[2]);
         }
-
-        public QAngle GetAng()
+        public QAngleT GetAng()
         {
-                return new QAngle(this.ang[0], this.ang[1], this.ang[2]);
+                return new QAngleT(this.ang[0], this.ang[1], this.ang[2]);
         }
 }

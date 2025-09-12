@@ -1,7 +1,8 @@
-namespace SurfTimer;
 using CounterStrikeSharp.API.Core;
 
-internal class Player 
+namespace SurfTimer;
+
+public class Player 
 {
     // CCS requirements
     public CCSPlayerController Controller {get;}
@@ -10,7 +11,7 @@ internal class Player
     // Timer-related properties
     public PlayerTimer Timer {get; set;}
     public PlayerStats Stats {get; set;}
-    public PlayerHUD HUD {get; set;}
+    public PlayerHud HUD {get; set;}
     public ReplayRecorder ReplayRecorder { get; set; }
     public List<SavelocFrame> SavedLocations { get; set; }
     public int CurrentSavedLocation { get; set; }
@@ -18,11 +19,8 @@ internal class Player
     // Player information
     public PlayerProfile Profile {get; set;}
 
-    // Map information
-    public Map CurrMap = null!;
-
     // Constructor
-    public Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile, Map CurrMap)
+    internal Player(CCSPlayerController Controller, CCSPlayer_MovementServices MovementServices, PlayerProfile Profile)
     {
         this.Controller = Controller;
         this.MovementServices = MovementServices;
@@ -35,12 +33,11 @@ internal class Player
         this.SavedLocations = new List<SavelocFrame>();
         CurrentSavedLocation = 0;
 
-        this.HUD = new PlayerHUD(this);
-        this.CurrMap = CurrMap;
+        this.HUD = new PlayerHud(this);
     }
 
     /// <summary>
-    /// Checks if current player is spectating player <p>
+    /// Checks if current player is spectating player
     /// </summary>
     public bool IsSpectating(CCSPlayerController p)
     {

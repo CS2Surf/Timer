@@ -1,4 +1,5 @@
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 
 namespace SurfTimer;
 
@@ -6,19 +7,22 @@ public partial class SurfTimer
 {
     public void OnTick()
     {
+        if (CurrentMap == null)
+            return;
+
         foreach (var player in playerList.Values)
         {
             player.Timer.Tick();
             player.ReplayRecorder.Tick(player);
             player.HUD.Display();
+            if (player.Controller.Collision == null) continue;
+            if ((CollisionGroup)player.Controller.Collision.CollisionGroup == CollisionGroup.COLLISION_GROUP_DEBRIS) continue;
+            player.Controller.SetCollisionGroup(CollisionGroup.COLLISION_GROUP_DEBRIS);
         }
-
-        if (CurrentMap == null)
-            return;
 
         // Need to disable maps from executing their cfgs. Currently idk how (But seriusly it a security issue)
         ConVar? bot_quota = ConVar.Find("bot_quota");
-        // Console.WriteLine($"======== public void OnTick -> bot_quota not null? {bot_quota != null}");
+
         if (bot_quota != null)
         {
             int cbq = bot_quota.GetPrimitiveValue<int>();
@@ -32,13 +36,16 @@ public partial class SurfTimer
             {
                 bot_quota.SetValue(replaybot_count);
             }
-
-            // Console.WriteLine($"======== public void OnTick -> Got bot_quota {cbq} | Setting to bot_quota {replaybot_count}");
         }
 
         CurrentMap.ReplayManager.MapWR.Tick();
         CurrentMap.ReplayManager.StageWR?.Tick();
         CurrentMap.ReplayManager.BonusWR?.Tick();
+
+        if (CurrentMap.ReplayManager.MapWR.MapTimeID != -1)
+        {
+            CurrentMap.ReplayManager.MapWR.FormatBotName();
+        }
 
         // Here we will load the NEXT stage replay from AllStageWR
         if (CurrentMap.ReplayManager.StageWR?.RepeatCount == 0)
@@ -51,7 +58,6 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllStageWR[next_stage][0].Controller = CurrentMap.ReplayManager.StageWR.Controller;
 
-            // Console.WriteLine($"======== public void OnTick() -> Finished replay cycle for stage {CurrentMap.ReplayManager.StageWR.Stage}, changing to stage {next_stage}");
             CurrentMap.ReplayManager.StageWR = CurrentMap.ReplayManager.AllStageWR[next_stage][0];
             CurrentMap.ReplayManager.StageWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.StageWR.FormatBotName();
@@ -68,7 +74,6 @@ public partial class SurfTimer
 
             CurrentMap.ReplayManager.AllBonusWR[next_bonus][0].Controller = CurrentMap.ReplayManager.BonusWR.Controller;
 
-            // Console.WriteLine($"======== public void OnTick() -> Finished replay cycle for bonus {CurrentMap.ReplayManager.BonusWR.Stage}, changing to bonus {next_bonus}");
             CurrentMap.ReplayManager.BonusWR = CurrentMap.ReplayManager.AllBonusWR[next_bonus][0];
             CurrentMap.ReplayManager.BonusWR.LoadReplayData(repeat_count: 3);
             CurrentMap.ReplayManager.BonusWR.FormatBotName();

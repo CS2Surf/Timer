@@ -1,6 +1,6 @@
 namespace SurfTimer;
 
-internal class PlayerTimer
+public class PlayerTimer
 {
     // Status
     public bool IsEnabled { get; set; } = true; // Enable toggle for entire timer
@@ -13,15 +13,17 @@ internal class PlayerTimer
     public bool IsBonusMode { get; set; } = false; // Bonus mode toggle
 
     // Tracking
-    public int Stage { get; set; } = 0; // Current stage tracker
-    public int Checkpoint {get; set;} = 0; // Current checkpoint tracker
-    // public CurrentRun CurrentRunData { get; set; } = new CurrentRun(); // Current RUN data tracker
-    public int Bonus { get; set; } = 0; // To-do: bonus implementation - Current bonus tracker 
-    public int Style { get; set; } = 0; // To-do: functionality for player to change this value and the actual styles implementation - Current style tracker
+    public short Stage { get; set; } = 0; // Current stage tracker
+    public short Checkpoint { get; set; } = 0; // Current checkpoint tracker
+    public short Bonus { get; set; } = 0; // To-do: bonus implementation - Current bonus tracker 
+    public short Style { get; set; } = 0; // To-do: functionality for player to change this value and the actual styles implementation - Current style tracker
 
     // Timing
     public int Ticks { get; set; } = 0; // To-do: sub-tick counting? This currently goes on OnTick, which is not sub-tick I believe? Needs investigating
 
+    /// <summary>
+    /// Different types of time formatting for chat and HUD
+    /// </summary>
     // Time Formatting - To-do: Move to player settings maybe?
     public enum TimeFormatStyle
     {
@@ -41,7 +43,6 @@ internal class PlayerTimer
         this.IsPracticeMode = false;
         this.IsStageMode = false;
         this.IsBonusMode = false;
-        // this.CurrentRunData.Reset();
     }
 
     public void Pause()
