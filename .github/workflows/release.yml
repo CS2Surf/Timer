@@ -37,14 +37,14 @@ jobs:
 
       # Checkout plugin repo at the tag
       - name: Checkout plugin repository (Timer)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: Timer
           ref: ${{ env.RELEASE_TAG }}
 
       # Checkout SurfTimer.Shared as sibling folder (ProjectReference resolves via ../../SurfTimer.Shared)
       - name: Checkout SurfTimer.Shared
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: tslashd/SurfTimer.Shared
           path: SurfTimer.Shared
@@ -54,7 +54,7 @@ jobs:
           # ref: vX.Y.Z
 
       - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -133,7 +133,7 @@ jobs:
     needs: build
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: ./artifacts
 
