@@ -1,7 +1,4 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: .NET Build
 
 on:
   push:
@@ -11,18 +8,40 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      # Checkout for the current repo (plugin) into subfolder ./SurfTimer.Plugin
+      - name: Checkout Plugin repo into subfolder
+        uses: actions/checkout@v5
+        with:
+          path: SurfTimer.Plugin
+
+      # Checkout for SurfTimer.Shared as a "sibling" folder (NOT a submodule)
+      - name: Checkout Shared repo (sibling folder)
+        uses: actions/checkout@v5
+        with:
+          repository: tslashd/SurfTimer.Shared
+          path: SurfTimer.Shared
+          # If private, add PAT:
+          # token: ${{ secrets.SHARED_REPO_PAT }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore SurfTimer.Plugin/src/SurfTimer.Plugin.csproj
+
+      - name: Build
+        run: dotnet build SurfTimer.Plugin/src/SurfTimer.Plugin.csproj -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish SurfTimer.Plugin/src/SurfTimer.Plugin.csproj -c Release -o out --no-restore
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SurfTimer.Plugin
+          path: out
