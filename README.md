@@ -210,7 +210,7 @@ Bold & Italics = being worked on.
   - [ ] Points/Skill Groups (DB)
   - [ ] Player settings (DB)
 - [x] Replays
-   - [x] Personal Best 
+   - [x] Personal Best - Data for the PB replays is saved but no functionality to replay them yet is available
       - [x] Map Record
       - [X] Stage Record
       - [X] Bonus Record
@@ -220,4 +220,4 @@ Bold & Italics = being worked on.
       - [X] Bonus Record
 - [ ] Style implementation (SW, HSW, BW)
 - [ ] Paint (?)
-- [ ] API Integration (Repo can be found [here](https://github.com/CS2Surf/CS2-Surf-API))
+- [x] API Integration (Repo can be found [here](https://github.com/tslashd/SurfTimer.Api))
