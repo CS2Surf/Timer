@@ -5,10 +5,17 @@ namespace SurfTimer;
 
 public partial class SurfTimer
 {
-    public static void OnTick()
+    public void OnTick()
     {
         if (CurrentMap == null)
             return;
+
+        foreach (var player in playerList.Values)
+        {
+            player.Timer.Tick();
+            player.ReplayRecorder.Tick(player);
+            player.HUD.Display();
+        }
 
         // Need to disable maps from executing their cfgs. Currently idk how (But seriusly it a security issue)
         ConVar? bot_quota = ConVar.Find("bot_quota");
