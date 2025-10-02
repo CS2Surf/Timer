@@ -45,17 +45,6 @@ unsafe static class Extensions
     public static VectorT ToVector_t(this Vector vec) => new(vec.Handle);
     public static QAngleT ToQAngle_t(this QAngle vec) => new(vec.Handle);
 
-    public static void SetCollisionGroup(this CCSPlayerController controller, CollisionGroup collisionGroup)
-    {
-        if (!controller.IsValid || controller.Collision == null) return;
-        controller.Collision.CollisionAttribute.CollisionGroup = (byte)collisionGroup;
-        controller.Collision.CollisionGroup = (byte)collisionGroup;
-
-        Utilities.SetStateChanged(controller, "CColisionProperity", "m_collisionGroup");
-        Utilities.SetStateChanged(controller, "CCollisionProperty", "m_collisionAttribute");
-    }
-
-
     /// <summary>
     /// Checks whether an IP is a local one. Allows testing the plugin in a local environment setup for GeoIP
     /// </summary>
