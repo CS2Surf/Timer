@@ -15,7 +15,7 @@ updates:
       day: "monday"                      # every Monday
       time: "04:00"                      # at 04:00 local time
       timezone: "Europe/Sofia"
-    target-branch: "main"                # PRs will target this branch
+    target-branch: "dev"                # PRs will target this branch
     open-pull-requests-limit: 10         # safety cap (not really needed with grouping)
     commit-message:
       prefix: "chore"                    # e.g., "chore: bump actions/*"
@@ -32,7 +32,7 @@ updates:
       day: "monday"                      # every Monday
       time: "04:00"                      # at 04:00 local time
       timezone: "Europe/Sofia"
-    target-branch: "main"                # PRs will target this branch
+    target-branch: "dev"                # PRs will target this branch
     open-pull-requests-limit: 10         # safety cap (not really needed with grouping)
     commit-message:
       prefix: "chore"                    # e.g., "chore: bump MySqlConnector"
