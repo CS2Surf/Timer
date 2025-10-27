@@ -41,7 +41,7 @@ jobs:
         run: dotnet publish SurfTimer.Plugin/src/SurfTimer.Plugin.csproj -c Release -o out --no-restore
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: SurfTimer.Plugin
           path: out
