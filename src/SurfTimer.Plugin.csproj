@@ -14,7 +14,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CounterStrikeSharp.API" Version="1.0.352" />
+		<PackageReference Include="CounterStrikeSharp.API" Version="1.0.361" />
 		<PackageReference Include="MaxMind.GeoIP2" Version="5.4.1" />
 		<PackageReference Include="MySqlConnector" Version="2.5.0" />
 		<PackageReference Include="Serilog" Version="4.3.0" />
