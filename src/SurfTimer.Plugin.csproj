@@ -14,15 +14,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CounterStrikeSharp.API" Version="1.0.362" />
+		<PackageReference Include="CounterStrikeSharp.API" Version="1.0.364" />
 		<PackageReference Include="MaxMind.GeoIP2" Version="5.4.1" />
 		<PackageReference Include="MySqlConnector" Version="2.5.0" />
-		<PackageReference Include="Serilog" Version="4.3.0" />
+		<PackageReference Include="Serilog" Version="4.3.1" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 		<!-- Add Dapper, to ensure Dapper.dll is included in the output -->
-		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="Dapper" Version="2.1.72" />
 		<ProjectReference Include="..\..\SurfTimer.Shared\SurfTimer.Shared.csproj" />
 	</ItemGroup>
 
