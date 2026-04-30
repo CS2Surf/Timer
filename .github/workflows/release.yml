@@ -153,7 +153,7 @@ jobs:
         run: ls -R ./artifacts
 
       - name: Create GitHub Release and upload assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: SurfTimer.Plugin ${{ steps.vars.outputs.tag }}
