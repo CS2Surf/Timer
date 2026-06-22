@@ -13,13 +13,13 @@ jobs:
     steps:
       # Checkout for the current repo (plugin) into subfolder ./SurfTimer.Plugin
       - name: Checkout Plugin repo into subfolder
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: SurfTimer.Plugin
 
       # Checkout for SurfTimer.Shared as a "sibling" folder (NOT a submodule)
       - name: Checkout Shared repo (sibling folder)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: tslashd/SurfTimer.Shared
           path: SurfTimer.Shared

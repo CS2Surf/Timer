@@ -37,14 +37,14 @@ jobs:
 
       # Checkout plugin repo at the tag
       - name: Checkout plugin repository (Timer)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: Timer
           ref: ${{ env.RELEASE_TAG }}
 
       # Checkout SurfTimer.Shared as sibling folder (ProjectReference resolves via ../../SurfTimer.Shared)
       - name: Checkout SurfTimer.Shared
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: tslashd/SurfTimer.Shared
           path: SurfTimer.Shared
