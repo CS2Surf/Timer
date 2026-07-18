@@ -149,9 +149,10 @@ public class Map : MapEntity
             if (trigger.Entity!.Name != null)
             {
                 // Map start zone
-                if (trigger.Entity!.Name.Contains("map_start") ||
+                if ((trigger.Entity!.Name.Contains("map_start") ||
                     trigger.Entity!.Name.Contains("stage1_start") ||
-                    trigger.Entity!.Name.Contains("s1_start"))
+                    trigger.Entity!.Name.Contains("s1_start")) &&
+                    !trigger.Entity!.Name.Contains("bonus")) // Prevents setting bonus as start zone (e.g. bonus1_start)
                 {
                     bool foundPlayerSpawn = false; // Track whether a player spawn is found
                     foreach (CBaseEntity teleport in teleports)
